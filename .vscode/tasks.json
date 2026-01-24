@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "flutter: pub get",
+      "type": "shell",
+      "command": "flutter pub get",
+      "problemMatcher": []
+    },
+    {
+      "label": "flutter: build_runner",
+      "type": "shell",
+      "command": "flutter pub run build_runner build --delete-conflicting-outputs",
+      "problemMatcher": []
+    },
+    {
+      "label": "flutter: build_runner watch",
+      "type": "shell",
+      "command": "flutter pub run build_runner watch --delete-conflicting-outputs",
+      "problemMatcher": [],
+      "isBackground": true
+    },
+    {
+      "label": "flutter: analyze",
+      "type": "shell",
+      "command": "flutter analyze",
+      "problemMatcher": []
+    },
+    {
+      "label": "flutter: test",
+      "type": "shell",
+      "command": "flutter test",
+      "problemMatcher": []
+    },
+    {
+      "label": "flutter: clean",
+      "type": "shell",
+      "command": "flutter clean && flutter pub get",
+      "problemMatcher": []
+    }
+  ]
+}

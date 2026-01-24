@@ -1,0 +1,185 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    function isCreator() {
+      return hasRole('creator') || hasRole('admin');
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isTourOwner(tourId) {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/tours/$(tourId)).data.creatorId == request.auth.uid;
+    }
+
+    function isTourApproved(tourId) {
+      return get(/databases/$(database)/documents/tours/$(tourId)).data.status == 'approved';
+    }
+
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
+
+    match /users/{userId} {
+      // Anyone authenticated can read user profiles (for displaying names, etc.)
+      allow read: if isAuthenticated();
+
+      // Users can create their own profile
+      allow create: if isOwner(userId) &&
+        request.resource.data.role == 'user'; // New users start as 'user' role
+
+      // Users can update their own profile (but not change their role)
+      allow update: if isOwner(userId) &&
+        request.resource.data.role == resource.data.role; // Cannot change own role
+
+      // Admins can update any user (including role changes)
+      allow update: if isAdmin();
+
+      // Only admins can delete users
+      allow delete: if isAdmin();
+
+      // User tour progress
+      match /tourProgress/{progressId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // User downloads
+      match /downloads/{downloadId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // ============================================
+    // TOURS COLLECTION
+    // ============================================
+
+    match /tours/{tourId} {
+      // Public can read approved tours
+      // Creators can read their own tours
+      // Admins can read all tours
+      allow read: if resource.data.status == 'approved' ||
+        (isAuthenticated() && resource.data.creatorId == request.auth.uid) ||
+        isAdmin();
+
+      // Only creators and admins can create tours
+      allow create: if isCreator() &&
+        request.resource.data.creatorId == request.auth.uid &&
+        request.resource.data.status == 'draft';
+
+      // Tour owners can update their tours (but not change status to 'approved')
+      allow update: if (isAuthenticated() && resource.data.creatorId == request.auth.uid &&
+        request.resource.data.status != 'approved') ||
+        isAdmin();
+
+      // Only admins can delete tours
+      allow delete: if isAdmin();
+
+      // ============================================
+      // TOUR VERSIONS SUBCOLLECTION
+      // ============================================
+
+      match /versions/{versionId} {
+        // Same read rules as parent tour
+        allow read: if get(/databases/$(database)/documents/tours/$(tourId)).data.status == 'approved' ||
+          isTourOwner(tourId) ||
+          isAdmin();
+
+        // Tour owners can create/update versions
+        allow create, update: if isTourOwner(tourId) || isAdmin();
+
+        // Only admins can delete versions
+        allow delete: if isAdmin();
+
+        // ============================================
+        // STOPS SUBCOLLECTION
+        // ============================================
+
+        match /stops/{stopId} {
+          // Same read rules as parent version
+          allow read: if isTourApproved(tourId) ||
+            isTourOwner(tourId) ||
+            isAdmin();
+
+          // Tour owners can create/update/delete stops
+          allow create, update, delete: if isTourOwner(tourId) || isAdmin();
+        }
+      }
+
+      // ============================================
+      // TOUR REVIEWS SUBCOLLECTION
+      // ============================================
+
+      match /reviews/{reviewId} {
+        // Anyone can read reviews of approved tours
+        allow read: if isTourApproved(tourId);
+
+        // Authenticated users can create reviews for approved tours
+        allow create: if isAuthenticated() &&
+          isTourApproved(tourId) &&
+          request.resource.data.userId == request.auth.uid;
+
+        // Users can update/delete their own reviews
+        allow update, delete: if isAuthenticated() &&
+          resource.data.userId == request.auth.uid;
+
+        // Admins can delete any review
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ============================================
+    // REVIEW QUEUE (Admin Only)
+    // ============================================
+
+    match /reviewQueue/{queueId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ============================================
+    // RATE LIMITS (Cloud Functions Only)
+    // ============================================
+
+    match /rateLimits/{document=**} {
+      // Users can read their own rate limit status
+      allow read: if isAuthenticated();
+
+      // Only Cloud Functions can write (no client writes)
+      allow write: if false;
+    }
+
+    // ============================================
+    // APP CONFIGURATION
+    // ============================================
+
+    match /config/{docId} {
+      // Everyone can read app config
+      allow read: if true;
+
+      // Only admins can modify config
+      allow write: if isAdmin();
+    }
+  }
+}
