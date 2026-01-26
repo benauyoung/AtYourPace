@@ -330,6 +330,163 @@ final List<StopModel> _demoStops3 = [
   ),
 ];
 
+// Demo tour for Clamart, France (testing in Europe)
+final _demoTourClamart = TourModel(
+  id: 'demo-tour-clamart',
+  creatorId: 'demo-user-001',
+  creatorName: 'Demo Guide',
+  slug: 'clamart-historic-walking-tour',
+  category: TourCategory.history,
+  tourType: TourType.walking,
+  status: TourStatus.approved,
+  featured: true,
+  startLocation: const GeoPoint(48.8005, 2.2645), // 23 Avenue Jean Jaurès
+  geohash: 'u09tun',
+  city: 'Clamart',
+  region: 'Île-de-France',
+  country: 'France',
+  liveVersionId: 'v1',
+  liveVersion: 1,
+  draftVersionId: 'v1',
+  draftVersion: 1,
+  stats: const TourStats(
+    totalPlays: 342,
+    totalDownloads: 187,
+    averageRating: 4.6,
+    totalRatings: 45,
+  ),
+  createdAt: DateTime.now().subtract(const Duration(days: 20)),
+  updatedAt: DateTime.now().subtract(const Duration(days: 3)),
+  publishedAt: DateTime.now().subtract(const Duration(days: 18)),
+);
+
+final _demoVersionClamart = TourVersionModel(
+  id: 'v1',
+  tourId: 'demo-tour-clamart',
+  versionNumber: 1,
+  versionType: VersionType.live,
+  title: 'Historic Clamart Walking Tour',
+  description:
+      'Discover the charming town of Clamart, a hidden gem in the southwestern suburbs of Paris. This walking tour takes you through the historic center, featuring a 17th-century château turned town hall, a neo-Greek fountain, a medieval church, and a beautiful 19th-century park. Learn about Clamart\'s fascinating history, from its famous peas that fed Paris to its artistic residents like Henri Matisse.',
+  coverImageUrl: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',
+  duration: '1.5 hours',
+  distance: '2.0 km',
+  difficulty: TourDifficulty.easy,
+  languages: const ['English', 'French'],
+  route: const TourRoute(
+    encodedPolyline: 'gfqiHcxhM_@dAiBrCkAnB',
+    boundingBox: BoundingBox(
+      northeast: GeoPoint(48.8035, 2.2690),
+      southwest: GeoPoint(48.8000, 2.2630),
+    ),
+  ),
+  createdAt: DateTime.now().subtract(const Duration(days: 20)),
+  updatedAt: DateTime.now().subtract(const Duration(days: 3)),
+);
+
+final List<StopModel> _demoStopsClamart = [
+  StopModel(
+    id: 'stop-clamart-1',
+    tourId: 'demo-tour-clamart',
+    versionId: 'v1',
+    order: 0,
+    name: 'Avenue Jean Jaurès - Start Point',
+    description:
+        'Begin your walk at Avenue Jean Jaurès, one of Clamart\'s main arteries named after the famous French socialist leader Jean Jaurès. This avenue has been the heart of commercial life in Clamart and leads directly to the historic town center.',
+    location: const GeoPoint(48.8005, 2.2645),
+    geohash: 'u09tun',
+    triggerRadius: 30,
+    media: const StopMedia(
+      audioSource: AudioSource.elevenlabs,
+      audioDuration: 90,
+      audioText:
+          'Bienvenue à Clamart! Welcome to our historic walking tour. You are standing on Avenue Jean Jaurès, named after the beloved French socialist leader who championed workers\' rights in the early 20th century. Clamart has a rich history dating back to prehistoric times, though the first real settlement was discovered from the 7th century. Fun fact: the town is famous in French gastronomy - any dish served "à la Clamart" features peas, as Clamart\'s peas were the first of the season to reach Paris markets. Let\'s begin our journey into history.',
+    ),
+    createdAt: DateTime.now().subtract(const Duration(days: 20)),
+    updatedAt: DateTime.now().subtract(const Duration(days: 3)),
+  ),
+  StopModel(
+    id: 'stop-clamart-2',
+    tourId: 'demo-tour-clamart',
+    versionId: 'v1',
+    order: 1,
+    name: 'Hôtel de Ville (Town Hall)',
+    description:
+        'The magnificent Clamart Town Hall is housed in the former Château de Barral, a stunning 17th-century neoclassical building. Acquired by the town council in 1842, it became a historic monument in 1929. The interior features remarkable 20th-century wall paintings.',
+    location: const GeoPoint(48.8024, 2.2636),
+    geohash: 'u09tup',
+    triggerRadius: 35,
+    media: const StopMedia(
+      audioSource: AudioSource.elevenlabs,
+      audioDuration: 120,
+      audioText:
+          'Before you stands the Hôtel de Ville, Clamart\'s town hall, but this elegant building has a much grander origin. This is the former Château de Barral, built in the 17th century in the neoclassical style. Notice the asymmetrical facade of six bays, constructed in beautiful ashlar stone. In the 1840s, Mayor Denis Gogue led the effort to acquire this property for the town. Inside, you\'ll find the Hall of Weddings and Council Chamber, decorated with stunning wall paintings from the 20th century - themselves classified as historic monuments. The building became a monument historique in 1929, preserving this jewel of French architecture for future generations.',
+    ),
+    createdAt: DateTime.now().subtract(const Duration(days: 20)),
+    updatedAt: DateTime.now().subtract(const Duration(days: 3)),
+  ),
+  StopModel(
+    id: 'stop-clamart-3',
+    tourId: 'demo-tour-clamart',
+    versionId: 'v1',
+    order: 2,
+    name: 'Fontaine Thurotte',
+    description:
+        'This charming neo-Greek style fountain was installed in 1943, depicting a young shepherd playing the flute near his goat. It was Clamart\'s first public art acquisition, created by sculptor Thurotte who was inspired by Grand Prix de Rome winner Paul Landowski.',
+    location: const GeoPoint(48.8026, 2.2640),
+    geohash: 'u09tup',
+    triggerRadius: 25,
+    media: const StopMedia(
+      audioSource: AudioSource.elevenlabs,
+      audioDuration: 100,
+      audioText:
+          'Just steps from the town hall, you\'ll find the enchanting Fontaine Thurotte. Installed in 1943, this neo-Greek style fountain evokes the sylvan and bucolic life that once defined Clamart. Look closely at the sculpture: a young shepherd leans against a tree, peacefully playing his flute while his faithful goat stands nearby. The sculptor, Thurotte, drew inspiration from Paul Landowski, the Grand Prix de Rome winner famous for creating the Christ the Redeemer statue in Rio de Janeiro. This fountain holds special significance as it was Clamart\'s very first public art acquisition, marking the town\'s commitment to beautifying its public spaces.',
+    ),
+    createdAt: DateTime.now().subtract(const Duration(days: 20)),
+    updatedAt: DateTime.now().subtract(const Duration(days: 3)),
+  ),
+  StopModel(
+    id: 'stop-clamart-4',
+    tourId: 'demo-tour-clamart',
+    versionId: 'v1',
+    order: 3,
+    name: 'Église Saint-Pierre Saint-Paul',
+    description:
+        'This historic church has roots in the 11th century, with the base of its bell tower dating from that era. Rebuilt after the Hundred Years\' War and consecrated in 1523, it features a Gothic side gate, an 18th-century Tuscan facade, and the Saint Vincent chapel honoring the patron saint of winegrowers.',
+    location: const GeoPoint(48.8010, 2.2652),
+    geohash: 'u09tun',
+    triggerRadius: 35,
+    media: const StopMedia(
+      audioSource: AudioSource.elevenlabs,
+      audioDuration: 130,
+      audioText:
+          'The Église Saint-Pierre Saint-Paul stands as a testament to Clamart\'s long Christian heritage. The base of its bell tower dates all the way back to the 11th century, making it one of the oldest structures in the region. However, the church you see today was largely rebuilt after the devastating Hundred Years\' War and was consecrated in 1523. Notice the beautiful flamboyant Gothic style of the side gate, contrasting with the more restrained 18th-century Tuscan-style western facade. Inside, you\'ll discover remarkable stained glass windows and the Saint Vincent chapel. Saint Vincent is the patron saint of winegrowers - a reminder that Clamart was once surrounded by vineyards that produced wine for Paris. The church has been listed as a historic monument since 1928.',
+    ),
+    createdAt: DateTime.now().subtract(const Duration(days: 20)),
+    updatedAt: DateTime.now().subtract(const Duration(days: 3)),
+  ),
+  StopModel(
+    id: 'stop-clamart-5',
+    tourId: 'demo-tour-clamart',
+    versionId: 'v1',
+    order: 4,
+    name: 'Parc de la Maison Blanche',
+    description:
+        'End your tour at this beautiful 3.7-acre park designed in the 1830s, formerly owned by the Duchess of Galliera. The elegant Maison Blanche mansion at its heart now serves as a cultural center hosting exhibitions and concerts throughout the year.',
+    location: const GeoPoint(48.8030, 2.2678),
+    geohash: 'u09tuq',
+    triggerRadius: 40,
+    media: const StopMedia(
+      audioSource: AudioSource.elevenlabs,
+      audioDuration: 110,
+      audioText:
+          'We conclude our tour at the lovely Parc de la Maison Blanche, a green oasis in the heart of Clamart. This 3.7-acre park was designed in the 1830s and was once part of the estate of the Duchess of Galliera. As you stroll through the manicured gardens, past the small lake and charming playgrounds, you\'ll reach the centerpiece: the elegant Maison Blanche mansion. Today, this beautiful building serves as a cultural center, hosting art exhibitions and concerts throughout the year. Clamart has been home to many artists - Henri Matisse lived here before World War I, and the Dada artists Jean Arp and Sophie Taeuber-Arp resided here in the 1930s. Thank you for joining us on this journey through Clamart\'s rich history. Au revoir!',
+    ),
+    createdAt: DateTime.now().subtract(const Duration(days: 20)),
+    updatedAt: DateTime.now().subtract(const Duration(days: 3)),
+  ),
+];
+
 // Additional demo tours with different statuses for admin testing
 final _demoTour4 = TourModel(
   id: 'demo-tour-4',
@@ -413,13 +570,14 @@ final _demoTour6 = TourModel(
 );
 
 // All demo tours for users (only approved)
-final List<TourModel> _allDemoTours = [_demoTour1, _demoTour2, _demoTour3];
+final List<TourModel> _allDemoTours = [_demoTour1, _demoTour2, _demoTour3, _demoTourClamart];
 
 // All demo tours for admin (all statuses)
 final List<TourModel> _allDemoToursAdmin = [
   _demoTour1,
   _demoTour2,
   _demoTour3,
+  _demoTourClamart,
   _demoTour4,
   _demoTour5,
   _demoTour6,
@@ -430,6 +588,7 @@ final Map<String, TourVersionModel> _demoVersions = {
   'demo-tour-1:v1': _demoVersion1,
   'demo-tour-2:v1': _demoVersion2,
   'demo-tour-3:v1': _demoVersion3,
+  'demo-tour-clamart:v1': _demoVersionClamart,
 };
 
 // Demo stops map
@@ -437,6 +596,7 @@ final Map<String, List<StopModel>> _demoStopsMap = {
   'demo-tour-1:v1': _demoStops1,
   'demo-tour-2:v1': _demoStops2,
   'demo-tour-3:v1': _demoStops3,
+  'demo-tour-clamart:v1': _demoStopsClamart,
 };
 
 // Demo providers
