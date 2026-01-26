@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+lib/
+
+# Environment variables (contains secrets)
+.env
+.env.local
+.env.*.local
+
+# Firebase
+.runtimeconfig.json
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
