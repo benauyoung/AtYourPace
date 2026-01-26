@@ -6,7 +6,10 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../data/local/offline_storage_service.dart';
 import '../../../services/download_manager.dart';
+import '../../providers/offline_map_provider.dart';
 import '../../providers/tour_providers.dart';
+import '../../widgets/common/empty_state.dart';
+import '../../widgets/common/skeleton_loader.dart';
 import '../../widgets/tour/tour_card.dart';
 
 /// Provider for the list of downloaded tour IDs
@@ -61,39 +64,8 @@ class DownloadsScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.download_done,
-              size: 80,
-              color: context.colorScheme.primary.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No downloads yet',
-              style: context.textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Download tours to enjoy them offline without an internet connection',
-              style: context.textTheme.bodyMedium?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => context.go(RouteNames.discover),
-              icon: const Icon(Icons.explore),
-              label: const Text('Discover Tours'),
-            ),
-          ],
-        ),
-      ),
+    return EmptyState.noDownloads(
+      onExplore: () => context.go(RouteNames.discover),
     );
   }
 
@@ -108,6 +80,7 @@ class DownloadsScreen extends ConsumerWidget {
       itemBuilder: (context, index) {
         final tourId = downloadedIds[index];
         return _DownloadedTourItem(
+          key: ValueKey(tourId),
           tourId: tourId,
           onDelete: () => _showDeleteDialog(context, ref, tourId),
         );
@@ -174,7 +147,7 @@ class DownloadsScreen extends ConsumerWidget {
   }
 }
 
-class _StorageInfoCard extends StatelessWidget {
+class _StorageInfoCard extends ConsumerWidget {
   final AsyncValue<int> cacheSizeAsync;
   final int downloadCount;
 
@@ -184,7 +157,9 @@ class _StorageInfoCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mapTileSizeAsync = ref.watch(totalMapTileStorageProvider);
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -218,26 +193,7 @@ class _StorageInfoCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                cacheSizeAsync.when(
-                  data: (bytes) => Text(
-                    _formatBytes(bytes),
-                    style: context.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: context.colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  loading: () => const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  error: (_, __) => Text(
-                    'Unknown',
-                    style: context.textTheme.headlineSmall?.copyWith(
-                      color: context.colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                ),
+                _buildStorageBreakdown(context, mapTileSizeAsync),
               ],
             ),
           ),
@@ -264,6 +220,71 @@ class _StorageInfoCard extends StatelessWidget {
     );
   }
 
+  Widget _buildStorageBreakdown(BuildContext context, AsyncValue<int> mapTileSizeAsync) {
+    return cacheSizeAsync.when(
+      data: (mediaBytes) {
+        return mapTileSizeAsync.when(
+          data: (mapBytes) {
+            final totalBytes = mediaBytes + mapBytes;
+            if (mapBytes > 0) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _formatBytes(totalBytes),
+                    style: context.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: context.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Media: ${_formatBytes(mediaBytes)} | Maps: ${_formatBytes(mapBytes)}',
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colorScheme.onPrimaryContainer.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              );
+            }
+            return Text(
+              _formatBytes(mediaBytes),
+              style: context.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: context.colorScheme.onPrimaryContainer,
+              ),
+            );
+          },
+          loading: () => Text(
+            _formatBytes(mediaBytes),
+            style: context.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: context.colorScheme.onPrimaryContainer,
+            ),
+          ),
+          error: (_, __) => Text(
+            _formatBytes(mediaBytes),
+            style: context.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: context.colorScheme.onPrimaryContainer,
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox(
+        height: 20,
+        width: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ),
+      error: (_, __) => Text(
+        'Unknown',
+        style: context.textTheme.headlineSmall?.copyWith(
+          color: context.colorScheme.onPrimaryContainer,
+        ),
+      ),
+    );
+  }
+
   String _formatBytes(int bytes) {
     if (bytes < 1024) {
       return '$bytes B';
@@ -277,21 +298,50 @@ class _StorageInfoCard extends StatelessWidget {
   }
 }
 
-class _DownloadedTourItem extends ConsumerWidget {
+class _DownloadedTourItem extends ConsumerStatefulWidget {
   final String tourId;
   final VoidCallback onDelete;
 
   const _DownloadedTourItem({
+    super.key,
     required this.tourId,
     required this.onDelete,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tourAsync = ref.watch(tourByIdProvider(tourId));
-    final downloadState = ref.watch(tourDownloadStateProvider(tourId));
+  ConsumerState<_DownloadedTourItem> createState() => _DownloadedTourItemState();
+}
+
+class _DownloadedTourItemState extends ConsumerState<_DownloadedTourItem> {
+  bool _isDownloadingMap = false;
+
+  Future<void> _downloadMapTiles() async {
+    if (_isDownloadingMap) return;
+
+    setState(() => _isDownloadingMap = true);
+
+    try {
+      await ref.read(downloadManagerProvider.notifier).downloadMapTilesOnly(widget.tourId);
+      if (mounted) {
+        context.showSuccessSnackBar('Map tiles downloaded');
+      }
+    } catch (e) {
+      if (mounted) {
+        context.showErrorSnackBar('Failed to download map tiles');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDownloadingMap = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tourAsync = ref.watch(tourByIdProvider(widget.tourId));
     final storage = ref.watch(offlineStorageServiceProvider);
-    final downloadStatus = storage.getDownloadStatus(tourId);
+    final downloadStatus = storage.getDownloadStatus(widget.tourId);
+    final hasMapTiles = ref.watch(tourHasOfflineMapsProvider(widget.tourId));
 
     return tourAsync.when(
       data: (tour) {
@@ -305,41 +355,92 @@ class _DownloadedTourItem extends ConsumerWidget {
             children: [
               TourCard(
                 tour: tour,
-                onTap: () => context.go(RouteNames.tourDetailsPath(tourId)),
+                onTap: () => context.push(RouteNames.tourDetailsPath(widget.tourId)),
                 showFavoriteButton: false,
               ),
-              // Download info overlay
+              // Download info overlay with map indicator
               Positioned(
                 top: 8,
                 left: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.download_done,
-                        size: 14,
-                        color: Colors.white,
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _formatSize(downloadStatus?['fileSize'] as int?),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.download_done,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatSize(downloadStatus?['fileSize'] as int?),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    // Map tiles indicator
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: hasMapTiles ? Colors.blue : Colors.grey,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            hasMapTiles ? Icons.map : Icons.map_outlined,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                          if (!hasMapTiles && !_isDownloadingMap) ...[
+                            const SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: _downloadMapTiles,
+                              child: const Text(
+                                'Get Map',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (_isDownloadingMap) ...[
+                            const SizedBox(width: 4),
+                            const SizedBox(
+                              width: 10,
+                              height: 10,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
               // Delete button
@@ -351,7 +452,7 @@ class _DownloadedTourItem extends ConsumerWidget {
                   shape: const CircleBorder(),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
-                    onTap: onDelete,
+                    onTap: widget.onDelete,
                     child: const Padding(
                       padding: EdgeInsets.all(8),
                       child: Icon(
@@ -407,15 +508,7 @@ class _DownloadedTourItem extends ConsumerWidget {
   }
 
   Widget _buildLoadingCard(BuildContext context) {
-    return Card(
-      child: Container(
-        height: 200,
-        padding: const EdgeInsets.all(16),
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
-      ),
-    );
+    return const TourCardSkeleton();
   }
 
   Widget _buildErrorCard(BuildContext context, String error) {
@@ -448,7 +541,7 @@ class _DownloadedTourItem extends ConsumerWidget {
             ),
             IconButton(
               icon: const Icon(Icons.delete),
-              onPressed: onDelete,
+              onPressed: widget.onDelete,
             ),
           ],
         ),

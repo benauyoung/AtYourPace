@@ -31,6 +31,12 @@ class TourMapWidget extends StatefulWidget {
   /// Whether the map is interactive (can be panned/zoomed)
   final bool interactive;
 
+  /// Whether to show offline indicator overlay
+  final bool showOfflineIndicator;
+
+  /// Whether the device is currently offline
+  final bool isOffline;
+
   /// Callback when map is created
   final void Function(MapboxMap)? onMapCreated;
 
@@ -53,6 +59,8 @@ class TourMapWidget extends StatefulWidget {
     this.userPosition,
     this.showUserLocation = true,
     this.interactive = true,
+    this.showOfflineIndicator = false,
+    this.isOffline = false,
     this.onMapCreated,
     this.onStopTapped,
     this.onMapTapped,
@@ -95,7 +103,7 @@ class _TourMapWidgetState extends State<TourMapWidget> {
     final center = widget.initialCenter ??
         Position(MapboxConfig.defaultLongitude, MapboxConfig.defaultLatitude);
 
-    return MapWidget(
+    final mapWidget = MapWidget(
       key: const ValueKey('tour_map'),
       cameraOptions: CameraOptions(
         center: Point(coordinates: center),
@@ -106,6 +114,23 @@ class _TourMapWidgetState extends State<TourMapWidget> {
       onTapListener: widget.onMapTapped != null ? _onMapTapped : null,
       onLongTapListener:
           widget.onMapLongPressed != null ? _onMapLongPressed : null,
+    );
+
+    // If offline indicator is not needed, return map directly
+    if (!widget.showOfflineIndicator || !widget.isOffline) {
+      return mapWidget;
+    }
+
+    // Show offline indicator overlay
+    return Stack(
+      children: [
+        mapWidget,
+        Positioned(
+          top: 8,
+          left: 8,
+          child: _OfflineIndicator(),
+        ),
+      ],
     );
   }
 
@@ -308,5 +333,45 @@ class _PointAnnotationClickListener
     if (stop != null) {
       onStopTapped?.call(stop);
     }
+  }
+}
+
+/// Offline indicator overlay widget
+class _OfflineIndicator extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.offline_bolt,
+            size: 14,
+            color: Colors.white,
+          ),
+          SizedBox(width: 4),
+          Text(
+            'Offline Map',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

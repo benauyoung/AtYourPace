@@ -17,6 +17,7 @@ class OfflineStorageService {
   static const String _downloadsBoxName = 'downloads_metadata';
   static const String _progressBoxName = 'user_progress';
   static const String _settingsBoxName = 'app_settings';
+  static const String _mapTilesBoxName = 'map_tiles_metadata';
 
   late Box<Map> _toursBox;
   late Box<Map> _versionsBox;
@@ -24,6 +25,7 @@ class OfflineStorageService {
   late Box<Map> _downloadsBox;
   late Box<Map> _progressBox;
   late Box<dynamic> _settingsBox;
+  late Box<Map> _mapTilesBox;
 
   bool _isInitialized = false;
 
@@ -39,6 +41,7 @@ class OfflineStorageService {
     _downloadsBox = await Hive.openBox<Map>(_downloadsBoxName);
     _progressBox = await Hive.openBox<Map>(_progressBoxName);
     _settingsBox = await Hive.openBox(_settingsBoxName);
+    _mapTilesBox = await Hive.openBox<Map>(_mapTilesBoxName);
 
     _isInitialized = true;
   }
@@ -67,6 +70,7 @@ class OfflineStorageService {
 
   /// Get a cached tour
   TourModel? getCachedTour(String tourId) {
+    if (!_isInitialized) return null;
     final data = _toursBox.get(tourId);
     if (data == null) return null;
 
@@ -86,6 +90,7 @@ class OfflineStorageService {
 
   /// Get all cached tours
   List<TourModel> getAllCachedTours() {
+    if (!_isInitialized) return [];
     final tours = <TourModel>[];
     for (final data in _toursBox.values) {
       try {
@@ -116,6 +121,7 @@ class OfflineStorageService {
 
   /// Get a cached version
   TourVersionModel? getCachedVersion(String tourId, String versionId) {
+    if (!_isInitialized) return null;
     final key = '${tourId}_$versionId';
     final data = _versionsBox.get(key);
     if (data == null) return null;
@@ -143,6 +149,7 @@ class OfflineStorageService {
 
   /// Get cached stops
   List<StopModel>? getCachedStops(String tourId, String versionId) {
+    if (!_isInitialized) return null;
     final key = '${tourId}_$versionId';
     final data = _stopsBox.get(key);
     if (data == null) return null;
@@ -217,6 +224,7 @@ class OfflineStorageService {
 
   /// Check if a tour is downloaded
   bool isDownloaded(String tourId) {
+    if (!_isInitialized) return false;
     final data = _downloadsBox.get(tourId);
     if (data == null) return false;
 
@@ -234,6 +242,7 @@ class OfflineStorageService {
 
   /// Get download status
   Map<String, dynamic>? getDownloadStatus(String tourId) {
+    if (!_isInitialized) return null;
     final data = _downloadsBox.get(tourId);
     if (data == null) return null;
     return Map<String, dynamic>.from(data);
@@ -241,6 +250,7 @@ class OfflineStorageService {
 
   /// Get all downloaded tours
   List<String> getDownloadedTourIds() {
+    if (!_isInitialized) return [];
     final ids = <String>[];
     for (final key in _downloadsBox.keys) {
       final data = _downloadsBox.get(key);
@@ -323,6 +333,7 @@ class OfflineStorageService {
 
   /// Get user progress for a tour
   Map<String, dynamic>? getProgress(String tourId) {
+    if (!_isInitialized) return null;
     final data = _progressBox.get(tourId);
     if (data == null) return null;
     return Map<String, dynamic>.from(data);
@@ -335,6 +346,7 @@ class OfflineStorageService {
 
   /// Get all in-progress tours
   List<String> getInProgressTourIds() {
+    if (!_isInitialized) return [];
     final ids = <String>[];
     for (final key in _progressBox.keys) {
       final data = _progressBox.get(key);
@@ -354,9 +366,101 @@ class OfflineStorageService {
 
   /// Get a setting
   T? getSetting<T>(String key, {T? defaultValue}) {
+    if (!_isInitialized) return defaultValue;
     final value = _settingsBox.get(key);
     if (value == null) return defaultValue;
     return value as T;
+  }
+
+  // ==================== Map Tiles ====================
+
+  /// Save map tile metadata for a tour
+  Future<void> saveMapTileMetadata({
+    required String tourId,
+    required int estimatedSize,
+    required DateTime downloadedAt,
+    required DateTime expiresAt,
+  }) async {
+    await _mapTilesBox.put(tourId, {
+      'tourId': tourId,
+      'estimatedSize': estimatedSize,
+      'downloadedAt': downloadedAt.toIso8601String(),
+      'expiresAt': expiresAt.toIso8601String(),
+    });
+  }
+
+  /// Get map tile metadata for a tour
+  Map<String, dynamic>? getMapTileMetadata(String tourId) {
+    if (!_isInitialized) return null;
+    final data = _mapTilesBox.get(tourId);
+    if (data == null) return null;
+    return Map<String, dynamic>.from(data);
+  }
+
+  /// Check if a tour has map tiles
+  bool hasMapTiles(String tourId) {
+    if (!_isInitialized) return false;
+    final data = _mapTilesBox.get(tourId);
+    if (data == null) return false;
+
+    // Check if expired
+    final expiresAt = DateTime.tryParse(data['expiresAt'] ?? '');
+    if (expiresAt != null && DateTime.now().isAfter(expiresAt)) {
+      return false;
+    }
+    return true;
+  }
+
+  /// Delete map tile metadata for a tour
+  Future<void> deleteMapTileMetadata(String tourId) async {
+    await _mapTilesBox.delete(tourId);
+  }
+
+  /// Get total estimated map tile storage size
+  int getMapTileStorageSize() {
+    if (!_isInitialized) return 0;
+    int totalSize = 0;
+    for (final data in _mapTilesBox.values) {
+      // Only count non-expired tiles
+      final expiresAt = DateTime.tryParse(data['expiresAt'] ?? '');
+      if (expiresAt == null || DateTime.now().isBefore(expiresAt)) {
+        totalSize += (data['estimatedSize'] as int?) ?? 0;
+      }
+    }
+    return totalSize;
+  }
+
+  /// Get list of tour IDs with expired map tiles
+  List<String> getExpiredMapTileIds() {
+    if (!_isInitialized) return [];
+    final expiredIds = <String>[];
+    for (final key in _mapTilesBox.keys) {
+      final data = _mapTilesBox.get(key);
+      if (data != null) {
+        final expiresAt = DateTime.tryParse(data['expiresAt'] ?? '');
+        if (expiresAt != null && DateTime.now().isAfter(expiresAt)) {
+          expiredIds.add(key.toString());
+        }
+      }
+    }
+    return expiredIds;
+  }
+
+  /// Get list of all tour IDs with map tiles
+  List<String> getMapTileTourIds() {
+    if (!_isInitialized) return [];
+    final ids = <String>[];
+    for (final key in _mapTilesBox.keys) {
+      final data = _mapTilesBox.get(key);
+      if (data != null) {
+        // Only include non-expired tiles
+        final expiresAt = DateTime.tryParse(data['expiresAt'] ?? '');
+        if (expiresAt == null || DateTime.now().isBefore(expiresAt)) {
+          ids.add(key.toString());
+        }
+      }
+    }
+    return ids;
   }
 
   // ==================== Cleanup ====================
@@ -424,6 +528,7 @@ class OfflineStorageService {
     await _stopsBox.clear();
     await _downloadsBox.clear();
     await _progressBox.clear();
+    await _mapTilesBox.clear();
 
     // Delete local files
     if (!kIsWeb) {

@@ -7,7 +7,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../data/local/offline_storage_service.dart';
+import '../data/models/stop_model.dart';
+import '../data/models/tour_version_model.dart';
+import '../presentation/providers/offline_map_provider.dart';
 import '../presentation/providers/tour_providers.dart';
+import 'offline_map_service.dart';
 
 /// Download state for a tour
 class TourDownloadState {
@@ -17,6 +21,8 @@ class TourDownloadState {
   final int? totalBytes;
   final int? downloadedBytes;
   final String? errorMessage;
+  final double mapTileProgress;
+  final bool hasMapTiles;
 
   const TourDownloadState({
     required this.tourId,
@@ -25,6 +31,8 @@ class TourDownloadState {
     this.totalBytes,
     this.downloadedBytes,
     this.errorMessage,
+    this.mapTileProgress = 0.0,
+    this.hasMapTiles = false,
   });
 
   TourDownloadState copyWith({
@@ -34,6 +42,8 @@ class TourDownloadState {
     int? totalBytes,
     int? downloadedBytes,
     String? errorMessage,
+    double? mapTileProgress,
+    bool? hasMapTiles,
   }) {
     return TourDownloadState(
       tourId: tourId ?? this.tourId,
@@ -42,6 +52,8 @@ class TourDownloadState {
       totalBytes: totalBytes ?? this.totalBytes,
       downloadedBytes: downloadedBytes ?? this.downloadedBytes,
       errorMessage: errorMessage,
+      mapTileProgress: mapTileProgress ?? this.mapTileProgress,
+      hasMapTiles: hasMapTiles ?? this.hasMapTiles,
     );
   }
 
@@ -69,6 +81,12 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
   DownloadManager(this._ref) : super({});
 
   OfflineStorageService get _storage => _ref.read(offlineStorageServiceProvider);
+  OfflineMapService get _offlineMapService => _ref.read(offlineMapServiceProvider);
+
+  /// Ensure storage is initialized before use
+  Future<void> _ensureStorageInitialized() async {
+    await _storage.initialize();
+  }
 
   /// Start downloading a tour
   Future<void> downloadTour(String tourId) async {
@@ -88,6 +106,8 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
     };
 
     try {
+      // Ensure storage is initialized
+      await _ensureStorageInitialized();
       // Get tour data
       final tour = await _ref.read(tourByIdProvider(tourId).future);
       if (tour == null) {
@@ -153,6 +173,17 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
         await _downloadFiles(tourId, filesToDownload);
       }
 
+      // Download map tiles (non-blocking - don't fail download if map tiles fail)
+      bool tilesDownloaded = false;
+      if (!kIsWeb && stops.isNotEmpty) {
+        try {
+          await _downloadMapTilesForTour(tourId, version, stops);
+          tilesDownloaded = await _offlineMapService.hasTilesForTour(tourId);
+        } catch (e) {
+          debugPrint('Map tile download failed (non-fatal): $e');
+        }
+      }
+
       // Calculate final size
       int totalSize = 0;
       if (!kIsWeb) {
@@ -177,6 +208,8 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
           progress: 1.0,
           totalBytes: totalSize,
           downloadedBytes: totalSize,
+          mapTileProgress: tilesDownloaded ? 1.0 : 0.0,
+          hasMapTiles: tilesDownloaded,
         ),
       };
     } catch (e) {
@@ -297,6 +330,74 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
     }
   }
 
+  /// Download map tiles for a tour
+  Future<void> _downloadMapTilesForTour(
+    String tourId,
+    TourVersionModel version,
+    List<StopModel> stops,
+  ) async {
+    // Get bounding box - prefer from version route, fall back to calculating from stops
+    BoundingBox? boundingBox = version.route?.boundingBox;
+
+    if (boundingBox == null && stops.isNotEmpty) {
+      boundingBox = _offlineMapService.calculateBoundingBoxFromStops(stops);
+    }
+
+    if (boundingBox == null) {
+      debugPrint('Cannot download map tiles: no bounding box available');
+      return;
+    }
+
+    await _offlineMapService.downloadTourMapTiles(
+      tourId,
+      boundingBox,
+      onProgress: (completed, required, progress) {
+        // Update state with map tile progress
+        final currentState = state[tourId];
+        if (currentState != null) {
+          state = {
+            ...state,
+            tourId: currentState.copyWith(mapTileProgress: progress),
+          };
+        }
+      },
+    );
+  }
+
+  /// Download map tiles for an already downloaded tour (standalone)
+  Future<void> downloadMapTilesOnly(String tourId) async {
+    // Get version and stops from cache
+    final tour = _storage.getCachedTour(tourId);
+    if (tour == null) {
+      throw Exception('Tour not found in cache');
+    }
+
+    final versionId = tour.liveVersionId ?? tour.draftVersionId;
+    final version = _storage.getCachedVersion(tourId, versionId);
+    if (version == null) {
+      throw Exception('Version not found in cache');
+    }
+
+    final stops = _storage.getCachedStops(tourId, versionId);
+    if (stops == null || stops.isEmpty) {
+      throw Exception('Stops not found in cache');
+    }
+
+    await _downloadMapTilesForTour(tourId, version, stops);
+
+    // Update state to reflect map tiles downloaded
+    final currentState = state[tourId];
+    if (currentState != null) {
+      state = {
+        ...state,
+        tourId: currentState.copyWith(
+          mapTileProgress: 1.0,
+          hasMapTiles: true,
+        ),
+      };
+    }
+  }
+
   /// Cancel a download
   void cancelDownload(String tourId) {
     _cancelTokens[tourId]?.cancel('User cancelled');
@@ -314,6 +415,13 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
   /// Delete a downloaded tour
   Future<void> deleteDownload(String tourId) async {
     await _storage.deleteDownload(tourId);
+
+    // Also delete map tiles
+    try {
+      await _offlineMapService.deleteTourMapTiles(tourId);
+    } catch (e) {
+      debugPrint('Error deleting map tiles for $tourId: $e');
+    }
 
     final newState = Map<String, TourDownloadState>.from(state);
     newState.remove(tourId);
@@ -335,6 +443,9 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
     final storageStatus = _storage.getDownloadStatus(tourId);
     if (storageStatus == null) return null;
 
+    // Check map tile status
+    final hasMapTiles = _storage.hasMapTiles(tourId);
+
     return TourDownloadState(
       tourId: tourId,
       status: _parseStatus(storageStatus['status']),
@@ -342,6 +453,8 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
       totalBytes: storageStatus['fileSize'] as int?,
       downloadedBytes: storageStatus['fileSize'] as int?,
       errorMessage: storageStatus['error'] as String?,
+      mapTileProgress: hasMapTiles ? 1.0 : 0.0,
+      hasMapTiles: hasMapTiles,
     );
   }
 

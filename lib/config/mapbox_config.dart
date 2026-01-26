@@ -33,4 +33,14 @@ class MapboxConfig {
   static const int maxOfflineTiles = 6000;
   static const double offlineMinZoom = 10.0;
   static const double offlineMaxZoom = 16.0;
+
+  // Offline tile storage settings
+  static const int maxOfflineDiskQuotaMB = 500;
+  static const int tileExpirationDays = 30;
+
+  /// Generate a unique tile region ID for a tour
+  static String tileRegionId(String tourId) => 'tour_$tourId';
+
+  /// Bounding box padding percentage (10% on each side)
+  static const double boundingBoxPaddingPercent = 0.10;
 }
