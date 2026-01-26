@@ -228,13 +228,19 @@ npm install
 
 ### Step 2: Configure Environment
 
-```bash
-# Set ElevenLabs API key (for AI audio generation)
-firebase functions:config:set elevenlabs.apikey="YOUR_API_KEY"
+Create a `.env` file in the `functions/` directory:
 
-# View current config
-firebase functions:config:get
+```bash
+# functions/.env
+
+# ElevenLabs API key (for AI audio generation)
+ELEVENLABS_API_KEY=sk_your_elevenlabs_api_key
+
+# Resend API key (for email notifications)
+RESEND_API_KEY=re_your_resend_api_key
 ```
+
+> **Note:** The `.env` file is automatically loaded by Firebase Functions. Make sure `functions/.gitignore` includes `.env` to protect your secrets.
 
 ### Step 3: Deploy Functions
 
@@ -243,17 +249,18 @@ firebase functions:config:get
 firebase deploy --only functions
 
 # Deploy specific function
-firebase deploy --only functions:generateAudio
+firebase deploy --only functions:generateElevenLabsAudio
 ```
 
 ### Available Functions
 
 | Function | Trigger | Purpose |
 |----------|---------|---------|
-| `generateAudio` | HTTP | Generate TTS audio via ElevenLabs |
-| `onTourApproved` | Firestore | Handle tour approval workflow |
-| `onTourRejected` | Firestore | Handle tour rejection workflow |
-| `cleanupExpiredData` | Scheduled | Remove old/expired data |
+| `generateElevenLabsAudio` | HTTP Callable | Generate TTS audio via ElevenLabs |
+| `onTourApproved` | Firestore | Send approval email to creator |
+| `onTourRejected` | Firestore | Send rejection email with feedback |
+| `onUserCreated` | Firestore | Send welcome email to new creators |
+| `cleanupExpiredDownloads` | Scheduled | Remove expired download data |
 
 ---
 

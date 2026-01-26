@@ -70,11 +70,11 @@ flutter run
 
 ### Demo Mode
 
-The app runs in **demo mode** by default, providing realistic sample data without requiring Firebase configuration. This is ideal for development and testing.
+The app supports **demo mode** for development and testing without requiring Firebase configuration.
 
-To switch to production mode, update `lib/config/app_config.dart`:
+Demo mode is currently **disabled** (production mode). To enable demo mode, update `lib/config/app_config.dart`:
 ```dart
-static const bool demoMode = false;
+static const bool demoMode = true;
 ```
 
 See [docs/SETUP.md](docs/SETUP.md) for full configuration instructions.
@@ -109,9 +109,13 @@ lib/
 │   │   └── admin/            # Review queue, user management
 │   └── widgets/              # Reusable components
 ├── services/                 # Background services
-│   ├── audio_service.dart    # Audio playback
+│   ├── audio_service.dart    # Audio playback with background support
 │   ├── location_service.dart # GPS tracking
-│   ├── geofence_service.dart # Geofence monitoring
+│   ├── geofence_service.dart # Geofence monitoring with reliability improvements
+│   ├── background_location_service.dart  # Foreground service for background GPS
+│   ├── battery_optimization_service.dart # Battery exemption handling
+│   ├── notification_service.dart         # Local notifications
+│   ├── connectivity_service.dart         # Network monitoring & offline sync
 │   ├── download_manager.dart # Offline downloads
 │   └── ...
 └── domain/                   # Domain layer (entities, usecases)
@@ -123,6 +127,15 @@ functions/                    # Firebase Cloud Functions
 │   └── scheduled/            # Cleanup jobs
 ├── package.json
 └── tsconfig.json
+
+admin-web/                    # Web Admin Panel (Next.js)
+├── src/
+│   ├── app/                  # App router pages
+│   ├── components/           # React components
+│   ├── lib/firebase/         # Firebase integration
+│   ├── hooks/                # TanStack Query hooks
+│   └── types/                # TypeScript models
+└── package.json
 
 test/                         # Test suite
 ├── helpers/                  # Test utilities & mocks
@@ -207,10 +220,14 @@ Core models use Freezed for immutability and JSON serialization:
 | `AudioService` | Audio playback with just_audio |
 | `LocationService` | GPS tracking with geolocator |
 | `GeofenceService` | Geofence monitoring and triggers |
+| `BackgroundLocationService` | Foreground service for background GPS |
+| `BatteryOptimizationService` | Battery exemption handling |
 | `DownloadManager` | Tour downloads for offline use |
 | `OfflineStorageService` | Hive-based local caching |
+| `ConnectivityService` | Network monitoring and offline sync |
 | `ProgressService` | Track user tour completion |
 | `AdminService` | Admin operations and audit logging |
+| `NotificationService` | Local notifications for geofence triggers |
 
 ## Documentation
 
@@ -218,30 +235,43 @@ Core models use Freezed for immutability and JSON serialization:
 - [Architecture](docs/ARCHITECTURE.md) - Technical architecture overview
 - [Testing Guide](docs/TESTING.md) - Testing strategy and patterns
 - [Completion Plan](docs/COMPLETION_PLAN.md) - Remaining work and roadmap
+- [Session Log](docs/SESSION_LOG.md) - Development session notes
+- [Admin Web Panel](admin-web/README.md) - Web admin panel documentation
 
 ## Development Status
 
-**Current Status: ~65% Complete**
+**Current Status: ~92% Complete** (Updated January 26, 2026)
 
 ### Completed
 - Core architecture and navigation
-- Authentication (email/password, Google)
+- Authentication (email/password, Google, forgot password)
 - Tour discovery and playback with geofencing
-- Creator tour editor (basic)
+- Creator tour editor with full audio recording & image upload
 - Admin review queue UI
-- Offline storage infrastructure
+- Offline storage infrastructure with sync queue
 - Demo mode with sample data
-- Comprehensive test suite
+- Comprehensive test suite (504 tests)
+- **Web Admin Panel** (Next.js) - Full admin functionality
+- **Audio Recording & Preview** - Waveform visualization, Firebase upload
+- **Image Upload & Cropping** - Multiple aspect ratios, gallery view
+- **Reviews & Social** - Star ratings, comments, My Reviews screen
+- **Settings & Legal** - Terms, Privacy, Help, notification preferences
+- **Background Audio** - Lock screen controls, foreground service
+- **Background Location** - Foreground service for GPS tracking during tours
+- **Battery Optimization** - Educational dialogs, exemption requests
+- **Geofence Reliability** - Cooldown periods, minimum radius, distance filtering
+- **Firebase Backend** - Security rules, Cloud Functions deployed
+- **Offline Map Tiles** - Mapbox TileStore integration, auto-download with tours
+- **ElevenLabs AI Voice** - Text-to-speech for tour narration
+- **Resend Email Notifications** - Tour approval/rejection emails
 
 ### In Progress
-- Audio recording and preview
-- Image upload functionality
-- Full admin API integration
+- Comprehensive device testing
+- Accessibility improvements
 
 ### Planned
-- Background audio notifications
-- Offline sync improvements
-- App store deployment
+- App store deployment (iOS & Android)
+- Performance optimization
 
 See [docs/COMPLETION_PLAN.md](docs/COMPLETION_PLAN.md) for detailed roadmap.
 
