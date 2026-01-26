@@ -19,4 +19,4 @@ export { cleanupExpiredDownloads } from './scheduled/cleanup';
 export { setupInitialAdmin } from './admin/setupAdmin';
 
 // Export seed data function (temporary - remove after testing)
-export { seedTestTour } from './admin/seedData';
+export { seedTestTour, seedClamartTour } from './admin/seedData';
