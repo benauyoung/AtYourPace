@@ -28,6 +28,7 @@ import {
   TourStatsOverview,
   UserStatsOverview,
   AppSettings,
+  ReviewCommentModel,
   timestampToDate,
   nullableTimestampToDate,
 } from '@/types';
@@ -40,6 +41,7 @@ const COLLECTIONS = {
   stops: 'stops',
   reviews: 'reviews',
   reviewQueue: 'reviewQueue',
+  reviewComments: 'reviewComments',
   rateLimits: 'rateLimits',
   config: 'config',
   auditLogs: 'auditLogs',
@@ -335,7 +337,11 @@ export async function approveTour(tourId: string, notes?: string): Promise<void>
   });
 }
 
-export async function rejectTour(tourId: string, reason: string): Promise<void> {
+export async function rejectTour(
+  tourId: string,
+  reason: string,
+  includeStopComments?: boolean
+): Promise<void> {
   await verifyAdminRole();
 
   await updateDoc(doc(db, COLLECTIONS.tours, tourId), {
@@ -344,13 +350,15 @@ export async function rejectTour(tourId: string, reason: string): Promise<void> 
     lastReviewedAt: serverTimestamp(),
     rejectedBy: auth.currentUser!.uid,
     rejectionReason: reason,
+    // Store flag for notification system to know whether to include stop comments
+    rejectionIncludesStopComments: includeStopComments ?? false,
   });
 
   await logAction({
     action: 'tourRejected',
     targetId: tourId,
     targetType: 'tour',
-    details: { reason },
+    details: { reason, includeStopComments },
   });
 }
 
@@ -403,6 +411,94 @@ export async function featureTour(tourId: string, featured: boolean): Promise<vo
     action: featured ? 'tourFeatured' : 'tourUnfeatured',
     targetId: tourId,
     targetType: 'tour',
+  });
+}
+
+// ==================== Review Comments ====================
+
+export async function getReviewComments(
+  tourId: string,
+  versionId: string
+): Promise<ReviewCommentModel[]> {
+  await verifyAdminRole();
+
+  const q = query(
+    collection(db, COLLECTIONS.reviewComments),
+    where('tourId', '==', tourId),
+    where('versionId', '==', versionId),
+    orderBy('createdAt', 'asc')
+  );
+  const snapshot = await getDocs(q);
+
+  return snapshot.docs.map((doc) => parseReviewCommentDoc(doc.id, doc.data()));
+}
+
+export async function addReviewComment(
+  tourId: string,
+  versionId: string,
+  stopId: string,
+  content: string
+): Promise<ReviewCommentModel> {
+  await verifyAdminRole();
+
+  const user = auth.currentUser!;
+
+  const commentData = {
+    tourId,
+    versionId,
+    stopId,
+    authorId: user.uid,
+    authorName: user.displayName || 'Admin',
+    authorEmail: user.email || '',
+    content,
+    resolved: false,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  const docRef = await addDoc(collection(db, COLLECTIONS.reviewComments), commentData);
+
+  return {
+    id: docRef.id,
+    tourId,
+    versionId,
+    stopId,
+    authorId: user.uid,
+    authorName: user.displayName || 'Admin',
+    authorEmail: user.email || '',
+    content,
+    resolved: false,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+}
+
+export async function deleteReviewComment(commentId: string): Promise<void> {
+  await verifyAdminRole();
+
+  const { deleteDoc } = await import('firebase/firestore');
+  await deleteDoc(doc(db, COLLECTIONS.reviewComments, commentId));
+}
+
+export async function resolveReviewComment(commentId: string): Promise<void> {
+  await verifyAdminRole();
+
+  await updateDoc(doc(db, COLLECTIONS.reviewComments, commentId), {
+    resolved: true,
+    resolvedAt: serverTimestamp(),
+    resolvedBy: auth.currentUser!.uid,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function unresolveReviewComment(commentId: string): Promise<void> {
+  await verifyAdminRole();
+
+  await updateDoc(doc(db, COLLECTIONS.reviewComments, commentId), {
+    resolved: false,
+    resolvedAt: deleteField(),
+    resolvedBy: deleteField(),
+    updatedAt: serverTimestamp(),
   });
 }
 
@@ -711,5 +807,26 @@ function parseAuditLogDoc(
     targetType: data.targetType as string | undefined,
     details: data.details as Record<string, unknown> | undefined,
     timestamp: timestampToDate(data.timestamp),
+  };
+}
+
+function parseReviewCommentDoc(
+  id: string,
+  data: Record<string, unknown>
+): ReviewCommentModel {
+  return {
+    id,
+    tourId: data.tourId as string,
+    versionId: data.versionId as string,
+    stopId: data.stopId as string,
+    authorId: data.authorId as string,
+    authorName: (data.authorName as string) || 'Admin',
+    authorEmail: (data.authorEmail as string) || '',
+    content: data.content as string,
+    resolved: (data.resolved as boolean) || false,
+    resolvedAt: nullableTimestampToDate(data.resolvedAt),
+    resolvedBy: data.resolvedBy as string | undefined,
+    createdAt: timestampToDate(data.createdAt),
+    updatedAt: timestampToDate(data.updatedAt),
   };
 }

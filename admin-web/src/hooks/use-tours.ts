@@ -13,6 +13,10 @@ import {
   unhideTour,
   featureTour,
   getTourStats,
+  getReviewComments,
+  addReviewComment,
+  deleteReviewComment,
+  resolveReviewComment,
 } from '@/lib/firebase/admin';
 import { TourStatus, TourCategory } from '@/types';
 
@@ -88,8 +92,15 @@ export function useRejectTour() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ tourId, reason }: { tourId: string; reason: string }) =>
-      rejectTour(tourId, reason),
+    mutationFn: ({
+      tourId,
+      reason,
+      includeComments,
+    }: {
+      tourId: string;
+      reason: string;
+      includeComments?: boolean;
+    }) => rejectTour(tourId, reason, includeComments),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tours'] });
       queryClient.invalidateQueries({ queryKey: ['pendingTours'] });
@@ -136,6 +147,81 @@ export function useFeatureTour() {
       queryClient.invalidateQueries({ queryKey: ['tours'] });
       queryClient.invalidateQueries({ queryKey: ['tourStats'] });
       queryClient.invalidateQueries({ queryKey: ['auditLogs'] });
+    },
+  });
+}
+
+// ==================== Review Comments ====================
+
+export function useReviewComments(tourId: string | null, versionId: string | null) {
+  return useQuery({
+    queryKey: ['reviewComments', tourId, versionId],
+    queryFn: () => (tourId && versionId ? getReviewComments(tourId, versionId) : []),
+    enabled: !!tourId && !!versionId,
+  });
+}
+
+export function useAddReviewComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      tourId,
+      versionId,
+      stopId,
+      content,
+    }: {
+      tourId: string;
+      versionId: string;
+      stopId: string;
+      content: string;
+    }) => addReviewComment(tourId, versionId, stopId, content),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['reviewComments', variables.tourId, variables.versionId],
+      });
+    },
+  });
+}
+
+export function useDeleteReviewComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      commentId,
+      tourId,
+      versionId,
+    }: {
+      commentId: string;
+      tourId: string;
+      versionId: string;
+    }) => deleteReviewComment(commentId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['reviewComments', variables.tourId, variables.versionId],
+      });
+    },
+  });
+}
+
+export function useResolveReviewComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      commentId,
+      tourId,
+      versionId,
+    }: {
+      commentId: string;
+      tourId: string;
+      versionId: string;
+    }) => resolveReviewComment(commentId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['reviewComments', variables.tourId, variables.versionId],
+      });
     },
   });
 }

@@ -34,8 +34,18 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
-import { useTour, useTourVersion, useTourStops, useApproveTour, useRejectTour } from '@/hooks/use-tours';
-import { categoryDisplayNames, statusDisplayNames, StopModel } from '@/types';
+import {
+  useTour,
+  useTourVersion,
+  useTourStops,
+  useApproveTour,
+  useRejectTour,
+  useReviewComments,
+  useAddReviewComment,
+  useDeleteReviewComment,
+  useResolveReviewComment,
+} from '@/hooks/use-tours';
+import { categoryDisplayNames, statusDisplayNames, StopModel, ReviewCommentModel } from '@/types';
 
 // Admin components
 import { TourMapPreview } from '@/components/admin/tour-map-preview';
@@ -64,15 +74,44 @@ export default function TourReviewPage() {
   const approveMutation = useApproveTour();
   const rejectMutation = useRejectTour();
 
+  // Review comments - persisted to Firestore
+  const { data: reviewComments = [], isLoading: commentsLoading } = useReviewComments(
+    tourId,
+    tour?.draftVersionId ?? null
+  );
+  const addCommentMutation = useAddReviewComment();
+  const deleteCommentMutation = useDeleteReviewComment();
+  const resolveCommentMutation = useResolveReviewComment();
+
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [notes, setNotes] = useState('');
   const [expandedStops, setExpandedStops] = useState<Set<string>>(new Set());
 
-  // Mock comments state - in production this would come from Firestore
-  const [stopComments, setStopComments] = useState<Record<string, StopComment[]>>({});
+  const isLoading = tourLoading || versionLoading || stopsLoading || commentsLoading;
 
-  const isLoading = tourLoading || versionLoading || stopsLoading;
+  // Group comments by stopId
+  const stopComments = useMemo(() => {
+    const grouped: Record<string, StopComment[]> = {};
+    reviewComments.forEach((comment: ReviewCommentModel) => {
+      if (!grouped[comment.stopId]) {
+        grouped[comment.stopId] = [];
+      }
+      grouped[comment.stopId].push({
+        id: comment.id,
+        stopId: comment.stopId,
+        authorId: comment.authorId,
+        authorName: comment.authorName,
+        authorEmail: comment.authorEmail,
+        content: comment.content,
+        createdAt: comment.createdAt,
+        resolved: comment.resolved,
+        resolvedAt: comment.resolvedAt,
+        resolvedBy: comment.resolvedBy,
+      });
+    });
+    return grouped;
+  }, [reviewComments]);
 
   // Get stops with their comments for the rejection dialog
   const stopsWithComments = useMemo(() => {
@@ -103,7 +142,6 @@ export default function TourReviewPage() {
 
   const handleReject = async (reason: string, includeComments: boolean) => {
     try {
-      // TODO: In production, pass includeComments to include stop comments in notification email
       await rejectMutation.mutateAsync({ tourId, reason, includeComments });
       toast({
         title: 'Tour rejected',
@@ -120,44 +158,33 @@ export default function TourReviewPage() {
   };
 
   const handleAddComment = async (stopId: string, content: string) => {
-    // In production, this would save to Firestore
-    const newComment: StopComment = {
-      id: `comment-${Date.now()}`,
-      stopId,
-      authorId: user?.uid || '',
-      authorName: user?.displayName || 'Admin',
-      authorEmail: user?.email || '',
-      content,
-      createdAt: new Date(),
-    };
+    if (!tour?.draftVersionId) return;
 
-    setStopComments((prev) => ({
-      ...prev,
-      [stopId]: [...(prev[stopId] || []), newComment],
-    }));
+    await addCommentMutation.mutateAsync({
+      tourId,
+      versionId: tour.draftVersionId,
+      stopId,
+      content,
+    });
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    setStopComments((prev) => {
-      const updated = { ...prev };
-      for (const stopId in updated) {
-        updated[stopId] = updated[stopId].filter((c) => c.id !== commentId);
-      }
-      return updated;
+    if (!tour?.draftVersionId) return;
+
+    await deleteCommentMutation.mutateAsync({
+      commentId,
+      tourId,
+      versionId: tour.draftVersionId,
     });
   };
 
   const handleResolveComment = async (commentId: string) => {
-    setStopComments((prev) => {
-      const updated = { ...prev };
-      for (const stopId in updated) {
-        updated[stopId] = updated[stopId].map((c) =>
-          c.id === commentId
-            ? { ...c, resolved: true, resolvedAt: new Date(), resolvedBy: user?.uid }
-            : c
-        );
-      }
-      return updated;
+    if (!tour?.draftVersionId) return;
+
+    await resolveCommentMutation.mutateAsync({
+      commentId,
+      tourId,
+      versionId: tour.draftVersionId,
     });
   };
 

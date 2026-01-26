@@ -180,6 +180,23 @@ export interface StopModel {
   updatedAt: Date;
 }
 
+// Review Comment Types
+export interface ReviewCommentModel {
+  id: string;
+  tourId: string;
+  versionId: string;
+  stopId: string;
+  authorId: string;
+  authorName: string;
+  authorEmail: string;
+  content: string;
+  resolved: boolean;
+  resolvedAt?: Date;
+  resolvedBy?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Audit Log Types
 export interface AuditLogEntry {
   id: string;

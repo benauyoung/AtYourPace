@@ -39,6 +39,13 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/tours/$(tourId)).data.status == 'approved';
     }
 
+    // Check if update only modifies stats fields (for play counts, ratings, etc.)
+    function onlyUpdatesStats() {
+      let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return affectedKeys.hasOnly(['stats', 'stats.totalPlays', 'stats.totalDownloads',
+                                   'stats.averageRating', 'stats.totalRatings']);
+    }
+
     // ============================================
     // USERS COLLECTION
     // ============================================
@@ -62,7 +69,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       // User tour progress
-      match /tourProgress/{progressId} {
+      match /progress/{progressId} {
         allow read, write: if isOwner(userId);
       }
 
@@ -90,9 +97,12 @@ service cloud.firestore {
         request.resource.data.status == 'draft';
 
       // Tour owners can update their tours (but not change status to 'approved')
+      // Authenticated users can update only stats (for play counts, ratings)
       allow update: if (isAuthenticated() && resource.data.creatorId == request.auth.uid &&
         request.resource.data.status != 'approved') ||
-        isAdmin();
+        isAdmin() ||
+        // Allow authenticated users to update only stats fields
+        (isAuthenticated() && onlyUpdatesStats());
 
       // Only admins can delete tours
       allow delete: if isAdmin();
@@ -156,6 +166,26 @@ service cloud.firestore {
 
     match /reviewQueue/{queueId} {
       allow read, write: if isAdmin();
+    }
+
+    // ============================================
+    // REVIEW COMMENTS (Admin Only)
+    // ============================================
+
+    match /reviewComments/{commentId} {
+      // Admins can read all review comments
+      allow read: if isAdmin();
+
+      // Admins can create comments
+      allow create: if isAdmin() &&
+        request.resource.data.authorId == request.auth.uid;
+
+      // Admins can update comments (e.g., resolve them)
+      allow update: if isAdmin();
+
+      // Admins can delete their own comments
+      allow delete: if isAdmin() &&
+        resource.data.authorId == request.auth.uid;
     }
 
     // ============================================
