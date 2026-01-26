@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    /* Matching mobile app's neumorphic + minimalist theme */
+    --background: 210 33% 98%; /* #F5F7FA - Clean warm white */
+    --foreground: 214 32% 22%; /* #2D3748 - Warm charcoal */
+    --card: 208 35% 95%; /* #F0F4F8 - Soft blue-gray surface */
+    --card-foreground: 214 32% 22%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 32% 22%;
+
+    /* Primary - Muted Teal (matching mobile #3D7A8C) */
+    --primary: 193 40% 40%; /* #3D7A8C */
+    --primary-foreground: 0 0% 98%; /* Off-white text */
+
+    /* Secondary - Sage Green (matching mobile #7CB69A) */
+    --secondary: 147 29% 60%; /* #7CB69A */
+    --secondary-foreground: 214 32% 22%;
+
+    /* Muted - Blue-gray for subtle elements */
+    --muted: 208 35% 92%; /* #E8ECF0 */
+    --muted-foreground: 215 17% 50%; /* #718096 */
+
+    /* Accent - Warm Coral (matching mobile #E8967A) */
+    --accent: 17 68% 69%; /* #E8967A */
+    --accent-foreground: 214 32% 22%;
+
+    /* Status colors */
+    --destructive: 0 65% 67%; /* #E57373 - Muted red */
+    --destructive-foreground: 0 0% 98%;
+    --success: 139 38% 56%; /* #68B984 - Muted green */
+    --warning: 38 75% 60%; /* #E5A84C - Muted amber */
+    --info: 207 73% 68%; /* #64B5F6 - Muted blue */
+
+    /* Borders and inputs */
+    --border: 208 30% 85%; /* #DCE2E8 */
+    --input: 208 30% 85%;
+    --ring: 193 40% 40%; /* Same as primary */
+
+    /* Chart colors - harmonious palette */
+    --chart-1: 193 40% 40%; /* Primary teal */
+    --chart-2: 147 29% 60%; /* Sage green */
+    --chart-3: 17 68% 69%; /* Coral */
+    --chart-4: 262 44% 63%; /* #9575CD - Muted purple */
+    --chart-5: 207 73% 68%; /* Blue */
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark theme - Deep blue-gray (matching mobile) */
+    --background: 224 28% 14%; /* #1A1F2E - Deep blue-gray */
+    --foreground: 210 33% 95%; /* #F0F4F8 - Soft white */
+    --card: 224 24% 18%; /* #242938 - Elevated surface */
+    --card-foreground: 210 33% 95%;
+    --popover: 224 24% 18%;
+    --popover-foreground: 210 33% 95%;
+
+    /* Primary - Lighter teal for dark mode */
+    --primary: 193 45% 52%; /* #5A9AAD - Lighter variant */
+    --primary-foreground: 224 28% 14%;
+
+    /* Secondary - Lighter sage for dark mode */
+    --secondary: 147 35% 55%; /* #9ECAB4 */
+    --secondary-foreground: 224 28% 14%;
+
+    /* Muted - Dark blue-gray */
+    --muted: 224 22% 24%; /* #2E3446 */
+    --muted-foreground: 215 24% 68%; /* #A0AEC0 */
+
+    /* Accent - Same coral, works well on dark */
+    --accent: 17 68% 69%;
+    --accent-foreground: 224 28% 14%;
+
+    /* Status colors - slightly lighter for visibility */
+    --destructive: 0 65% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Borders and inputs */
+    --border: 224 18% 28%; /* #3A4255 */
+    --input: 224 18% 28%;
+    --ring: 193 45% 52%;
+
+    /* Chart colors - brighter for dark mode */
+    --chart-1: 193 45% 55%;
+    --chart-2: 147 35% 58%;
+    --chart-3: 17 75% 72%;
+    --chart-4: 262 50% 68%;
+    --chart-5: 207 80% 72%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

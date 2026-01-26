@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { sendTourApprovedEmail, sendTourRejectedEmail } from '../emails/emailService';
 
 const db = admin.firestore();
 
@@ -111,7 +112,29 @@ export const onTourApproved = functions.firestore
         });
       }
 
-      // TODO: Send notification to creator about approval
+      // Send notification to creator about approval
+      const draftVersionDoc = await db
+        .collection('tours')
+        .doc(tourId)
+        .collection('versions')
+        .doc(after.draftVersionId)
+        .get();
+
+      const draftVersion = draftVersionDoc.data();
+
+      // Get creator email from users collection
+      const creatorDoc = await db.collection('users').doc(after.creatorId).get();
+      const creator = creatorDoc.data();
+
+      if (creator?.email && draftVersion?.title) {
+        await sendTourApprovedEmail({
+          creatorName: after.creatorName || creator.displayName || 'Creator',
+          creatorEmail: creator.email,
+          tourTitle: draftVersion.title,
+          tourId,
+          notes: after.reviewNotes,
+        });
+      }
 
       functions.logger.info(`Tour ${tourId} promoted to live`);
     }
@@ -159,7 +182,29 @@ export const onTourRejected = functions.firestore
           });
       }
 
-      // TODO: Send notification to creator about rejection with feedback
+      // Send notification to creator about rejection with feedback
+      const draftVersionDoc = await db
+        .collection('tours')
+        .doc(tourId)
+        .collection('versions')
+        .doc(after.draftVersionId)
+        .get();
+
+      const draftVersion = draftVersionDoc.data();
+
+      // Get creator email from users collection
+      const creatorDoc = await db.collection('users').doc(after.creatorId).get();
+      const creator = creatorDoc.data();
+
+      if (creator?.email && draftVersion?.title) {
+        await sendTourRejectedEmail({
+          creatorName: after.creatorName || creator.displayName || 'Creator',
+          creatorEmail: creator.email,
+          tourTitle: draftVersion.title,
+          tourId,
+          reason: after.rejectionReason || 'Your tour needs some changes before it can be approved.',
+        });
+      }
 
       functions.logger.info(`Tour ${tourId} rejection processed`);
     }

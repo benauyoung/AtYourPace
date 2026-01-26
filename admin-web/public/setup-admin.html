@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Admin Account</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 500px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { margin-top: 0; color: #333; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    input:focus { outline: none; border-color: #0070f3; }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #0070f3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover { background: #0060df; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 20px;
+    }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .info { background: #e7f3ff; color: #004085; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Create Admin Account</h1>
+
+    <div class="info">
+      This will create a new admin account that you can use to log into the admin panel.
+    </div>
+
+    <form id="adminForm">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" value="admin@test.com" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password (min 6 characters)</label>
+        <input type="password" id="password" value="admin123" required minlength="6">
+      </div>
+
+      <div class="form-group">
+        <label for="name">Display Name</label>
+        <input type="text" id="name" value="Test Admin" required>
+      </div>
+
+      <button type="submit" id="submitBtn">Create Admin Account</button>
+    </form>
+
+    <div id="message"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+    import { getAuth, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+    import { getFirestore, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyA0DIMgU5RwGoKedE68K4iWTft1XAuXs9c',
+      appId: '1:144690156112:web:623a40fd0b8345b460f755',
+      messagingSenderId: '144690156112',
+      projectId: 'atyourpace-6a6e5',
+      authDomain: 'atyourpace-6a6e5.firebaseapp.com',
+      storageBucket: 'atyourpace-6a6e5.firebasestorage.app',
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const form = document.getElementById('adminForm');
+    const messageDiv = document.getElementById('message');
+    const submitBtn = document.getElementById('submitBtn');
+
+    function showMessage(text, isError = false) {
+      messageDiv.className = 'message ' + (isError ? 'error' : 'success');
+      messageDiv.innerHTML = text;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const name = document.getElementById('name').value;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Creating...';
+      messageDiv.innerHTML = '';
+
+      try {
+        let user;
+
+        // Try to create new user
+        try {
+          const credential = await createUserWithEmailAndPassword(auth, email, password);
+          user = credential.user;
+          await updateProfile(user, { displayName: name });
+          console.log('Created new user');
+        } catch (authError) {
+          if (authError.code === 'auth/email-already-in-use') {
+            // User exists, try to sign in
+            const credential = await signInWithEmailAndPassword(auth, email, password);
+            user = credential.user;
+            console.log('User already exists, signed in');
+          } else {
+            throw authError;
+          }
+        }
+
+        // Create user document with 'user' role first (required by Firestore rules)
+        try {
+          await setDoc(doc(db, 'users', user.uid), {
+            email: email,
+            displayName: name,
+            role: 'user',  // Must start as 'user' per Firestore rules
+            preferences: {
+              autoPlayAudio: true,
+              triggerMode: 'geofence',
+              offlineEnabled: true,
+            },
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          }, { merge: true });
+        } catch (firestoreError) {
+          console.log('Firestore write failed (may already exist):', firestoreError);
+        }
+
+        // Direct link to edit the user in Firestore Console
+        const firestoreLink = `https://console.firebase.google.com/project/atyourpace-6a6e5/firestore/databases/-default-/data/~2Fusers~2F${user.uid}`;
+
+        showMessage(`
+          <strong>Account created!</strong><br><br>
+          <strong>Step 2:</strong> Change role to admin in Firestore:<br>
+          <a href="${firestoreLink}" target="_blank">Open user document in Firebase Console</a><br><br>
+          Change the <code>role</code> field from <code>"user"</code> to <code>"admin"</code> and save.<br><br>
+          Then log in at <a href="/login">/login</a> with:<br>
+          <strong>Email:</strong> ${email}<br>
+          <strong>Password:</strong> ${password}
+        `);
+
+      } catch (error) {
+        console.error('Error:', error);
+        showMessage(`<strong>Error:</strong> ${error.message}`, true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Admin Account';
+      }
+    });
+  </script>
+</body>
+</html>
