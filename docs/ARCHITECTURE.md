@@ -480,6 +480,26 @@ class StopModel with _$StopModel {
     @TimestampConverter() required DateTime updatedAt,
   }) = _StopModel;
 }
+
+// Admin Review Comments (admin-web)
+@freezed
+class ReviewCommentModel with _$ReviewCommentModel {
+  const factory ReviewCommentModel({
+    required String id,
+    required String tourId,
+    required String versionId,
+    required String stopId,
+    required String authorId,
+    required String authorName,
+    required String authorEmail,
+    required String content,
+    @Default(false) bool resolved,
+    DateTime? resolvedAt,
+    String? resolvedBy,
+    @TimestampConverter() required DateTime createdAt,
+    @TimestampConverter() required DateTime updatedAt,
+  }) = _ReviewCommentModel;
+}
 ```
 
 ### Enums
@@ -506,6 +526,7 @@ enum AudioState { idle, loading, playing, paused, completed, error }
 // - Reviews writable by authenticated users
 // - Admin collections restricted to admin role
 // - Audit logs admin-only
+// - Review comments admin-only (for tour review workflow)
 ```
 
 ### App Security
