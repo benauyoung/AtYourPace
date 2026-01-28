@@ -118,8 +118,7 @@ class StorageService {
     return await ref.getDownloadURL();
   }
 
-  /// Uploads user avatar.
-  /// TODO: Add image compression
+  /// Uploads user avatar from bytes.
   Future<String> uploadUserAvatar({
     required String userId,
     required Uint8List imageBytes,
@@ -129,6 +128,22 @@ class StorageService {
 
     await ref.putData(
       imageBytes,
+      SettableMetadata(contentType: 'image/jpeg'),
+    );
+
+    return await ref.getDownloadURL();
+  }
+
+  /// Uploads user avatar from File (mobile platforms).
+  Future<String> uploadUserAvatarFile({
+    required String userId,
+    required File imageFile,
+  }) async {
+    final path = StoragePaths.userAvatar(userId);
+    final ref = _storage.ref(path);
+
+    await ref.putFile(
+      imageFile,
       SettableMetadata(contentType: 'image/jpeg'),
     );
 

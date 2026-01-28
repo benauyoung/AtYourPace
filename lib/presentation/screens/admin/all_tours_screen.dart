@@ -159,6 +159,7 @@ class _AllToursScreenState extends ConsumerState<AllToursScreen> {
                   itemBuilder: (context, index) {
                     final tour = filteredTours[index];
                     return _TourAdminCard(
+                      key: ValueKey(tour.id),
                       tour: tour,
                       onTap: () => _showTourDetails(tour),
                       onToggleFeatured: () => _toggleFeatured(tour),
@@ -373,6 +374,7 @@ class _TourAdminCard extends StatelessWidget {
   final VoidCallback onToggleFeatured;
 
   const _TourAdminCard({
+    super.key,
     required this.tour,
     required this.onTap,
     required this.onToggleFeatured,

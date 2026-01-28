@@ -70,6 +70,11 @@ final submitReviewProvider = Provider((ref) {
   return SubmitReviewService(ref);
 });
 
+/// Provider for deleting a review
+final deleteReviewProvider = Provider((ref) {
+  return DeleteReviewService(ref);
+});
+
 class SubmitReviewService {
   final Ref _ref;
 
@@ -155,6 +160,93 @@ class SubmitReviewService {
         'stats.totalRatings': newTotalRatings,
         'stats.averageRating': newAverageRating,
       });
+    });
+  }
+}
+
+class DeleteReviewService {
+  final Ref _ref;
+
+  DeleteReviewService(this._ref);
+
+  Future<void> deleteReview({
+    required String tourId,
+    required String reviewId,
+  }) async {
+    final currentUser = _ref.read(currentUserProvider).value;
+    if (currentUser == null) {
+      throw Exception('User must be logged in to delete a review');
+    }
+
+    if (AppConfig.demoMode) {
+      // In demo mode, just simulate success
+      await Future.delayed(const Duration(milliseconds: 500));
+      _ref.invalidate(userReviewsProvider(currentUser.uid));
+      return;
+    }
+
+    final firestore = _ref.read(firestoreProvider);
+
+    // Verify the review belongs to the current user
+    final reviewDoc = await firestore
+        .collection(FirestoreCollections.reviews)
+        .doc(reviewId)
+        .get();
+
+    if (!reviewDoc.exists) {
+      throw Exception('Review not found');
+    }
+
+    final reviewData = reviewDoc.data()!;
+    if (reviewData['userId'] != currentUser.uid) {
+      throw Exception('You can only delete your own reviews');
+    }
+
+    // Delete the review
+    await firestore
+        .collection(FirestoreCollections.reviews)
+        .doc(reviewId)
+        .delete();
+
+    // Update tour stats
+    await _updateTourStatsAfterDelete(tourId, reviewData['rating'] as int);
+
+    // Invalidate providers to refresh
+    _ref.invalidate(tourReviewsProvider(tourId));
+    _ref.invalidate(userReviewsProvider(currentUser.uid));
+  }
+
+  Future<void> _updateTourStatsAfterDelete(String tourId, int deletedRating) async {
+    final firestore = _ref.read(firestoreProvider);
+
+    await firestore.runTransaction((transaction) async {
+      final tourDoc = await transaction.get(
+        firestore.collection(FirestoreCollections.tours).doc(tourId),
+      );
+
+      if (!tourDoc.exists) return;
+
+      final data = tourDoc.data()!;
+      final stats = data['stats'] as Map<String, dynamic>? ?? {};
+      final currentTotalRatings = (stats['totalRatings'] as int?) ?? 0;
+      final currentAverageRating = (stats['averageRating'] as num?)?.toDouble() ?? 0.0;
+
+      if (currentTotalRatings <= 1) {
+        // No more reviews, reset stats
+        transaction.update(tourDoc.reference, {
+          'stats.totalRatings': 0,
+          'stats.averageRating': 0.0,
+        });
+      } else {
+        final newTotalRatings = currentTotalRatings - 1;
+        final newAverageRating =
+            ((currentAverageRating * currentTotalRatings) - deletedRating) / newTotalRatings;
+
+        transaction.update(tourDoc.reference, {
+          'stats.totalRatings': newTotalRatings,
+          'stats.averageRating': newAverageRating,
+        });
+      }
     });
   }
 }

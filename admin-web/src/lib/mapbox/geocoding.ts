@@ -121,6 +121,62 @@ export async function forwardGeocode(
 }
 
 /**
+ * Snap a coordinate to the nearest road using Mapbox Map Matching API
+ * @param lng - Longitude
+ * @param lat - Latitude
+ * @param profile - Routing profile ('walking' or 'driving')
+ * @returns Snapped coordinate or original if snapping fails
+ */
+export async function snapToRoad(
+  lng: number,
+  lat: number,
+  profile: 'walking' | 'driving' = 'walking'
+): Promise<{ lng: number; lat: number; snapped: boolean }> {
+  if (!MAPBOX_TOKEN) {
+    return { lng, lat, snapped: false };
+  }
+
+  try {
+    // Map Matching API requires at least 2 coordinates, so we create a tiny segment
+    // Use a small offset (~5 meters) in a random direction
+    const offsetLng = lng + 0.00005;
+    const offsetLat = lat + 0.00005;
+
+    const coordinates = `${lng},${lat};${offsetLng},${offsetLat}`;
+    const response = await fetch(
+      `https://api.mapbox.com/matching/v5/mapbox/${profile}/${coordinates}?access_token=${MAPBOX_TOKEN}&geometries=geojson&radiuses=50;50`
+    );
+
+    if (!response.ok) {
+      console.warn('Map Matching API request failed:', response.statusText);
+      return { lng, lat, snapped: false };
+    }
+
+    const data = await response.json();
+
+    if (!data.matchings || data.matchings.length === 0 || !data.tracepoints) {
+      // No match found, return original
+      return { lng, lat, snapped: false };
+    }
+
+    // Get the snapped location for the first point
+    const tracepoint = data.tracepoints[0];
+    if (tracepoint && tracepoint.location) {
+      return {
+        lng: tracepoint.location[0],
+        lat: tracepoint.location[1],
+        snapped: true,
+      };
+    }
+
+    return { lng, lat, snapped: false };
+  } catch (error) {
+    console.error('Map Matching API error:', error);
+    return { lng, lat, snapped: false };
+  }
+}
+
+/**
  * Get directions between two points using Mapbox Directions API
  */
 export async function getDirections(

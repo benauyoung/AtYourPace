@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/app_config.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 
@@ -290,7 +291,7 @@ class SettingsScreen extends ConsumerWidget {
                   title: const Text('Manage Downloads'),
                   subtitle: const Text('View and manage downloaded tours'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => context.go(RouteNames.downloads),
+                  onTap: () => context.push(RouteNames.downloads),
                 ),
               ],
             ),
@@ -306,34 +307,28 @@ class SettingsScreen extends ConsumerWidget {
                 ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('App Version'),
-                  subtitle: const Text('1.0.0 (Build 1)'),
+                  subtitle: Text('${AppConstants.appVersion} (${AppConstants.appName})'),
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.description),
                   title: const Text('Terms of Service'),
-                  trailing: const Icon(Icons.open_in_new, size: 16),
-                  onTap: () {
-                    // TODO: Open terms
-                  },
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push(RouteNames.termsOfService),
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.privacy_tip),
                   title: const Text('Privacy Policy'),
-                  trailing: const Icon(Icons.open_in_new, size: 16),
-                  onTap: () {
-                    // TODO: Open privacy policy
-                  },
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () => context.push(RouteNames.privacyPolicy),
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.help_outline),
                   title: const Text('Help & Support'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () {
-                    // TODO: Open help
-                  },
+                  onTap: () => context.push(RouteNames.help),
                 ),
               ],
             ),

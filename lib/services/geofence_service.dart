@@ -78,12 +78,23 @@ class GeofenceService {
   final Map<String, Geofence> _geofences = {};
   final Set<String> _insideGeofences = {};
   final Map<String, DateTime> _dwellTimers = {};
+  final Map<String, DateTime> _cooldownTimers = {};
 
   StreamSubscription<Position>? _positionSubscription;
   bool _isMonitoring = false;
 
   /// Duration to trigger dwell event (default 30 seconds)
   Duration dwellDuration = const Duration(seconds: 30);
+
+  /// Cooldown period to prevent re-triggering same geofence (default 10 minutes)
+  Duration cooldownDuration = const Duration(minutes: 10);
+
+  /// Minimum geofence radius for reliable triggering (50 meters recommended)
+  static const double minReliableRadius = 50.0;
+
+  /// Default distance filter for location updates (meters)
+  /// 20m provides good balance between accuracy and battery life
+  static const int defaultDistanceFilter = 20;
 
   GeofenceService(this._locationService);
 
@@ -100,8 +111,20 @@ class GeofenceService {
   Set<String> get insideGeofences => Set.from(_insideGeofences);
 
   /// Add a geofence to monitor
+  /// If the radius is below minReliableRadius, it will be adjusted
   void addGeofence(Geofence geofence) {
-    _geofences[geofence.id] = geofence;
+    // Ensure minimum radius for reliable triggering
+    final adjustedGeofence = geofence.radiusMeters < minReliableRadius
+        ? Geofence(
+            id: geofence.id,
+            name: geofence.name,
+            latitude: geofence.latitude,
+            longitude: geofence.longitude,
+            radiusMeters: minReliableRadius,
+            data: geofence.data,
+          )
+        : geofence;
+    _geofences[geofence.id] = adjustedGeofence;
   }
 
   /// Add multiple geofences
@@ -123,16 +146,17 @@ class GeofenceService {
     _geofences.clear();
     _insideGeofences.clear();
     _dwellTimers.clear();
+    _cooldownTimers.clear();
   }
 
   /// Start monitoring geofences
   Future<bool> startMonitoring({
-    int distanceFilter = 5,
+    int? distanceFilter,
   }) async {
     if (_isMonitoring) return true;
 
     final started = await _locationService.startTracking(
-      distanceFilter: distanceFilter,
+      distanceFilter: distanceFilter ?? defaultDistanceFilter,
     );
 
     if (!started) return false;
@@ -153,6 +177,17 @@ class GeofenceService {
     _isMonitoring = false;
     _insideGeofences.clear();
     _dwellTimers.clear();
+    // Keep cooldown timers - they should persist across monitoring sessions
+  }
+
+  /// Clear cooldown for a specific geofence (useful for manual skip)
+  void clearCooldown(String geofenceId) {
+    _cooldownTimers.remove(geofenceId);
+  }
+
+  /// Clear all cooldowns (useful when restarting tour from beginning)
+  void clearAllCooldowns() {
+    _cooldownTimers.clear();
   }
 
   /// Check geofences against a specific position
@@ -168,9 +203,17 @@ class GeofenceService {
       final wasInside = _insideGeofences.contains(geofence.id);
 
       if (isInside && !wasInside) {
+        // Check cooldown - don't re-trigger if recently triggered
+        final lastTrigger = _cooldownTimers[geofence.id];
+        if (lastTrigger != null && now.difference(lastTrigger) < cooldownDuration) {
+          // Still in cooldown period, skip this enter event
+          continue;
+        }
+
         // Enter event
         _insideGeofences.add(geofence.id);
         _dwellTimers[geofence.id] = now;
+        _cooldownTimers[geofence.id] = now; // Start cooldown
 
         _eventController.add(GeofenceEvent(
           geofence: geofence,
@@ -182,6 +225,7 @@ class GeofenceService {
         // Exit event
         _insideGeofences.remove(geofence.id);
         _dwellTimers.remove(geofence.id);
+        // Don't clear cooldown on exit - prevents re-trigger if user walks back
 
         _eventController.add(GeofenceEvent(
           geofence: geofence,

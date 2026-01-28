@@ -26,26 +26,38 @@ export function useAutoSave<T>({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Use refs for values that shouldn't trigger re-renders
   const dataRef = useRef(data);
   const savedDataRef = useRef<string | null>(null);
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const onSaveRef = useRef(onSave);
+  const isSavingRef = useRef(false);
 
-  // Update ref when data changes
+  // Update refs when values change (without triggering effects)
   useEffect(() => {
     dataRef.current = data;
-    const currentDataString = JSON.stringify(data);
+  }, [data]);
 
+  useEffect(() => {
+    onSaveRef.current = onSave;
+  }, [onSave]);
+
+  // Track unsaved changes separately
+  useEffect(() => {
+    const currentDataString = JSON.stringify(data);
     if (savedDataRef.current !== null && savedDataRef.current !== currentDataString) {
       setHasUnsavedChanges(true);
     }
   }, [data]);
 
+  // Stable saveNow function that doesn't change on every render
   const saveNow = useCallback(async () => {
-    if (isSaving) return;
+    if (isSavingRef.current) return;
 
+    isSavingRef.current = true;
     setIsSaving(true);
+
     try {
-      await onSave(dataRef.current);
+      await onSaveRef.current(dataRef.current);
       const now = new Date();
       setLastSaved(now);
       savedDataRef.current = JSON.stringify(dataRef.current);
@@ -54,20 +66,21 @@ export function useAutoSave<T>({
       console.error('Auto-save failed:', error);
       throw error;
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
-  }, [onSave, isSaving]);
+  }, []); // No dependencies - uses refs
 
-  // Set up auto-save interval
+  // Set up auto-save interval (only depends on enabled and interval)
   useEffect(() => {
     if (!enabled) return;
 
     // Initial save of data state
     if (savedDataRef.current === null) {
-      savedDataRef.current = JSON.stringify(data);
+      savedDataRef.current = JSON.stringify(dataRef.current);
     }
 
-    saveTimeoutRef.current = setInterval(() => {
+    const intervalId = setInterval(() => {
       const currentDataString = JSON.stringify(dataRef.current);
 
       // Only save if data has changed
@@ -77,22 +90,20 @@ export function useAutoSave<T>({
     }, interval);
 
     return () => {
-      if (saveTimeoutRef.current) {
-        clearInterval(saveTimeoutRef.current);
-      }
+      clearInterval(intervalId);
     };
-  }, [enabled, interval, saveNow, data]);
+  }, [enabled, interval, saveNow]);
 
   // Save on unmount if there are unsaved changes
   useEffect(() => {
     return () => {
       const currentDataString = JSON.stringify(dataRef.current);
-      if (savedDataRef.current !== currentDataString) {
+      if (savedDataRef.current !== null && savedDataRef.current !== currentDataString) {
         // Fire and forget - we're unmounting
-        onSave(dataRef.current).catch(console.error);
+        onSaveRef.current(dataRef.current).catch(console.error);
       }
     };
-  }, [onSave]);
+  }, []); // Empty deps - only runs on unmount
 
   return {
     isSaving,

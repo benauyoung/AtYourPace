@@ -20,6 +20,10 @@ class RouteNames {
   static const String editProfile = '/profile/edit';
   static const String settings = '/settings';
   static const String downloads = '/downloads';
+  static const String myReviews = '/my-reviews';
+  static const String termsOfService = '/terms';
+  static const String privacyPolicy = '/privacy';
+  static const String help = '/help';
 
   // Creator routes
   static const String creatorDashboard = '/creator';

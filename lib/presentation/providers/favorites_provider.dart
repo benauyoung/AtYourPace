@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/app_config.dart';
@@ -15,12 +16,12 @@ final favoriteTourIdsProvider = StateNotifierProvider<FavoriteTourIdsNotifier, S
 class FavoriteTourIdsNotifier extends StateNotifier<Set<String>> {
   final Ref _ref;
 
-  FavoriteTourIdsNotifier(this._ref) : super(_demoFavorites) {
+  FavoriteTourIdsNotifier(this._ref) : super(AppConfig.demoMode ? _demoFavorites : {}) {
     _loadFavorites();
   }
 
-  // Demo favorites for testing
-  static final Set<String> _demoFavorites = {'tour_1', 'tour_3'};
+  // Demo favorites only used when AppConfig.demoMode is true
+  static final Set<String> _demoFavorites = {'demo-tour-1', 'demo-tour-3'};
 
   /// Load favorites from Firestore
   Future<void> _loadFavorites() async {
@@ -44,7 +45,8 @@ class FavoriteTourIdsNotifier extends StateNotifier<Set<String>> {
         }
       }
     } catch (e) {
-      // Ignore errors, keep demo favorites
+      // Keep current state on error (empty set in Firebase mode)
+      debugPrint('Failed to load favorites: $e');
     }
   }
 

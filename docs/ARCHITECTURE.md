@@ -78,7 +78,7 @@ The app follows a modified Clean Architecture pattern:
 ┌─────────────────────────▼───────────────────────────────────┐
 │                     Services Layer                           │
 │  ┌────────────────────────────────────────────────────────┐ │
-│  │  Audio │ Location │ Geofence │ Storage │ Connectivity  │ │
+│  │  Audio │ Location │ Geofence │ Storage │ OfflineMap    │ │
 │  └────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -102,6 +102,7 @@ lib/
 ├── services/         # Platform Services
 │   ├── audio_service.dart
 │   ├── location_service.dart
+│   ├── offline_map_service.dart
 │   └── ...
 ├── core/             # Shared Utilities
 │   ├── constants/
@@ -162,6 +163,7 @@ providers/
 ├── review_providers.dart      # Tour reviews
 ├── recommendations_provider.dart # Personalized recommendations
 ├── user_providers.dart        # User profiles
+├── offline_map_provider.dart  # Offline map tiles state
 ├── demo_auth_provider.dart    # Demo mode auth
 └── demo_tour_providers.dart   # Demo mode tours
 ```
@@ -329,6 +331,10 @@ final routerProvider = Provider<GoRouter>((ref) {
 │  ├── tour_id -> DownloadStatus                              │
 │  └── file_paths -> List<String>                             │
 ├─────────────────────────────────────────────────────────────┤
+│  Box: map_tiles_metadata                                     │
+│  ├── tour_id -> { estimatedSize, downloadedAt, expiresAt }  │
+│  └── Tracks Mapbox TileStore regions                        │
+├─────────────────────────────────────────────────────────────┤
 │  Box: progress                                               │
 │  └── tour_id -> UserProgress                                 │
 ├─────────────────────────────────────────────────────────────┤
@@ -342,7 +348,9 @@ final routerProvider = Provider<GoRouter>((ref) {
 ```dart
 enum DownloadStatus {
   idle,
+  queued,
   downloading,
+  paused,
   complete,
   failed,
 }
@@ -352,6 +360,8 @@ class DownloadState {
   final double progress;
   final int fileSize;
   final String? error;
+  final double mapTileProgress;  // Offline map download progress
+  final bool hasMapTiles;        // Whether tour has offline maps
 }
 
 // Download flow:
@@ -359,8 +369,33 @@ class DownloadState {
 // 2. Fetch tour metadata
 // 3. Download audio files
 // 4. Cache images
-// 5. Store in Hive
-// 6. Update download status
+// 5. Download map tiles (via OfflineMapService)
+// 6. Store in Hive
+// 7. Update download status
+```
+
+### Offline Map Service
+
+Manages offline map tiles using Mapbox TileStore API:
+
+```dart
+class OfflineMapService {
+  // Core operations
+  Future<void> initialize();
+  Future<void> downloadTourMapTiles(tourId, boundingBox);
+  Future<bool> hasTilesForTour(tourId);
+  Future<void> deleteTourMapTiles(tourId);
+  Future<void> cleanupExpiredTiles();
+
+  // Bounding box calculation
+  BoundingBox calculateBoundingBoxFromStops(stops);
+}
+
+// Storage settings:
+// - Max disk quota: 500 MB
+// - Tile expiration: 30 days
+// - Zoom levels: 10-16
+// - Region ID format: tour_{tourId}
 ```
 
 ---

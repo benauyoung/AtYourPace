@@ -21,6 +21,9 @@ import '../screens/user/tour_history_screen.dart';
 import '../screens/user/achievements_screen.dart';
 import '../screens/user/settings_screen.dart';
 import '../screens/user/downloads_screen.dart';
+import '../screens/user/legal_document_screen.dart';
+import '../screens/user/help_screen.dart';
+import '../screens/user/my_reviews_screen.dart';
 import '../screens/creator/creator_dashboard_screen.dart';
 import '../screens/creator/creator_analytics_screen.dart';
 import '../screens/creator/tour_editor_screen.dart';
@@ -43,7 +46,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppConfig.demoMode ? RouteNames.home : RouteNames.splash,
     debugLogDiagnostics: true,
-    refreshListenable: GoRouterRefreshStream(authState),
+    refreshListenable: RouterRefreshNotifier(ref),
     redirect: (context, state) {
       // In demo mode, skip authentication redirects
       if (AppConfig.demoMode) {
@@ -58,14 +61,26 @@ final routerProvider = Provider<GoRouter>((ref) {
         return null;
       }
 
-      final isLoggedIn = authState.value != null;
+      final isLoading = authState.isLoading;
+      final isLoggedIn = authState.valueOrNull != null;
+      final hasResolved = !isLoading; // Auth state has resolved (data or error)
       final isLoggingIn = state.matchedLocation == RouteNames.login ||
           state.matchedLocation == RouteNames.register ||
           state.matchedLocation == RouteNames.forgotPassword;
       final isSplash = state.matchedLocation == RouteNames.splash;
 
+      // If still loading auth state, stay on splash
+      if (isLoading && isSplash) {
+        return null;
+      }
+
+      // If auth has resolved and we're on splash, redirect appropriately
+      if (hasResolved && isSplash) {
+        return isLoggedIn ? RouteNames.home : RouteNames.login;
+      }
+
       // If not logged in and not on auth pages, redirect to login
-      if (!isLoggedIn && !isLoggingIn && !isSplash) {
+      if (!isLoggedIn && !isLoggingIn && !isSplash && hasResolved) {
         return RouteNames.login;
       }
 
@@ -75,7 +90,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       // Check role-based access
-      final user = currentUser.value;
+      final user = currentUser.valueOrNull;
       if (user != null) {
         final isCreatorRoute = state.matchedLocation.startsWith('/creator');
         final isAdminRoute = state.matchedLocation.startsWith('/admin');
@@ -173,6 +188,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const DownloadsScreen(),
       ),
 
+      // Legal documents
+      GoRoute(
+        path: RouteNames.termsOfService,
+        builder: (context, state) => const LegalDocumentScreen(
+          documentType: LegalDocumentType.termsOfService,
+        ),
+      ),
+      GoRoute(
+        path: RouteNames.privacyPolicy,
+        builder: (context, state) => const LegalDocumentScreen(
+          documentType: LegalDocumentType.privacyPolicy,
+        ),
+      ),
+
+      // Help
+      GoRoute(
+        path: RouteNames.help,
+        builder: (context, state) => const HelpScreen(),
+      ),
+
+      // My Reviews
+      GoRoute(
+        path: RouteNames.myReviews,
+        builder: (context, state) => const MyReviewsScreen(),
+      ),
+
       // Tour routes
       GoRoute(
         path: '/tour/:tourId',
@@ -246,10 +287,15 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 // Helper class to refresh GoRouter when auth state changes
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(AsyncValue<dynamic> stream) {
-    // Notify listeners whenever the auth state changes
-    notifyListeners();
+class RouterRefreshNotifier extends ChangeNotifier {
+  RouterRefreshNotifier(Ref ref) {
+    // Listen to auth state changes and notify router to re-evaluate redirects
+    ref.listen(authStateProvider, (previous, next) {
+      notifyListeners();
+    });
+
+    // Trigger initial check after a brief delay to ensure router is ready
+    Future.microtask(() => notifyListeners());
   }
 }
 
@@ -268,7 +314,7 @@ class MainShell extends ConsumerWidget {
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _calculateSelectedIndex(context),
+        selectedIndex: _calculateSelectedIndex(context, currentUser?.isCreator ?? false),
         onDestinationSelected: (index) => _onItemTapped(index, context, currentUser),
         destinations: [
           const NavigationDestination(
@@ -297,12 +343,15 @@ class MainShell extends ConsumerWidget {
     );
   }
 
-  int _calculateSelectedIndex(BuildContext context) {
+  int _calculateSelectedIndex(BuildContext context, bool isCreator) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith(RouteNames.home)) return 0;
     if (location.startsWith(RouteNames.discover)) return 1;
     if (location.startsWith(RouteNames.creatorDashboard)) return 2;
-    if (location.startsWith(RouteNames.profile)) return 3;
+    if (location.startsWith(RouteNames.profile)) {
+      // Profile is index 3 for creators (4 tabs), index 2 for non-creators (3 tabs)
+      return isCreator ? 3 : 2;
+    }
     return 0;
   }
 
@@ -328,53 +377,53 @@ class MainShell extends ConsumerWidget {
   }
 }
 
-// Splash screen
+// Splash screen - just shows loading UI while router handles navigation via redirect
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // In demo mode, just redirect to home immediately
-    if (AppConfig.demoMode) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.go(RouteNames.home);
-      });
-    } else {
-      ref.listen(authStateProvider, (previous, next) {
-        next.when(
-          data: (user) {
-            if (user != null) {
-              context.go(RouteNames.home);
-            } else {
-              context.go(RouteNames.login);
-            }
-          },
-          loading: () {},
-          error: (_, __) => context.go(RouteNames.login),
-        );
-      });
-    }
+    // Watch auth state - this triggers router refresh when state changes
+    final authState = ref.watch(authStateProvider);
 
-    return const Scaffold(
+    // The router's redirect logic handles all navigation
+    // This widget just needs to display loading UI
+
+    return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.tour,
               size: 80,
               color: Colors.blue,
             ),
-            SizedBox(height: 24),
-            Text(
+            const SizedBox(height: 24),
+            const Text(
               'AYP Tour Guide',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 24),
-            CircularProgressIndicator(),
+            const SizedBox(height: 24),
+            authState.when(
+              data: (_) => const CircularProgressIndicator(),
+              loading: () => const CircularProgressIndicator(),
+              error: (e, _) => Column(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 8),
+                  Text('Error: $e', textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => context.go(RouteNames.login),
+                    child: const Text('Go to Login'),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

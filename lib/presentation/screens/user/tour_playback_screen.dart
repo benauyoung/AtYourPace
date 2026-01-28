@@ -152,6 +152,7 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                     IconButton(
                       icon: const Icon(Icons.close),
                       onPressed: () => _showEndTourDialog(context),
+                      tooltip: 'End tour',
                     ),
                     Expanded(
                       child: Column(
@@ -204,6 +205,7 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                       onPressed: () {
                         setState(() => _showStopsList = !_showStopsList);
                       },
+                      tooltip: 'View all stops',
                     ),
                   ],
                 ),
@@ -430,6 +432,7 @@ class _CurrentStopPanel extends ConsumerWidget {
                   IconButton(
                     icon: const Icon(Icons.skip_previous),
                     iconSize: 32,
+                    tooltip: 'Previous stop',
                     onPressed: playbackState.currentStopIndex > 0
                         ? () => ref
                             .read(playbackStateProvider.notifier)
@@ -440,6 +443,7 @@ class _CurrentStopPanel extends ConsumerWidget {
                   IconButton(
                     icon: const Icon(Icons.replay_10),
                     iconSize: 28,
+                    tooltip: 'Rewind 10 seconds',
                     onPressed: () =>
                         ref.read(playbackStateProvider.notifier).skipBackward(),
                   ),
@@ -462,6 +466,7 @@ class _CurrentStopPanel extends ConsumerWidget {
                   IconButton(
                     icon: const Icon(Icons.forward_10),
                     iconSize: 28,
+                    tooltip: 'Forward 10 seconds',
                     onPressed: () =>
                         ref.read(playbackStateProvider.notifier).skipForward(),
                   ),
@@ -469,6 +474,7 @@ class _CurrentStopPanel extends ConsumerWidget {
                   IconButton(
                     icon: const Icon(Icons.skip_next),
                     iconSize: 32,
+                    tooltip: 'Next stop',
                     onPressed:
                         playbackState.currentStopIndex < playbackState.stops.length - 1
                             ? () =>
@@ -523,6 +529,7 @@ class _StopsListPanel extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
+                  tooltip: 'Close stops list',
                   onPressed: onClose,
                 ),
               ],

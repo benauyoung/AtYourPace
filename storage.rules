@@ -1,0 +1,102 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*')
+        && request.resource.size < 10 * 1024 * 1024; // 10MB max
+    }
+
+    function isValidAudio() {
+      return request.resource.contentType.matches('audio/.*')
+        && request.resource.size < 50 * 1024 * 1024; // 50MB max
+    }
+
+    // ============================================
+    // USER PROFILE IMAGES
+    // ============================================
+
+    match /users/{userId}/profile/{fileName} {
+      // Anyone can read profile images
+      allow read: if true;
+
+      // Users can upload their own profile images
+      allow write: if isOwner(userId) && isValidImage();
+    }
+
+    // ============================================
+    // TOUR MEDIA
+    // ============================================
+
+    match /tours/{tourId}/{allPaths=**} {
+      // Anyone can read tour media (for approved tours)
+      // Access control is handled at the Firestore level
+      allow read: if true;
+
+      // Authenticated users can write tour media
+      // The app should verify tour ownership before upload
+      allow write: if isAuthenticated()
+        && (isValidImage() || isValidAudio());
+    }
+
+    // ============================================
+    // TOUR COVER IMAGES
+    // ============================================
+
+    match /tours/{tourId}/cover/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isValidImage();
+    }
+
+    // ============================================
+    // STOP IMAGES
+    // ============================================
+
+    match /tours/{tourId}/stops/{stopId}/images/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isValidImage();
+    }
+
+    // ============================================
+    // STOP AUDIO
+    // ============================================
+
+    match /tours/{tourId}/stops/{stopId}/audio/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isValidAudio();
+    }
+
+    // ============================================
+    // TEMPORARY UPLOADS (for processing)
+    // ============================================
+
+    match /temp/{userId}/{allPaths=**} {
+      // Users can read/write their own temp files
+      allow read, write: if isOwner(userId);
+    }
+
+    // ============================================
+    // TTS GENERATED AUDIO (Cloud Functions)
+    // ============================================
+
+    match /tts/{allPaths=**} {
+      // Anyone can read TTS audio
+      allow read: if true;
+
+      // Only Cloud Functions can write (via Admin SDK)
+      allow write: if false;
+    }
+  }
+}

@@ -33,15 +33,14 @@ dependencies:
   geolocator: ^13.0.2
   geocoding: ^3.0.0
 
-  # ===== GEOFENCING =====
-  geofence_service: ^5.0.0
+  # ===== NOTIFICATIONS =====
   flutter_local_notifications: ^18.0.1
 
   # ===== AUDIO =====
   just_audio: ^0.9.42
   just_audio_background: ^0.0.1-beta.13
   audio_session: ^0.1.21
-  record: ^5.1.2
+  record: ^6.0.0
 
   # ===== OFFLINE STORAGE =====
   hive_flutter: ^1.1.0
@@ -61,6 +60,9 @@ dependencies:
   image_picker: ^1.1.2
   image_cropper: ^8.0.2
   file_picker: ^8.0.0
+
+  # ===== BACKGROUND SERVICES =====
+  flutter_foreground_task: ^8.10.3
 
   # ===== UTILITIES =====
   intl: ^0.19.0
@@ -100,6 +102,51 @@ flutter:
     - assets/mapbox/
 
   fonts:
+    # Geist Sans - Primary UI font (from vercel.com/font)
+    - family: GeistSans
+      fonts:
+        - asset: assets/fonts/Geist-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Geist-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/Geist-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Geist-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Geist-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Geist-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Geist-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Geist-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Geist-Black.ttf
+          weight: 900
+
+    # Geist Mono - Monospace for data, timestamps, codes
+    - family: GeistMono
+      fonts:
+        - asset: assets/fonts/GeistMono-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/GeistMono-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/GeistMono-Light.ttf
+          weight: 300
+        - asset: assets/fonts/GeistMono-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/GeistMono-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/GeistMono-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/GeistMono-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/GeistMono-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/GeistMono-Black.ttf
+          weight: 900
+
+    # Plus Jakarta Sans - Fallback font
     - family: PlusJakartaSans
       fonts:
         - asset: assets/fonts/PlusJakartaSans-Regular.ttf

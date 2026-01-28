@@ -1,7 +1,10 @@
 import 'dart:async';
 
+import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
 /// Provider for the audio service
 final audioServiceProvider = Provider<AudioService>((ref) {
@@ -9,6 +12,20 @@ final audioServiceProvider = Provider<AudioService>((ref) {
   ref.onDispose(() => service.dispose());
   return service;
 });
+
+/// Initialize audio service for background playback
+/// This should be called once in main.dart before runApp
+Future<void> initAudioService() async {
+  // Skip background audio initialization on web - not supported
+  if (kIsWeb) return;
+
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.ayp.aypTourGuide.audio',
+    androidNotificationChannelName: 'Tour Audio',
+    androidNotificationOngoing: true,
+    androidShowNotificationBadge: true,
+  );
+}
 
 /// Provider for the current audio state
 final audioStateProvider = StreamProvider<AudioState>((ref) {
@@ -38,7 +55,7 @@ enum AudioState {
   error,
 }
 
-/// Service for managing audio playback
+/// Service for managing audio playback with background support
 class AudioService {
   final AudioPlayer _player = AudioPlayer();
 
@@ -46,9 +63,74 @@ class AudioService {
       StreamController<AudioState>.broadcast();
 
   String? _currentAudioId;
+  String? _currentTitle;
+  String? _currentArtist;
+  String? _currentArtworkUrl;
+  bool _isSessionConfigured = false;
 
   AudioService() {
     _setupListeners();
+    _configureAudioSession();
+  }
+
+  /// Configure audio session for playback
+  Future<void> _configureAudioSession() async {
+    if (_isSessionConfigured || kIsWeb) return;
+
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(const AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.playback,
+        avAudioSessionCategoryOptions: AVAudioSessionCategoryOptions.duckOthers,
+        avAudioSessionMode: AVAudioSessionMode.spokenAudio,
+        avAudioSessionRouteSharingPolicy: AVAudioSessionRouteSharingPolicy.defaultPolicy,
+        avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
+        androidAudioAttributes: AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.speech,
+          usage: AndroidAudioUsage.media,
+          flags: AndroidAudioFlags.none,
+        ),
+        androidAudioFocusGainType: AndroidAudioFocusGainType.gain,
+        androidWillPauseWhenDucked: true,
+      ));
+
+      // Handle audio interruptions (phone calls, etc.)
+      session.interruptionEventStream.listen((event) {
+        if (event.begin) {
+          switch (event.type) {
+            case AudioInterruptionType.duck:
+              // Another app wants us to lower volume
+              _player.setVolume(0.5);
+              break;
+            case AudioInterruptionType.pause:
+            case AudioInterruptionType.unknown:
+              // We should pause
+              _player.pause();
+              break;
+          }
+        } else {
+          switch (event.type) {
+            case AudioInterruptionType.duck:
+              // Restore volume
+              _player.setVolume(1.0);
+              break;
+            case AudioInterruptionType.pause:
+            case AudioInterruptionType.unknown:
+              // We can resume, but let user decide
+              break;
+          }
+        }
+      });
+
+      // Handle becoming noisy (headphones unplugged)
+      session.becomingNoisyEventStream.listen((_) {
+        _player.pause();
+      });
+
+      _isSessionConfigured = true;
+    } catch (e) {
+      // Audio session configuration failed, continue without it
+    }
   }
 
   /// Stream of audio states
@@ -117,13 +199,44 @@ class AudioService {
     });
   }
 
-  /// Load audio from URL
-  Future<Duration?> loadUrl(String url, {String? audioId}) async {
+  /// Set metadata for lock screen display
+  void setMetadata({
+    String? title,
+    String? artist,
+    String? artworkUrl,
+  }) {
+    _currentTitle = title;
+    _currentArtist = artist;
+    _currentArtworkUrl = artworkUrl;
+  }
+
+  /// Load audio from URL with optional lock screen metadata
+  Future<Duration?> loadUrl(
+    String url, {
+    String? audioId,
+    String? title,
+    String? artist,
+    String? artworkUrl,
+  }) async {
     try {
       _stateController.add(AudioState.loading);
       _currentAudioId = audioId;
-      
-      final duration = await _player.setUrl(url);
+      _currentTitle = title;
+      _currentArtist = artist;
+      _currentArtworkUrl = artworkUrl;
+
+      // Create audio source with media item for lock screen controls
+      final audioSource = AudioSource.uri(
+        Uri.parse(url),
+        tag: MediaItem(
+          id: audioId ?? url,
+          title: title ?? 'Tour Audio',
+          artist: artist ?? 'AYP Tour Guide',
+          artUri: artworkUrl != null ? Uri.parse(artworkUrl) : null,
+        ),
+      );
+
+      final duration = await _player.setAudioSource(audioSource);
       return duration;
     } catch (e) {
       _stateController.add(AudioState.error);
@@ -131,13 +244,33 @@ class AudioService {
     }
   }
 
-  /// Load audio from local file
-  Future<Duration?> loadFile(String filePath, {String? audioId}) async {
+  /// Load audio from local file with optional lock screen metadata
+  Future<Duration?> loadFile(
+    String filePath, {
+    String? audioId,
+    String? title,
+    String? artist,
+    String? artworkUrl,
+  }) async {
     try {
       _stateController.add(AudioState.loading);
       _currentAudioId = audioId;
+      _currentTitle = title;
+      _currentArtist = artist;
+      _currentArtworkUrl = artworkUrl;
 
-      final duration = await _player.setFilePath(filePath);
+      // Create audio source with media item for lock screen controls
+      final audioSource = AudioSource.file(
+        filePath,
+        tag: MediaItem(
+          id: audioId ?? filePath,
+          title: title ?? 'Tour Audio',
+          artist: artist ?? 'AYP Tour Guide',
+          artUri: artworkUrl != null ? Uri.parse(artworkUrl) : null,
+        ),
+      );
+
+      final duration = await _player.setAudioSource(audioSource);
       return duration;
     } catch (e) {
       _stateController.add(AudioState.error);
@@ -145,13 +278,33 @@ class AudioService {
     }
   }
 
-  /// Load audio from asset
-  Future<Duration?> loadAsset(String assetPath, {String? audioId}) async {
+  /// Load audio from asset with optional lock screen metadata
+  Future<Duration?> loadAsset(
+    String assetPath, {
+    String? audioId,
+    String? title,
+    String? artist,
+    String? artworkUrl,
+  }) async {
     try {
       _stateController.add(AudioState.loading);
       _currentAudioId = audioId;
+      _currentTitle = title;
+      _currentArtist = artist;
+      _currentArtworkUrl = artworkUrl;
 
-      final duration = await _player.setAsset(assetPath);
+      // Create audio source with media item for lock screen controls
+      final audioSource = AudioSource.asset(
+        assetPath,
+        tag: MediaItem(
+          id: audioId ?? assetPath,
+          title: title ?? 'Tour Audio',
+          artist: artist ?? 'AYP Tour Guide',
+          artUri: artworkUrl != null ? Uri.parse(artworkUrl) : null,
+        ),
+      );
+
+      final duration = await _player.setAudioSource(audioSource);
       return duration;
     } catch (e) {
       _stateController.add(AudioState.error);
@@ -204,14 +357,38 @@ class AudioService {
   }
 
   /// Load and play audio from URL
-  Future<void> playUrl(String url, {String? audioId}) async {
-    await loadUrl(url, audioId: audioId);
+  Future<void> playUrl(
+    String url, {
+    String? audioId,
+    String? title,
+    String? artist,
+    String? artworkUrl,
+  }) async {
+    await loadUrl(
+      url,
+      audioId: audioId,
+      title: title,
+      artist: artist,
+      artworkUrl: artworkUrl,
+    );
     await play();
   }
 
   /// Load and play audio from file
-  Future<void> playFile(String filePath, {String? audioId}) async {
-    await loadFile(filePath, audioId: audioId);
+  Future<void> playFile(
+    String filePath, {
+    String? audioId,
+    String? title,
+    String? artist,
+    String? artworkUrl,
+  }) async {
+    await loadFile(
+      filePath,
+      audioId: audioId,
+      title: title,
+      artist: artist,
+      artworkUrl: artworkUrl,
+    );
     await play();
   }
 

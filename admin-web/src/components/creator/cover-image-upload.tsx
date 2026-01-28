@@ -163,13 +163,13 @@ export function CoverImageUpload({
       >
         <input {...getInputProps()} />
 
-        {imageUrl ? (
+        {imageUrl && imageUrl.length > 0 ? (
           <>
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={imageUrl}
               alt="Tour cover"
-              fill
-              className="object-cover"
+              className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
               <div className="text-white text-center">

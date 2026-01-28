@@ -107,9 +107,10 @@ class _InProgressTab extends ConsumerWidget {
           itemBuilder: (context, index) {
             final (tour, record) = tours[index];
             return _TourHistoryCard(
+              key: ValueKey(tour.id),
               tour: tour,
               record: record,
-              onTap: () => context.go(RouteNames.tourDetailsPath(tour.id)),
+              onTap: () => context.push(RouteNames.tourDetailsPath(tour.id)),
               onResume: () => context.go(RouteNames.tourPlaybackPath(tour.id)),
             );
           },
@@ -144,9 +145,10 @@ class _CompletedTab extends ConsumerWidget {
           itemBuilder: (context, index) {
             final (tour, record) = tours[index];
             return _TourHistoryCard(
+              key: ValueKey(tour.id),
               tour: tour,
               record: record,
-              onTap: () => context.go(RouteNames.tourDetailsPath(tour.id)),
+              onTap: () => context.push(RouteNames.tourDetailsPath(tour.id)),
               showCompletedBadge: true,
             );
           },
@@ -195,7 +197,7 @@ class _HistoryTab extends ConsumerWidget {
               child: _TourHistoryCard(
                 tour: tour,
                 record: record,
-                onTap: () => context.go(RouteNames.tourDetailsPath(tour.id)),
+                onTap: () => context.push(RouteNames.tourDetailsPath(tour.id)),
                 showTimestamp: true,
               ),
             );
@@ -217,6 +219,7 @@ class _TourHistoryCard extends StatelessWidget {
   final bool showTimestamp;
 
   const _TourHistoryCard({
+    super.key,
     required this.tour,
     required this.record,
     this.onTap,

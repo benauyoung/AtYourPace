@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -258,18 +259,10 @@ class _ReviewCard extends StatelessWidget {
             // Header
             Row(
               children: [
-                CircleAvatar(
+                _ReviewAvatar(
+                  photoUrl: review.userPhotoUrl,
+                  userName: review.userName,
                   radius: 20,
-                  backgroundImage: review.userPhotoUrl != null
-                      ? NetworkImage(review.userPhotoUrl!)
-                      : null,
-                  child: review.userPhotoUrl == null
-                      ? Text(
-                          review.userName.isNotEmpty
-                              ? review.userName[0].toUpperCase()
-                              : '?',
-                        )
-                      : null,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -534,5 +527,52 @@ class _WriteReviewSheetState extends State<WriteReviewSheet> {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+}
+
+/// Cached avatar widget for reviews
+class _ReviewAvatar extends StatelessWidget {
+  final String? photoUrl;
+  final String userName;
+  final double radius;
+
+  const _ReviewAvatar({
+    required this.photoUrl,
+    required this.userName,
+    this.radius = 20,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (photoUrl == null || photoUrl!.isEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        child: Text(
+          userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+        ),
+      );
+    }
+
+    return CachedNetworkImage(
+      imageUrl: photoUrl!,
+      imageBuilder: (context, imageProvider) => CircleAvatar(
+        radius: radius,
+        backgroundImage: imageProvider,
+      ),
+      placeholder: (context, url) => CircleAvatar(
+        radius: radius,
+        child: const SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      errorWidget: (context, url, error) => CircleAvatar(
+        radius: radius,
+        child: Text(
+          userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+        ),
+      ),
+    );
   }
 }

@@ -80,6 +80,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
+                  tooltip: 'Dismiss error',
                   onPressed: notifier.clearError,
                   iconSize: 18,
                 ),
@@ -242,6 +243,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
             children: [
               // Delete button
               IconButton(
+                tooltip: 'Delete recording',
                 onPressed: () async {
                   final confirm = await showDialog<bool>(
                     context: context,
@@ -289,6 +291,7 @@ class _AudioRecorderWidgetState extends ConsumerState<AudioRecorderWidget>
 
               // Stop button
               IconButton(
+                tooltip: 'Stop playback',
                 onPressed:
                     state.isPlaying ? () => notifier.stopPlayback() : null,
                 icon: const Icon(Icons.stop),

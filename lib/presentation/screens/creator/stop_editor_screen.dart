@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
@@ -1023,40 +1024,46 @@ class _StopEditorScreenState extends ConsumerState<StopEditorScreen> {
       padding: const EdgeInsets.only(right: 8),
       child: Stack(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: isLocal && !kIsWeb
-                ? Image.file(
-                    File(imagePath),
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.cover,
-                  )
-                : Image.network(
-                    imagePath,
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        width: 120,
-                        height: 120,
-                        color: context.colorScheme.surfaceContainerHighest,
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 120,
-                        height: 120,
-                        color: context.colorScheme.surfaceContainerHighest,
-                        child: const Icon(Icons.broken_image),
-                      );
-                    },
+          Semantics(
+            label: 'Stop image ${index + 1}',
+            image: true,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: isLocal && !kIsWeb
+                  ? Image.file(
+                      File(imagePath),
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
+                      semanticLabel: 'Stop image ${index + 1}',
+                    )
+                  : Image.network(
+                      imagePath,
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.cover,
+                      semanticLabel: 'Stop image ${index + 1}',
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          width: 120,
+                          height: 120,
+                          color: context.colorScheme.surfaceContainerHighest,
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          width: 120,
+                          height: 120,
+                          color: context.colorScheme.surfaceContainerHighest,
+                          child: const Icon(Icons.broken_image),
+                        );
+                      },
                   ),
+            ),
           ),
           // Local file indicator
           if (isLocal)
@@ -1147,6 +1154,7 @@ class _StopEditorScreenState extends ConsumerState<StopEditorScreen> {
               ListTile(
                 leading: const Icon(Icons.camera_alt),
                 title: const Text('Take Photo'),
+                subtitle: const Text('Take a photo and crop it'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.camera);
@@ -1155,6 +1163,7 @@ class _StopEditorScreenState extends ConsumerState<StopEditorScreen> {
               ListTile(
                 leading: const Icon(Icons.photo_library),
                 title: const Text('Choose from Gallery'),
+                subtitle: const Text('Select one image and crop it'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
@@ -1163,6 +1172,7 @@ class _StopEditorScreenState extends ConsumerState<StopEditorScreen> {
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined),
                 title: const Text('Choose Multiple'),
+                subtitle: const Text('Select multiple images (no cropping)'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickMultipleImages();
@@ -1175,6 +1185,50 @@ class _StopEditorScreenState extends ConsumerState<StopEditorScreen> {
     );
   }
 
+  Future<String?> _cropImage(String imagePath) async {
+    // Skip cropping on web platform
+    if (kIsWeb) return imagePath;
+
+    try {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: imagePath,
+        compressQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Image',
+            toolbarColor: Theme.of(context).colorScheme.primary,
+            toolbarWidgetColor: Theme.of(context).colorScheme.onPrimary,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio16x9,
+              CropAspectRatioPreset.ratio4x3,
+            ],
+          ),
+          IOSUiSettings(
+            title: 'Crop Image',
+            aspectRatioPresets: [
+              CropAspectRatioPreset.original,
+              CropAspectRatioPreset.square,
+              CropAspectRatioPreset.ratio16x9,
+              CropAspectRatioPreset.ratio4x3,
+            ],
+          ),
+        ],
+      );
+
+      return croppedFile?.path;
+    } catch (e) {
+      debugPrint('Error cropping image: $e');
+      // Return original path if cropping fails
+      return imagePath;
+    }
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     try {
       final pickedFile = await _imagePicker.pickImage(
@@ -1185,7 +1239,11 @@ class _StopEditorScreenState extends ConsumerState<StopEditorScreen> {
       );
 
       if (pickedFile != null) {
-        await _uploadImage(pickedFile.path);
+        // Crop the image before uploading
+        final croppedPath = await _cropImage(pickedFile.path);
+        if (croppedPath != null) {
+          await _uploadImage(croppedPath);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -1303,6 +1361,34 @@ class _StopEditorScreenState extends ConsumerState<StopEditorScreen> {
         _selectedPosition!.lng.toDouble(),
       );
 
+      // Generate stop ID for uploads
+      final stopId = widget.existingStop?.id ?? 'stop_${DateTime.now().millisecondsSinceEpoch}';
+
+      // Upload local audio recording to Firebase Storage if exists
+      String? finalAudioUrl = _audioUrl;
+      if (_localAudioPath != null && !AppConfig.demoMode) {
+        try {
+          if (mounted) {
+            context.showInfoSnackBar('Uploading audio...');
+          }
+          final storageService = ref.read(storageServiceProvider);
+          finalAudioUrl = await storageService.uploadStopAudio(
+            tourId: widget.tourId,
+            stopId: stopId,
+            audioFile: File(_localAudioPath!),
+          );
+        } catch (e) {
+          if (mounted) {
+            context.showErrorSnackBar('Failed to upload audio: $e');
+          }
+          setState(() => _isSaving = false);
+          return;
+        }
+      } else if (_localAudioPath != null && AppConfig.demoMode) {
+        // In demo mode, just use the local path
+        finalAudioUrl = _localAudioPath;
+      }
+
       // Create media model
       // Combine uploaded images with any pending local images (converted to StopImage)
       final allImages = [
@@ -1312,7 +1398,7 @@ class _StopEditorScreenState extends ConsumerState<StopEditorScreen> {
             ),
       ];
       final media = StopMedia(
-        audioUrl: _audioUrl ?? _localAudioPath,
+        audioUrl: finalAudioUrl,
         audioSource: _audioSource ?? AudioSource.recorded,
         audioText: _scriptController.text.isNotEmpty ? _scriptController.text : null,
         images: allImages,
@@ -1321,7 +1407,7 @@ class _StopEditorScreenState extends ConsumerState<StopEditorScreen> {
       // Create stop model
       final now = DateTime.now();
       final stop = StopModel(
-        id: widget.existingStop?.id ?? '',
+        id: widget.existingStop?.id ?? stopId,
         tourId: widget.tourId,
         versionId: widget.versionId,
         order: widget.stopOrder,

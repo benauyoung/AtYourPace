@@ -29,6 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TourModel, TourVersionModel, TourCategory, TourDifficulty, categoryDisplayNames } from '@/types';
 import { useAutoSave } from '@/hooks/use-auto-save';
 import { CoverImageUpload } from './cover-image-upload';
+import { LocationPicker, LocationInfo } from './location-picker';
 
 const tourFormSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters').max(100, 'Title must be less than 100 characters'),
@@ -321,6 +322,41 @@ export function TourForm({
             <CardTitle>Location</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Start Location Picker */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Start Location
+              </label>
+              <LocationPicker
+                latitude={form.watch('startLatitude')}
+                longitude={form.watch('startLongitude')}
+                onLocationChange={(lat, lng, locationInfo) => {
+                  form.setValue('startLatitude', lat, { shouldDirty: true });
+                  form.setValue('startLongitude', lng, { shouldDirty: true });
+                  // Auto-fill city, region, country if not already set
+                  if (locationInfo) {
+                    if (locationInfo.city && !form.getValues('city')) {
+                      form.setValue('city', locationInfo.city, { shouldDirty: true });
+                    }
+                    if (locationInfo.region && !form.getValues('region')) {
+                      form.setValue('region', locationInfo.region, { shouldDirty: true });
+                    }
+                    if (locationInfo.country && !form.getValues('country')) {
+                      form.setValue('country', locationInfo.country, { shouldDirty: true });
+                    }
+                  }
+                }}
+              />
+              <p className="text-sm text-muted-foreground">
+                Click to choose the starting point using a map, address search, or coordinates
+              </p>
+              {(form.formState.errors.startLatitude || form.formState.errors.startLongitude) && (
+                <p className="text-sm font-medium text-destructive">
+                  Please select a valid start location
+                </p>
+              )}
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-3">
               <FormField
                 control={form.control}
@@ -364,46 +400,6 @@ export function TourForm({
                 )}
               />
             </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="startLatitude"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Latitude</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="any" placeholder="e.g., 37.7749" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      The latitude of where the tour begins
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="startLongitude"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Longitude</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="any" placeholder="e.g., -122.4194" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      The longitude of where the tour begins
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <p className="text-sm text-muted-foreground">
-              Tip: You can set the exact start location on the map in the Stops editor.
-            </p>
           </CardContent>
         </Card>
 

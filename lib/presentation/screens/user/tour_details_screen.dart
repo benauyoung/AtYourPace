@@ -147,22 +147,25 @@ https://ayp.tours/${tour.slug ?? tour.id}
                         style: context.textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 20),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${tour.stats.averageRating.toStringAsFixed(1)} (${tour.stats.totalRatings} reviews)',
-                            style: context.textTheme.bodyMedium,
-                          ),
-                          const SizedBox(width: 16),
-                          const Icon(Icons.play_arrow, size: 20),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${tour.stats.totalPlays} plays',
-                            style: context.textTheme.bodyMedium,
-                          ),
-                        ],
+                      Semantics(
+                        label: 'Rating: ${tour.stats.averageRating.toStringAsFixed(1)} stars from ${tour.stats.totalRatings} reviews. ${tour.stats.totalPlays} plays',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.star, color: Colors.amber, size: 20, semanticLabel: 'Rating'),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${tour.stats.averageRating.toStringAsFixed(1)} (${tour.stats.totalRatings} reviews)',
+                              style: context.textTheme.bodyMedium,
+                            ),
+                            const SizedBox(width: 16),
+                            const Icon(Icons.play_arrow, size: 20, semanticLabel: 'Plays'),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${tour.stats.totalPlays} plays',
+                              style: context.textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 24),
 
@@ -187,23 +190,30 @@ https://ayp.tours/${tour.slug ?? tour.id}
             ? SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Row(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: TourDownloadButton(
-                          tourId: tourId,
-                          showLabel: true,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        flex: 2,
+                      // Start Tour button (primary action)
+                      SizedBox(
+                        width: double.infinity,
                         child: FilledButton.icon(
                           onPressed: () {
-                            context.go(RouteNames.tourPlaybackPath(tourId));
+                            context.push(RouteNames.tourPlaybackPath(tourId));
                           },
                           icon: const Icon(Icons.play_arrow),
                           label: const Text('Start Tour'),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Download button (secondary action)
+                      SizedBox(
+                        width: double.infinity,
+                        child: TourDownloadButton(
+                          tourId: tourId,
+                          showLabel: true,
                         ),
                       ),
                     ],
@@ -316,6 +326,7 @@ class _TourVersionDetails extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final stop = stops[index];
                 return Card(
+                  key: ValueKey(stop.id),
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
                     leading: CircleAvatar(
@@ -337,7 +348,10 @@ class _TourVersionDetails extends ConsumerWidget {
                           )
                         : null,
                     trailing: stop.hasAudio
-                        ? const Icon(Icons.audiotrack, size: 20)
+                        ? Semantics(
+                            label: 'Has audio narration',
+                            child: const Icon(Icons.audiotrack, size: 20),
+                          )
                         : null,
                   ),
                 );

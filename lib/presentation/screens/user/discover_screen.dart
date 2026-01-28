@@ -6,6 +6,9 @@ import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/tour_model.dart';
 import '../../providers/tour_providers.dart';
+import '../../widgets/common/empty_state.dart';
+import '../../widgets/common/error_view.dart';
+import '../../widgets/common/skeleton_loader.dart';
 import '../../widgets/tour/tour_card.dart';
 
 /// Search query provider
@@ -261,40 +264,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             child: filteredTours.when(
               data: (tours) {
                 if (tours.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 80,
-                          color: context.colorScheme.primary.withValues(alpha: 0.5),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No tours found',
-                          style: context.textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Try adjusting your search or filters',
-                          style: context.textTheme.bodyMedium?.copyWith(
-                            color: context.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            _searchController.clear();
-                            ref.read(searchQueryProvider.notifier).state = '';
-                            ref.read(selectedCategoryProvider.notifier).state = null;
-                            ref.read(selectedTourTypeProvider.notifier).state = null;
-                          },
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Clear filters'),
-                        ),
-                      ],
-                    ),
+                  return EmptyState.noSearchResults(
+                    onClear: () {
+                      _searchController.clear();
+                      ref.read(searchQueryProvider.notifier).state = '';
+                      ref.read(selectedCategoryProvider.notifier).state = null;
+                      ref.read(selectedTourTypeProvider.notifier).state = null;
+                    },
                   );
                 }
 
@@ -304,35 +280,20 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   itemBuilder: (context, index) {
                     final tour = tours[index];
                     return Padding(
+                      key: ValueKey(tour.id),
                       padding: const EdgeInsets.only(bottom: 16),
                       child: TourCard(
                         tour: tour,
-                        onTap: () => context.go(RouteNames.tourDetailsPath(tour.id)),
+                        onTap: () => context.push(RouteNames.tourDetailsPath(tour.id)),
                       ),
                     );
                   },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: context.colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Error: $error'),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: () => ref.invalidate(filteredToursProvider),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
-                    ),
-                  ],
-                ),
+              loading: () => SkeletonList.tourCards(count: 4),
+              error: (error, _) => ErrorView(
+                message: error.toString(),
+                onRetry: () => ref.invalidate(filteredToursProvider),
               ),
             ),
           ),

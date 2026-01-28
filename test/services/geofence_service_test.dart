@@ -483,6 +483,9 @@ void main() {
 
   group('Rapid Enter/Exit Event Handling', () {
     test('handles rapid enter/exit sequences correctly', () async {
+      // Disable cooldown for this test to allow rapid re-entry
+      geofenceService.cooldownDuration = Duration.zero;
+
       final geofence = Geofence(
         id: 'test',
         name: 'Test',

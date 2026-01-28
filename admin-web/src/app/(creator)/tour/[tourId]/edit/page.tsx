@@ -1,6 +1,5 @@
 'use client';
 
-import { use } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Loader2, MapPin, Eye, Send } from 'lucide-react';
 import { CreatorPageWrapper } from '@/components/layout/creator-page-wrapper';
@@ -18,11 +17,11 @@ import { useToast } from '@/hooks/use-toast';
 import { statusDisplayNames } from '@/types';
 
 interface EditTourPageProps {
-  params: Promise<{ tourId: string }>;
+  params: { tourId: string };
 }
 
 export default function EditTourPage({ params }: EditTourPageProps) {
-  const { tourId } = use(params);
+  const { tourId } = params;
   const { toast } = useToast();
 
   const { data, isLoading, error } = useCreatorTour(tourId);

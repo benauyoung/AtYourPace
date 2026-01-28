@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -42,11 +42,11 @@ const EMPTY_TOUR_VERSION: TourVersionModel = {
 };
 
 interface PreviewPageProps {
-  params: Promise<{ tourId: string }>;
+  params: { tourId: string };
 }
 
 export default function PreviewPage({ params }: PreviewPageProps) {
-  const { tourId } = use(params);
+  const { tourId } = params;
   const router = useRouter();
   const { toast } = useToast();
 

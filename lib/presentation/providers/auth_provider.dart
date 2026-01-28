@@ -80,9 +80,38 @@ class AuthService {
         throw AuthException.unknown();
       }
 
-      return await _getUserData(credential.user!.uid);
+      // Check if user document exists in Firestore
+      final userDoc = await _firestore
+          .collection(FirestoreCollections.users)
+          .doc(credential.user!.uid)
+          .get();
+
+      if (!userDoc.exists) {
+        // Create user document if it doesn't exist (can happen if signup failed to create doc)
+        final user = UserModel(
+          uid: credential.user!.uid,
+          email: credential.user!.email ?? email,
+          displayName: credential.user!.displayName ?? email.split('@').first,
+          photoUrl: credential.user!.photoURL,
+          role: UserRole.user,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+
+        await _firestore
+            .collection(FirestoreCollections.users)
+            .doc(user.uid)
+            .set(user.toFirestore());
+
+        return user;
+      }
+
+      return UserModel.fromFirestore(userDoc);
     } on FirebaseAuthException catch (e) {
       throw _mapFirebaseAuthException(e);
+    } catch (e) {
+      // Handle any other exceptions (Firestore errors, etc.)
+      throw AuthException.unknown(e);
     }
   }
 
@@ -121,6 +150,8 @@ class AuthService {
       return user;
     } on FirebaseAuthException catch (e) {
       throw _mapFirebaseAuthException(e);
+    } catch (e) {
+      throw AuthException.unknown(e);
     }
   }
 
@@ -219,6 +250,69 @@ class AuthService {
         .update(updates);
 
     return await _getUserData(user.uid);
+  }
+
+  /// Updates the full user profile including preferences and creator bio.
+  Future<UserModel> updateFullProfile({
+    String? displayName,
+    String? photoUrl,
+    String? bio,
+    UserPreferences? preferences,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw AuthException(message: 'No authenticated user');
+    }
+
+    // Update Firebase Auth profile
+    if (displayName != null) {
+      await user.updateDisplayName(displayName);
+    }
+    if (photoUrl != null) {
+      await user.updatePhotoURL(photoUrl);
+    }
+
+    // Build Firestore update map
+    final updates = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+
+    if (displayName != null) {
+      updates['displayName'] = displayName;
+    }
+    if (photoUrl != null) {
+      updates['photoUrl'] = photoUrl;
+    }
+    if (bio != null) {
+      updates['creatorProfile.bio'] = bio;
+    }
+    if (preferences != null) {
+      updates['preferences'] = preferences.toJson();
+    }
+
+    await _firestore
+        .collection(FirestoreCollections.users)
+        .doc(user.uid)
+        .update(updates);
+
+    return await _getUserData(user.uid);
+  }
+
+  /// Deletes the current user's account and all associated data.
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw AuthException(message: 'No authenticated user');
+    }
+
+    // Delete user document from Firestore
+    await _firestore
+        .collection(FirestoreCollections.users)
+        .doc(user.uid)
+        .delete();
+
+    // Delete Firebase Auth account
+    await user.delete();
   }
 
   Future<void> updateUserRole(String userId, UserRole role) async {

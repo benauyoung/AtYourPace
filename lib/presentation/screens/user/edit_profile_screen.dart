@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +10,7 @@ import '../../../config/app_config.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/tour_providers.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -92,21 +96,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             Center(
               child: Stack(
                 children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundImage: _newPhotoPath != null
-                        ? AssetImage(_newPhotoPath!) as ImageProvider
-                        : user.photoUrl != null
-                            ? NetworkImage(user.photoUrl!)
-                            : null,
-                    child: (_newPhotoPath == null && user.photoUrl == null)
-                        ? Text(
-                            user.displayName.isNotEmpty
-                                ? user.displayName[0].toUpperCase()
-                                : '?',
-                            style: context.textTheme.headlineLarge,
-                          )
-                        : null,
+                  _ProfilePhotoAvatar(
+                    newPhotoPath: _newPhotoPath,
+                    photoUrl: user.photoUrl,
+                    displayName: user.displayName,
                   ),
                   Positioned(
                     bottom: 0,
@@ -379,8 +372,34 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     setState(() => _isSaving = true);
 
     try {
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
+      final authService = ref.read(authServiceProvider);
+      final currentUser = ref.read(currentUserProvider).value;
+      String? newPhotoUrl;
+
+      // Upload new photo if selected
+      if (_newPhotoPath != null && currentUser != null) {
+        final storageService = ref.read(storageServiceProvider);
+        newPhotoUrl = await storageService.uploadUserAvatarFile(
+          userId: currentUser.uid,
+          imageFile: File(_newPhotoPath!),
+        );
+      }
+
+      // Build preferences object
+      final preferences = UserPreferences(
+        autoPlayAudio: _autoPlayAudio,
+        triggerMode: _triggerMode,
+        offlineEnabled: _offlineEnabled,
+        preferredVoice: currentUser?.preferences.preferredVoice,
+      );
+
+      // Update profile in Firestore
+      await authService.updateFullProfile(
+        displayName: _displayNameController.text.trim(),
+        photoUrl: newPhotoUrl,
+        bio: currentUser?.isCreator == true ? _bioController.text.trim() : null,
+        preferences: preferences,
+      );
 
       if (mounted) {
         context.showSuccessSnackBar('Profile updated successfully');
@@ -398,9 +417,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   void _changePassword() {
+    final userEmail = ref.read(currentUserProvider).value?.email ?? '';
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Change Password'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -410,8 +431,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              ref.read(currentUserProvider).value?.email ?? '',
-              style: context.textTheme.bodyMedium?.copyWith(
+              userEmail,
+              style: dialogContext.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -419,13 +440,23 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.showSuccessSnackBar('Password reset email sent');
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              try {
+                final authService = ref.read(authServiceProvider);
+                await authService.sendPasswordResetEmail(userEmail);
+                if (mounted) {
+                  context.showSuccessSnackBar('Password reset email sent');
+                }
+              } catch (e) {
+                if (mounted) {
+                  context.showErrorSnackBar('Failed to send reset email: $e');
+                }
+              }
             },
             child: const Text('Send'),
           ),
@@ -437,10 +468,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void _deleteAccount() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: Text(
           'Delete Account',
-          style: TextStyle(color: context.colorScheme.error),
+          style: TextStyle(color: dialogContext.colorScheme.error),
         ),
         content: const Text(
           'Are you sure you want to delete your account? '
@@ -448,20 +479,109 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.showInfoSnackBar('Account deletion is not available in demo mode');
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await _performAccountDeletion();
             },
             style: FilledButton.styleFrom(
-              backgroundColor: context.colorScheme.error,
+              backgroundColor: dialogContext.colorScheme.error,
             ),
             child: const Text('Delete'),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _performAccountDeletion() async {
+    setState(() => _isSaving = true);
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      await authService.deleteAccount();
+
+      if (mounted) {
+        // Navigate to login screen after deletion
+        GoRouter.of(context).go('/login');
+      }
+    } catch (e) {
+      if (mounted) {
+        // Firebase requires recent authentication for sensitive operations
+        if (e.toString().contains('requires-recent-login')) {
+          context.showErrorSnackBar(
+            'Please sign out and sign in again before deleting your account',
+          );
+        } else {
+          context.showErrorSnackBar('Failed to delete account: $e');
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+}
+
+class _ProfilePhotoAvatar extends StatelessWidget {
+  final String? newPhotoPath;
+  final String? photoUrl;
+  final String displayName;
+
+  const _ProfilePhotoAvatar({
+    required this.newPhotoPath,
+    required this.photoUrl,
+    required this.displayName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // If there's a new local photo selected
+    if (newPhotoPath != null) {
+      return CircleAvatar(
+        radius: 60,
+        backgroundImage: FileImage(File(newPhotoPath!)),
+      );
+    }
+
+    // If there's a network photo URL
+    if (photoUrl != null && photoUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: photoUrl!,
+        imageBuilder: (context, imageProvider) => CircleAvatar(
+          radius: 60,
+          backgroundImage: imageProvider,
+        ),
+        placeholder: (context, url) => CircleAvatar(
+          radius: 60,
+          backgroundColor: context.colorScheme.primaryContainer,
+          child: const SizedBox(
+            width: 30,
+            height: 30,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildFallbackAvatar(context),
+      );
+    }
+
+    // Fallback to initials
+    return _buildFallbackAvatar(context);
+  }
+
+  Widget _buildFallbackAvatar(BuildContext context) {
+    return CircleAvatar(
+      radius: 60,
+      backgroundColor: context.colorScheme.primaryContainer,
+      child: Text(
+        displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+        style: context.textTheme.headlineLarge?.copyWith(
+          color: context.colorScheme.onPrimaryContainer,
+        ),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -151,6 +152,7 @@ class _UserManagementScreenState extends ConsumerState<UserManagementScreen> {
                   itemBuilder: (context, index) {
                     final user = filteredUsers[index];
                     return _UserCard(
+                      key: ValueKey(user.uid),
                       user: user,
                       isLoading: _isLoading,
                       onRoleChange: (newRole) => _changeUserRole(user, newRole),
@@ -275,6 +277,7 @@ class _UserCard extends StatelessWidget {
   final void Function(UserRole) onRoleChange;
 
   const _UserCard({
+    super.key,
     required this.user,
     required this.isLoading,
     required this.onRoleChange,
@@ -289,20 +292,7 @@ class _UserCard extends StatelessWidget {
         child: Row(
           children: [
             // Avatar
-            CircleAvatar(
-              radius: 28,
-              backgroundImage: user.photoUrl != null
-                  ? NetworkImage(user.photoUrl!)
-                  : null,
-              child: user.photoUrl == null
-                  ? Text(
-                      user.displayName.isNotEmpty
-                          ? user.displayName[0].toUpperCase()
-                          : '?',
-                      style: const TextStyle(fontSize: 20),
-                    )
-                  : null,
-            ),
+            _UserAvatar(user: user),
             const SizedBox(width: 16),
 
             // User info
@@ -390,6 +380,61 @@ class _UserCard extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+class _UserAvatar extends StatelessWidget {
+  final UserModel user;
+
+  const _UserAvatar({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    if (user.photoUrl != null && user.photoUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: user.photoUrl!,
+        imageBuilder: (context, imageProvider) => CircleAvatar(
+          radius: 28,
+          backgroundImage: imageProvider,
+        ),
+        placeholder: (context, url) => CircleAvatar(
+          radius: 28,
+          backgroundColor: context.colorScheme.primaryContainer,
+          child: const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context, url, error) => CircleAvatar(
+          radius: 28,
+          backgroundColor: context.colorScheme.primaryContainer,
+          child: Text(
+            user.displayName.isNotEmpty
+                ? user.displayName[0].toUpperCase()
+                : '?',
+            style: TextStyle(
+              fontSize: 20,
+              color: context.colorScheme.onPrimaryContainer,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return CircleAvatar(
+      radius: 28,
+      backgroundColor: context.colorScheme.primaryContainer,
+      child: Text(
+        user.displayName.isNotEmpty
+            ? user.displayName[0].toUpperCase()
+            : '?',
+        style: TextStyle(
+          fontSize: 20,
+          color: context.colorScheme.onPrimaryContainer,
+        ),
+      ),
+    );
   }
 }
 

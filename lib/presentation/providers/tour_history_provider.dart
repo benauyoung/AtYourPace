@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/app_config.dart';
 import '../../data/models/tour_model.dart';
-import 'auth_provider.dart';
 import 'tour_providers.dart';
 
 /// Record of a tour view
@@ -52,25 +52,26 @@ final tourHistoryProvider = StateNotifierProvider<TourHistoryNotifier, List<Tour
 class TourHistoryNotifier extends StateNotifier<List<TourViewRecord>> {
   final Ref _ref;
 
-  TourHistoryNotifier(this._ref) : super(_demoHistory) {
+  TourHistoryNotifier(this._ref) : super(AppConfig.demoMode ? _demoHistory : []) {
     _loadHistory();
   }
 
+  // Demo history only used when AppConfig.demoMode is true
   static final List<TourViewRecord> _demoHistory = [
     TourViewRecord(
-      tourId: 'tour_1',
+      tourId: 'demo-tour-1',
       viewedAt: DateTime.now().subtract(const Duration(hours: 2)),
       progressPercent: 75,
       completed: false,
     ),
     TourViewRecord(
-      tourId: 'tour_2',
+      tourId: 'demo-tour-2',
       viewedAt: DateTime.now().subtract(const Duration(days: 1)),
       progressPercent: 100,
       completed: true,
     ),
     TourViewRecord(
-      tourId: 'tour_3',
+      tourId: 'demo-tour-3',
       viewedAt: DateTime.now().subtract(const Duration(days: 3)),
       progressPercent: 30,
       completed: false,
@@ -107,7 +108,8 @@ class TourHistoryNotifier extends StateNotifier<List<TourViewRecord>> {
       // Take only the most recent 20
       state = records.take(20).toList();
     } catch (e) {
-      // Keep demo history on error
+      // Keep current state on error (empty list in Firebase mode)
+      debugPrint('Failed to load tour history: $e');
     }
   }
 

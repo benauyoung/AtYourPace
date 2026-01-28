@@ -20,6 +20,12 @@ A standalone web admin panel for the AYP Tour Guide application, built with Next
 - **User Management** - User list, role changes, ban/unban actions
 - **Settings** - Maintenance mode, registration, quotas, app version control
 - **Audit Logs** - Filterable admin action history
+- **Tour Creator** - Interactive map-based tour creation with:
+  - Stop management with drag-and-drop reordering
+  - Route editing with custom waypoints
+  - Touch/tablet support (44px hit targets, long-press gestures)
+  - Snap-to-road toggle for waypoint placement
+  - Responsive collapsible sidebar
 
 ## Getting Started
 
@@ -80,6 +86,11 @@ admin-web/
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/login/         # Login page
+│   │   ├── (creator)/            # Tour creator
+│   │   │   └── tour/[tourId]/
+│   │   │       ├── edit/         # Tour details editor
+│   │   │       ├── stops/        # Stop & route map editor
+│   │   │       └── preview/      # Tour preview
 │   │   └── (admin)/
 │   │       ├── dashboard/        # Dashboard with stats
 │   │       ├── review-queue/     # Pending tour reviews
@@ -101,6 +112,8 @@ admin-web/
 │   ├── hooks/                    # TanStack Query hooks
 │   │   ├── use-auth.ts
 │   │   ├── use-tours.ts
+│   │   ├── use-route-calculation.ts  # Route waypoints & ordering
+│   │   ├── use-auto-save.ts          # Auto-save functionality
 │   │   ├── use-users.ts
 │   │   ├── use-settings.ts
 │   │   └── use-audit-logs.ts
@@ -132,6 +145,32 @@ All operations are ported from Flutter's `admin_service.dart`:
 - `banUser(userId, reason)` - Ban user
 - `unbanUser(userId)` - Unban user
 - `getAuditLogs(filters)` - Query audit history
+
+## Tour Creator Features
+
+The Map Editor (`/tour/[tourId]/stops`) provides advanced route editing:
+
+### Route Waypoints
+- Click on route line to add waypoints
+- Drag waypoints to adjust route path
+- Double-click (desktop) or long-press (tablet) to remove waypoints
+- Route-aware ordering for curved routes (fixes U-shaped route issues)
+
+### Touch Support (Tablet/iPad)
+- 44px touch targets (WCAG accessibility standard)
+- Long-press (500ms) with visual feedback to remove waypoints
+- Haptic feedback when available
+- Responsive sidebar that collapses on tablets (<1024px)
+
+### API Limits
+- Mapbox Directions API supports max 25 coordinates
+- Automatic Douglas-Peucker simplification when exceeding limit
+- Proportional distribution of waypoints across route segments
+
+### Snap-to-Road
+- Toggle button in map controls
+- Uses Mapbox Map Matching API
+- Preference persisted in localStorage
 
 ## Deployment
 

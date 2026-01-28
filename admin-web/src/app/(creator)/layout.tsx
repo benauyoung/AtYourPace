@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { CreatorSidebar } from '@/components/layout/creator-sidebar';
 import { useAuth } from '@/hooks/use-auth';
 import { SidebarContext } from '@/hooks/use-sidebar';
-import { CreatorSidebar } from '@/components/layout/creator-sidebar';
+import { useRouter } from 'next/navigation';
+import { ReactNode, useEffect, useState } from 'react';
 
 interface CreatorLayoutProps {
   children: ReactNode;
@@ -48,7 +48,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
     >
       <div className="flex h-screen bg-background">
         <CreatorSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex flex-1 flex-col">
           {children}
         </div>
       </div>

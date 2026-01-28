@@ -1,13 +1,9 @@
 'use client';
 
-import { use, useState, useCallback, useEffect } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Undo2, Redo2, Loader2 } from 'lucide-react';
-import { CreatorPageWrapper } from '@/components/layout/creator-page-wrapper';
-import { Button } from '@/components/ui/button';
 import { MapEditor } from '@/components/creator/map-editor';
-import { StopListPanel } from '@/components/creator/stop-list-panel';
 import { StopDetailModal } from '@/components/creator/stop-detail-modal';
+import { StopListPanel } from '@/components/creator/stop-list-panel';
+import { CreatorPageWrapper } from '@/components/layout/creator-page-wrapper';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,32 +14,36 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useToast } from '@/hooks/use-toast';
-import {
-  useTourStops,
-  useCreateStop,
-  useUpdateStop,
-  useDeleteStop,
-  useReorderStops,
-} from '@/hooks/use-stops';
+import { Button } from '@/components/ui/button';
 import { useCreatorTour } from '@/hooks/use-creator-tours';
 import {
-  useUndoRedo,
+  useCreateStop,
+  useDeleteStop,
+  useReorderStops,
+  useTourStops,
+  useUpdateStop,
+} from '@/hooks/use-stops';
+import { useToast } from '@/hooks/use-toast';
+import {
   createAddStopCommand,
-  createRemoveStopCommand,
   createMoveStopCommand,
+  createRemoveStopCommand,
   createReorderStopsCommand,
   StopData,
+  useUndoRedo,
 } from '@/hooks/use-undo-redo';
-import { GeoPoint } from '@/types';
 import { DEFAULT_TRIGGER_RADIUS } from '@/lib/mapbox/config';
+import { GeoPoint } from '@/types';
+import { ArrowLeft, Loader2, PanelLeft, PanelLeftClose, Redo2, Undo2, X } from 'lucide-react';
+import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
 
 interface StopsPageProps {
-  params: Promise<{ tourId: string }>;
+  params: { tourId: string };
 }
 
 export default function StopsPage({ params }: StopsPageProps) {
-  const { tourId } = use(params);
+  const { tourId } = params;
   const { toast } = useToast();
 
   // Data fetching
@@ -65,10 +65,19 @@ export default function StopsPage({ params }: StopsPageProps) {
   const [editingStopId, setEditingStopId] = useState<string | null>(null);
   const [deleteStopId, setDeleteStopId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Get stops for modals
   const editingStop = stops.find((s) => s.id === editingStopId) || null;
   const deleteStop = stops.find((s) => s.id === deleteStopId) || null;
+
+  // Handle stop selection with auto-close on tablet/mobile
+  const handleStopSelect = useCallback((stopId: string | null) => {
+    setSelectedStopId(stopId);
+    if (stopId && typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
+  }, []);
 
   // Handler for adding a new stop
   const handleStopAdd = useCallback(
@@ -102,7 +111,7 @@ export default function StopsPage({ params }: StopsPageProps) {
           title: 'Stop added',
           description: `"${name}" has been added to the tour.`,
         });
-      } catch {
+      } catch (error) {
         toast({
           title: 'Error',
           description: 'Failed to add stop. Please try again.',
@@ -135,7 +144,7 @@ export default function StopsPage({ params }: StopsPageProps) {
 
       try {
         await execute(command);
-      } catch {
+      } catch (error) {
         toast({
           title: 'Error',
           description: 'Failed to move stop. Please try again.',
@@ -163,7 +172,7 @@ export default function StopsPage({ params }: StopsPageProps) {
 
       try {
         await execute(command);
-      } catch {
+      } catch (error) {
         toast({
           title: 'Error',
           description: 'Failed to reorder stops. Please try again.',
@@ -188,7 +197,7 @@ export default function StopsPage({ params }: StopsPageProps) {
           title: 'Stop updated',
           description: 'Stop details have been saved.',
         });
-      } catch {
+      } catch (error) {
         toast({
           title: 'Error',
           description: 'Failed to save stop. Please try again.',
@@ -219,7 +228,7 @@ export default function StopsPage({ params }: StopsPageProps) {
         await deleteStopMutation.mutateAsync({ tourId, stopId });
       },
       async (stop) => {
-        await createStopMutation.mutateAsync({
+        const stopId = await createStopMutation.mutateAsync({
           tourId,
           input: {
             name: stop.name,
@@ -229,7 +238,7 @@ export default function StopsPage({ params }: StopsPageProps) {
             order: stop.order,
           },
         });
-        return stop.id;
+        return stopId;
       },
       stopData
     );
@@ -243,7 +252,7 @@ export default function StopsPage({ params }: StopsPageProps) {
         title: 'Stop deleted',
         description: `"${deleteStop.name}" has been removed.`,
       });
-    } catch {
+    } catch (error) {
       toast({
         title: 'Error',
         description: 'Failed to delete stop. Please try again.',
@@ -262,43 +271,23 @@ export default function StopsPage({ params }: StopsPageProps) {
     toast,
   ]);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Delete selected stop
       if (e.key === 'Delete' && selectedStopId && !editingStopId) {
         e.preventDefault();
         setDeleteStopId(selectedStopId);
       }
 
-      // Undo: Ctrl+Z / Cmd+Z
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
-        if (canUndo) {
-          undo();
-          toast({
-            title: 'Undo',
-            description: 'Action undone.',
-          });
-        }
+        if (canUndo) undo();
       }
 
-      // Redo: Ctrl+Y / Cmd+Y or Ctrl+Shift+Z / Cmd+Shift+Z
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        (e.key === 'y' || (e.key === 'z' && e.shiftKey))
-      ) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
         e.preventDefault();
-        if (canRedo) {
-          redo();
-          toast({
-            title: 'Redo',
-            description: 'Action redone.',
-          });
-        }
+        if (canRedo) redo();
       }
 
-      // Escape: deselect stop or exit add mode
       if (e.key === 'Escape') {
         if (isAddMode) {
           setIsAddMode(false);
@@ -310,16 +299,7 @@ export default function StopsPage({ params }: StopsPageProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    selectedStopId,
-    editingStopId,
-    isAddMode,
-    canUndo,
-    canRedo,
-    undo,
-    redo,
-    toast,
-  ]);
+  }, [selectedStopId, editingStopId, isAddMode, canUndo, canRedo, undo, redo]);
 
   const isLoading = tourLoading || stopsLoading;
 
@@ -334,85 +314,137 @@ export default function StopsPage({ params }: StopsPageProps) {
   }
 
   return (
-    <CreatorPageWrapper title="Manage Stops">
-      <div className="flex h-[calc(100vh-8rem)] flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href={`/tour/${tourId}/edit`}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Link>
-            </Button>
-            <div>
-              <h2 className="font-semibold">{tourData?.version.title || 'Loading...'}</h2>
-              <p className="text-sm text-muted-foreground">
-                {stops.length} stop{stops.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-
-          {/* Undo/Redo buttons */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                undo();
-                toast({ title: 'Undo', description: 'Action undone.' });
-              }}
-              disabled={!canUndo}
-              title="Undo (Ctrl+Z)"
-            >
-              <Undo2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                redo();
-                toast({ title: 'Redo', description: 'Action redone.' });
-              }}
-              disabled={!canRedo}
-              title="Redo (Ctrl+Y)"
-            >
-              <Redo2 className="h-4 w-4" />
-            </Button>
+    <CreatorPageWrapper title="Manage Stops" noPadding>
+      {/* Header bar */}
+      <header className="flex-none flex items-center justify-between border-b px-4 py-3 bg-background z-30">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/tour/${tourId}/edit`}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Link>
+          </Button>
+          <div>
+            <h2 className="font-semibold text-foreground leading-tight">
+              {tourData?.version.title || 'Loading...'}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {stops.length} stop{stops.length !== 1 ? 's' : ''}
+            </p>
           </div>
         </div>
 
-        {/* Main content */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Stop list panel */}
-          <div className="w-80 flex-shrink-0 border-r bg-muted/30">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              undo();
+              toast({ title: 'Undo', description: 'Action undone.' });
+            }}
+            disabled={!canUndo}
+            title="Undo (Ctrl+Z)"
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              redo();
+              toast({ title: 'Redo', description: 'Action redone.' });
+            }}
+            disabled={!canRedo}
+            title="Redo (Ctrl+Y)"
+          >
+            <Redo2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </header>
+
+      {/* Main content: sidebar + map as flex siblings */}
+      <div className="flex-1 flex min-h-0">
+        {/* Desktop sidebar - always visible, in document flow */}
+        <aside
+          className={`
+            hidden lg:flex flex-col flex-shrink-0 bg-background border-r
+            transition-[width] duration-300 ease-in-out overflow-hidden
+            ${isSidebarOpen ? 'w-80' : 'w-0 border-r-0'}
+          `}
+        >
+          <div className="w-80 h-full flex flex-col">
             <StopListPanel
               stops={stops}
               selectedStopId={selectedStopId}
-              onStopSelect={setSelectedStopId}
-              onStopEdit={setEditingStopId}
-              onStopDelete={setDeleteStopId}
+              onStopSelect={handleStopSelect}
+              onStopEdit={(id) => setEditingStopId(id)}
+              onStopDelete={(id) => setDeleteStopId(id)}
               onReorder={handleReorder}
             />
           </div>
+        </aside>
 
-          {/* Map editor */}
-          <div className="flex-1">
-            <MapEditor
-              stops={stops}
-              selectedStopId={selectedStopId}
-              onStopSelect={setSelectedStopId}
-              onStopAdd={handleStopAdd}
-              onStopMove={handleStopMove}
-              centerLocation={tourData?.tour.startLocation}
-              isAddMode={isAddMode}
-              onAddModeChange={setIsAddMode}
-            />
-          </div>
+        {/* Map area */}
+        <div className="flex-1 min-w-0 relative">
+          {/* Mobile sidebar toggle */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="absolute top-4 left-4 z-20 lg:z-10 shadow-md h-10 w-10 p-0"
+          >
+            {isSidebarOpen ? <PanelLeftClose className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
+          </Button>
+
+          {/* Map fills entire area */}
+          <MapEditor
+            stops={stops}
+            selectedStopId={selectedStopId}
+            onStopSelect={handleStopSelect}
+            onStopAdd={handleStopAdd}
+            onStopMove={handleStopMove}
+            centerLocation={tourData?.tour.startLocation}
+            isAddMode={isAddMode}
+            onAddModeChange={setIsAddMode}
+            tourType={tourData?.tour.tourType}
+          />
         </div>
+
+        {/* Mobile sidebar - slides over map */}
+        {isSidebarOpen && (
+          <div className="lg:hidden fixed inset-0 z-40">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/30"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+            {/* Drawer */}
+            <aside className="absolute inset-y-0 left-0 w-80 bg-background border-r flex flex-col shadow-xl">
+              <div className="flex justify-end p-2 border-b">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="h-10 w-10 p-0"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <StopListPanel
+                  stops={stops}
+                  selectedStopId={selectedStopId}
+                  onStopSelect={handleStopSelect}
+                  onStopEdit={(id) => setEditingStopId(id)}
+                  onStopDelete={(id) => setDeleteStopId(id)}
+                  onReorder={handleReorder}
+                />
+              </div>
+            </aside>
+          </div>
+        )}
       </div>
 
-      {/* Edit stop modal */}
       <StopDetailModal
         stop={editingStop}
         isOpen={!!editingStopId}
@@ -421,14 +453,12 @@ export default function StopsPage({ params }: StopsPageProps) {
         isSaving={isSaving}
       />
 
-      {/* Delete confirmation dialog */}
       <AlertDialog open={!!deleteStopId} onOpenChange={() => setDeleteStopId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Stop</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{deleteStop?.name}&quot;? This
-              action can be undone using Ctrl+Z.
+              Are you sure you want to delete "{deleteStop?.name}"? This action can be undone using Ctrl+Z.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

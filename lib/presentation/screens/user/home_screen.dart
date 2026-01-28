@@ -9,6 +9,9 @@ import '../../providers/auth_provider.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/recommendations_provider.dart';
 import '../../providers/tour_providers.dart';
+import '../../widgets/common/error_view.dart';
+import '../../widgets/common/skeleton_loader.dart';
+import 'discover_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -128,8 +131,9 @@ class HomeScreen extends ConsumerWidget {
                       itemBuilder: (context, index) {
                         final tour = tours[index];
                         return _FeaturedTourCard(
+                          key: ValueKey(tour.id),
                           tour: tour,
-                          onTap: () => context.go(
+                          onTap: () => context.push(
                             RouteNames.tourDetailsPath(tour.id),
                           ),
                         );
@@ -137,13 +141,25 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   );
                 },
-                loading: () => const SizedBox(
+                loading: () => SizedBox(
                   height: 220,
-                  child: Center(child: CircularProgressIndicator()),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: 3,
+                    itemBuilder: (context, index) => const Padding(
+                      padding: EdgeInsets.only(right: 16),
+                      child: SizedBox(
+                        width: 280,
+                        child: TourCardSkeleton(),
+                      ),
+                    ),
+                  ),
                 ),
-                error: (error, _) => Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text('Error loading tours: $error'),
+                error: (error, _) => ErrorView(
+                  message: error.toString(),
+                  onRetry: () => ref.invalidate(featuredToursProvider),
+                  compact: true,
                 ),
               ),
               const SizedBox(height: 24),
@@ -168,9 +184,12 @@ class HomeScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: TourCategory.values.map((category) {
                     return _CategoryCard(
+                      key: ValueKey(category),
                       category: category,
                       onTap: () {
-                        // TODO: Navigate to category
+                        // Set the category filter and navigate to discover
+                        ref.read(selectedCategoryProvider.notifier).state = category;
+                        context.go(RouteNames.discover);
                       },
                     );
                   }).toList(),
@@ -226,6 +245,7 @@ class _FeaturedTourCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _FeaturedTourCard({
+    super.key,
     required this.tour,
     required this.onTap,
   });
@@ -287,6 +307,7 @@ class _FeaturedTourCard extends StatelessWidget {
                             Icons.star,
                             size: 16,
                             color: Colors.amber,
+                            semanticLabel: 'Rating',
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -329,6 +350,7 @@ class _CategoryCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _CategoryCard({
+    super.key,
     required this.category,
     required this.onTap,
   });
@@ -421,8 +443,9 @@ class _RecommendedSection extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final rec = recommendations[index];
                   return _RecommendedTourCard(
+                    key: ValueKey(rec.tour.id),
                     recommendation: rec,
-                    onTap: () => context.go(
+                    onTap: () => context.push(
                       RouteNames.tourDetailsPath(rec.tour.id),
                     ),
                   );
@@ -443,6 +466,7 @@ class _RecommendedTourCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _RecommendedTourCard({
+    super.key,
     required this.recommendation,
     required this.onTap,
   });
@@ -532,7 +556,7 @@ class _RecommendedTourCard extends StatelessWidget {
                       Row(
                         children: [
                           if (tour.stats.averageRating > 0) ...[
-                            const Icon(Icons.star, size: 12, color: Colors.amber),
+                            const Icon(Icons.star, size: 12, color: Colors.amber, semanticLabel: 'Rating'),
                             const SizedBox(width: 2),
                             Text(
                               tour.stats.averageRating.toStringAsFixed(1),

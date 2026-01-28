@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../config/app_config.dart';
@@ -841,6 +842,7 @@ class _CoverImagePickerState extends ConsumerState<_CoverImagePicker> {
               ListTile(
                 leading: const Icon(Icons.camera_alt),
                 title: const Text('Take Photo'),
+                subtitle: const Text('Take a photo and crop it'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.camera);
@@ -849,6 +851,7 @@ class _CoverImagePickerState extends ConsumerState<_CoverImagePicker> {
               ListTile(
                 leading: const Icon(Icons.photo_library),
                 title: const Text('Choose from Gallery'),
+                subtitle: const Text('Select an image and crop it'),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
@@ -859,6 +862,49 @@ class _CoverImagePickerState extends ConsumerState<_CoverImagePicker> {
         ),
       ),
     );
+  }
+
+  Future<String?> _cropImage(String imagePath) async {
+    // Skip cropping on web platform
+    if (kIsWeb) return imagePath;
+
+    try {
+      final croppedFile = await ImageCropper().cropImage(
+        sourcePath: imagePath,
+        compressQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        aspectRatio: const CropAspectRatio(ratioX: 16, ratioY: 9),
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Cover Image',
+            toolbarColor: Theme.of(context).colorScheme.primary,
+            toolbarWidgetColor: Theme.of(context).colorScheme.onPrimary,
+            initAspectRatio: CropAspectRatioPreset.ratio16x9,
+            lockAspectRatio: false,
+            aspectRatioPresets: [
+              CropAspectRatioPreset.ratio16x9,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.original,
+            ],
+          ),
+          IOSUiSettings(
+            title: 'Crop Cover Image',
+            aspectRatioPresets: [
+              CropAspectRatioPreset.ratio16x9,
+              CropAspectRatioPreset.ratio3x2,
+              CropAspectRatioPreset.original,
+            ],
+          ),
+        ],
+      );
+
+      return croppedFile?.path;
+    } catch (e) {
+      debugPrint('Error cropping image: $e');
+      // Return original path if cropping fails
+      return imagePath;
+    }
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -873,8 +919,12 @@ class _CoverImagePickerState extends ConsumerState<_CoverImagePicker> {
 
       if (image == null) return;
 
+      // Crop the image
+      final croppedPath = await _cropImage(image.path);
+      if (croppedPath == null) return;
+
       setState(() {
-        _localImagePath = image.path;
+        _localImagePath = croppedPath;
         _isUploading = true;
       });
 
@@ -882,7 +932,7 @@ class _CoverImagePickerState extends ConsumerState<_CoverImagePicker> {
         // In demo mode, just show the local preview
         await Future.delayed(const Duration(milliseconds: 500));
         setState(() => _isUploading = false);
-        widget.onImageSelected(image.path);
+        widget.onImageSelected(croppedPath);
         if (mounted) {
           context.showSuccessSnackBar('Cover image selected');
         }
@@ -893,8 +943,8 @@ class _CoverImagePickerState extends ConsumerState<_CoverImagePicker> {
       final storageService = ref.read(storageServiceProvider);
       final tourId = widget.tourId ?? 'temp_${DateTime.now().millisecondsSinceEpoch}';
 
-      // Read file bytes
-      final bytes = await File(image.path).readAsBytes();
+      // Read cropped file bytes
+      final bytes = await File(croppedPath).readAsBytes();
 
       final downloadUrl = await storageService.uploadTourCover(
         tourId: tourId,

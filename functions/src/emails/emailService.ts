@@ -1,11 +1,11 @@
 import { Resend } from 'resend';
 import * as functions from 'firebase-functions';
 
-// Initialize Resend with API key from environment config
+// Initialize Resend with API key from environment variables
 const getResend = () => {
-  const apiKey = functions.config().resend?.api_key;
+  const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
-    functions.logger.warn('Resend API key not configured');
+    functions.logger.warn('Resend API key not configured (set RESEND_API_KEY in .env)');
     return null;
   }
   return new Resend(apiKey);

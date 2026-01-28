@@ -199,6 +199,7 @@ class TourCard extends ConsumerWidget {
                           Icons.play_arrow,
                           size: 16,
                           color: context.colorScheme.onSurfaceVariant,
+                          semanticLabel: 'Plays',
                         ),
                         const SizedBox(width: 2),
                         Text(
