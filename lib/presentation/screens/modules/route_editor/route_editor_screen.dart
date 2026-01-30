@@ -11,15 +11,19 @@ import 'widgets/waypoint_list.dart';
 
 /// Screen for editing tour routes and waypoints
 class RouteEditorScreen extends ConsumerStatefulWidget {
-  final String tourId;
-  final String versionId;
+  final String? tourId;
+  final String? versionId;
   final String? routeId;
+
+  /// When true, hides the app bar and adapts for embedding in another screen
+  final bool embedded;
 
   const RouteEditorScreen({
     super.key,
-    required this.tourId,
-    required this.versionId,
+    this.tourId,
+    this.versionId,
     this.routeId,
+    this.embedded = false,
   });
 
   @override
@@ -35,10 +39,10 @@ class _RouteEditorScreenState extends ConsumerState<RouteEditorScreen> {
     super.initState();
     // Initialize route editor if editing existing route
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.routeId != null) {
+      if (widget.routeId != null && widget.tourId != null && widget.versionId != null) {
         final params = (
-          tourId: widget.tourId,
-          versionId: widget.versionId,
+          tourId: widget.tourId!,
+          versionId: widget.versionId!,
           routeId: widget.routeId,
         );
         ref.read(routeEditorProvider(params).notifier).initialize();
@@ -48,15 +52,52 @@ class _RouteEditorScreenState extends ConsumerState<RouteEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Use empty string defaults for new tours
+    final tourId = widget.tourId ?? '';
+    final versionId = widget.versionId ?? '';
     final params = (
-      tourId: widget.tourId,
-      versionId: widget.versionId,
+      tourId: tourId,
+      versionId: versionId,
       routeId: widget.routeId,
     );
     final routeState = ref.watch(routeEditorProvider(params));
     final notifier = ref.read(routeEditorProvider(params).notifier);
     final isDesktop = MediaQuery.of(context).size.width > 900;
 
+    // Build body content
+    final body = Column(
+      children: [
+        // Tools panel
+        RouteToolsPanel(
+          tourId: tourId,
+          versionId: versionId,
+          routeId: widget.routeId,
+          onSave: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Route saved'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+          onClear: () => _showClearConfirmation(context, notifier),
+          onFitToWaypoints: () => _mapKey.currentState?.fitToWaypoints(),
+        ),
+        // Main content
+        Expanded(
+          child: isDesktop
+              ? _buildDesktopLayout(routeState, notifier)
+              : _buildMobileLayout(routeState, notifier),
+        ),
+      ],
+    );
+
+    // In embedded mode, return just the body without scaffold
+    if (widget.embedded) {
+      return body;
+    }
+
+    // Full screen mode with app bar
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.routeId != null ? 'Edit Route' : 'Create Route'),
@@ -96,32 +137,7 @@ class _RouteEditorScreenState extends ConsumerState<RouteEditorScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Tools panel
-          RouteToolsPanel(
-            tourId: widget.tourId,
-            versionId: widget.versionId,
-            routeId: widget.routeId,
-            onSave: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Route saved'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            onClear: () => _showClearConfirmation(context, notifier),
-            onFitToWaypoints: () => _mapKey.currentState?.fitToWaypoints(),
-          ),
-          // Main content
-          Expanded(
-            child: isDesktop
-                ? _buildDesktopLayout(routeState, notifier)
-                : _buildMobileLayout(routeState, notifier),
-          ),
-        ],
-      ),
+      body: body,
       // FAB for adding waypoints (mobile only)
       floatingActionButton: !isDesktop && routeState.selectedWaypointIndex != null
           ? FloatingActionButton(
@@ -133,6 +149,9 @@ class _RouteEditorScreenState extends ConsumerState<RouteEditorScreen> {
   }
 
   Widget _buildDesktopLayout(RouteEditorState routeState, RouteEditorNotifier notifier) {
+    final tourId = widget.tourId ?? '';
+    final versionId = widget.versionId ?? '';
+
     return Row(
       children: [
         // Map
@@ -149,8 +168,8 @@ class _RouteEditorScreenState extends ConsumerState<RouteEditorScreen> {
                 // Waypoint list
                 Expanded(
                   child: WaypointList(
-                    tourId: widget.tourId,
-                    versionId: widget.versionId,
+                    tourId: tourId,
+                    versionId: versionId,
                     routeId: widget.routeId,
                     onWaypointTapped: (index) {
                       notifier.selectWaypoint(index);
@@ -164,8 +183,8 @@ class _RouteEditorScreenState extends ConsumerState<RouteEditorScreen> {
                 // Waypoint editor (if selected)
                 if (routeState.selectedWaypointIndex != null)
                   TriggerRadiusEditor(
-                    tourId: widget.tourId,
-                    versionId: widget.versionId,
+                    tourId: tourId,
+                    versionId: versionId,
                     routeId: widget.routeId,
                     waypointIndex: routeState.selectedWaypointIndex!,
                     onClose: () => notifier.selectWaypoint(null),
@@ -178,6 +197,9 @@ class _RouteEditorScreenState extends ConsumerState<RouteEditorScreen> {
   }
 
   Widget _buildMobileLayout(RouteEditorState routeState, RouteEditorNotifier notifier) {
+    final tourId = widget.tourId ?? '';
+    final versionId = widget.versionId ?? '';
+
     if (!_showWaypointList) {
       return _buildMap(routeState, notifier);
     }
@@ -193,8 +215,8 @@ class _RouteEditorScreenState extends ConsumerState<RouteEditorScreen> {
         Expanded(
           flex: 1,
           child: WaypointList(
-            tourId: widget.tourId,
-            versionId: widget.versionId,
+            tourId: tourId,
+            versionId: versionId,
             routeId: widget.routeId,
             onWaypointTapped: (index) {
               notifier.selectWaypoint(index);
@@ -210,12 +232,15 @@ class _RouteEditorScreenState extends ConsumerState<RouteEditorScreen> {
   }
 
   Widget _buildMap(RouteEditorState routeState, RouteEditorNotifier notifier) {
+    final tourId = widget.tourId ?? '';
+    final versionId = widget.versionId ?? '';
+
     return Stack(
       children: [
         InteractiveRouteMap(
           key: _mapKey,
-          tourId: widget.tourId,
-          versionId: widget.versionId,
+          tourId: tourId,
+          versionId: versionId,
           routeId: widget.routeId,
           onMapTapped: (location) => _showAddWaypointDialog(location, notifier),
           onMapLongPressed: (location) => _quickAddWaypoint(location, notifier),
@@ -308,12 +333,14 @@ class _RouteEditorScreenState extends ConsumerState<RouteEditorScreen> {
 
   void _showWaypointEditor(int index) {
     final isDesktop = MediaQuery.of(context).size.width > 900;
+    final tourId = widget.tourId ?? '';
+    final versionId = widget.versionId ?? '';
 
     if (isDesktop) {
       // On desktop, the editor is shown in the side panel
       final params = (
-        tourId: widget.tourId,
-        versionId: widget.versionId,
+        tourId: tourId,
+        versionId: versionId,
         routeId: widget.routeId,
       );
       ref.read(routeEditorProvider(params).notifier).selectWaypoint(index);
@@ -321,8 +348,8 @@ class _RouteEditorScreenState extends ConsumerState<RouteEditorScreen> {
       // On mobile, show as bottom sheet
       TriggerRadiusBottomSheet.show(
         context,
-        tourId: widget.tourId,
-        versionId: widget.versionId,
+        tourId: tourId,
+        versionId: versionId,
         routeId: widget.routeId,
         waypointIndex: index,
       );

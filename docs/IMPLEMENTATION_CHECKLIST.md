@@ -1,8 +1,8 @@
 # Implementation Checklist - Tour Manager Rebuild
 
-**Last Updated**: January 30, 2026 (Evening)
+**Last Updated**: January 30, 2026 (Night)
 **Duration**: 5 weeks
-**Status**: Week 2 - Route Editor (Days 1-3 Complete)
+**Status**: Week 2 - Complete (Route Editor + Content Editor Basic Structure)
 
 ---
 
@@ -275,53 +275,79 @@ This checklist tracks the week-by-week implementation of the Tour Manager rebuil
 - [ ] Test trigger radius visualization
 - [ ] Test waypoint drag-and-drop
 
-### Day 4-5: Content Editor - Basic Structure ⏳
+### Day 4-5: Content Editor - Basic Structure ✅
 
 #### Screen Structure
-- [ ] Create `lib/presentation/screens/modules/content_editor/` folder
-- [ ] Create `tour_editor_screen.dart` (tab-based layout)
-- [ ] Create `modules/` subfolder for tabs
-- [ ] Create `widgets/` subfolder
-- [ ] Create `providers/` subfolder
+- [x] Create `lib/presentation/screens/modules/content_editor/` folder
+- [x] Create `tour_editor_screen.dart` (tab-based layout)
+- [x] Create `modules/` subfolder for tabs
+- [x] Create `providers/` subfolder
+- [x] Create `content_editor.dart` (exports)
 
 #### Tab Modules
-- [ ] Create `modules/basic_info_module.dart`
-  - [ ] Title input
-  - [ ] Description textarea
-  - [ ] Category dropdown
-  - [ ] Tour type selector
-  - [ ] City/region/country inputs
-  - [ ] Tags input
+- [x] Create `modules/basic_info_module.dart`
+  - [x] Title input
+  - [x] Description textarea
+  - [x] Category dropdown
+  - [x] Tour type selector (SegmentedButton)
+  - [x] Difficulty selector (SegmentedButton)
+  - [x] City/region/country inputs
+  - [x] Tags placeholder
 
-- [ ] Create `modules/route_module.dart`
-  - [ ] Route Editor integration
-  - [ ] Route summary display
-  - [ ] Quick edit button
+- [x] Create `modules/route_module.dart`
+  - [x] Route Editor integration (embedded mode)
+  - [x] Route summary display (stops, distance, duration)
+  - [x] Full screen button
+  - [x] Empty state for no route
 
-- [ ] Create `modules/stops_module.dart`
-  - [ ] Stops list from route waypoints
-  - [ ] Inline editing
-  - [ ] Click to open Stop Editor
+- [x] Create `modules/stops_module.dart`
+  - [x] Stops list with ReorderableListView
+  - [x] Inline editing (title, description)
+  - [x] Expandable stop cards
+  - [x] Audio status indicators
+  - [x] Audio section with record/generate options
+  - [x] Delete confirmation dialog
 
-- [ ] Create `modules/media_module.dart`
-  - [ ] Cover image upload
-  - [ ] Image cropping tool
-  - [ ] Gallery images upload
+- [x] Create `modules/media_module.dart`
+  - [x] Cover image upload/preview
+  - [x] Image guidelines card
+  - [x] Stop images gallery preview
+  - [x] Image placeholder picker
 
-- [ ] Create `modules/pricing_module.dart`
-  - [ ] Free/Paid toggle
-  - [ ] Price input
-  - [ ] Currency selector
-  - [ ] Pricing tiers (placeholder)
+- [x] Create `modules/pricing_module.dart`
+  - [x] Free/Paid toggle cards
+  - [x] Price input with currency symbol
+  - [x] Quick price buttons
+  - [x] Currency selector (EUR, USD, GBP)
+  - [x] Pricing guidelines
+  - [x] Revenue breakdown display
 
 #### Providers
-- [ ] Create `providers/tour_editor_provider.dart`
-  - [ ] Load existing tour or create new
-  - [ ] Update basic info
-  - [ ] Update pricing
-  - [ ] Save tour
+- [x] Create `providers/tour_editor_provider.dart`
+  - [x] TourEditorState with all tour fields
+  - [x] TourEditorNotifier with full CRUD
+  - [x] Load existing tour or create new
+  - [x] Update title, description, basic info
+  - [x] Update cover image
+  - [x] Update pricing (free/paid/currency)
+  - [x] Manage stops (add/remove/reorder)
+  - [x] Save tour to Firestore
+  - [x] Validation errors getter
+  - [x] Completion progress tracking
+
+#### Route Editor Updates
+- [x] Added `embedded` parameter for integration
+- [x] Made tourId/versionId optional for new tours
+- [x] Updated all internal widget references
 
 #### Testing
+- [x] Write unit tests for TourEditorProvider (24 tests)
+  - [x] State tests (defaults, getters)
+  - [x] Title/description update tests
+  - [x] Pricing tests (free/paid)
+  - [x] Stops management tests
+  - [x] Reorder tests
+  - [x] Tab navigation tests
 - [ ] Write widget tests for all tabs
 - [ ] Write integration tests for tour creation
 - [ ] Test tab navigation
@@ -782,13 +808,13 @@ This checklist tracks the week-by-week implementation of the Tour Manager rebuil
 
 ## Progress Summary
 
-**Overall Progress**: 30% (Week 1 complete, Week 2 Route Editor complete)
+**Overall Progress**: 40% (Week 1 complete, Week 2 complete)
 
-**Week 1**: ✅ Complete
-**Week 2**: 🔄 In Progress (Days 1-3 Complete)
+**Week 1**: ✅ Complete (Foundation - Data Models, Repositories, Services, Cloud Functions)
+**Week 2**: ✅ Complete (Route Editor + Content Editor Basic Structure)
 **Week 3**: ⏳ Not Started
 **Week 4**: ⏳ Not Started
 **Week 5**: ⏳ Not Started
 
-**Last Updated**: January 30, 2026 (Evening)
-**Next Milestone**: Complete Week 2 Content Editor (Days 4-5)
+**Last Updated**: January 30, 2026 (Night)
+**Next Milestone**: Start Week 3 - Voice Generation, Tour Manager, Publishing
