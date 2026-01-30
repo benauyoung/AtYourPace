@@ -1,9 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../models/route_model.dart';
 import '../models/waypoint_model.dart';
+
+/// Provider for RouteRepository
+final routeRepositoryProvider = Provider<RouteRepository>((ref) {
+  return RouteRepository(firestore: FirebaseFirestore.instance);
+});
 
 /// Repository for managing route data including waypoints.
 class RouteRepository {

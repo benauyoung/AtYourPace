@@ -1,3 +1,5 @@
+import 'package:latlong2/latlong.dart';
+
 class MapboxConfig {
   MapboxConfig._();
 
@@ -8,6 +10,7 @@ class MapboxConfig {
   // Map styles
   // You can create custom styles at: https://studio.mapbox.com/
   static const String defaultStyle = 'mapbox://styles/mapbox/streets-v12';
+  static const String styleStreets = 'mapbox://styles/mapbox/streets-v12';
   static const String outdoorStyle = 'mapbox://styles/mapbox/outdoors-v12';
   static const String satelliteStyle = 'mapbox://styles/mapbox/satellite-streets-v12';
   static const String darkStyle = 'mapbox://styles/mapbox/dark-v11';
@@ -24,6 +27,9 @@ class MapboxConfig {
   // Default center (will be overridden by user location)
   static const double defaultLatitude = 40.7128;  // New York City
   static const double defaultLongitude = -74.0060;
+
+  /// Default center as LatLng
+  static LatLng get defaultCenter => LatLng(defaultLatitude, defaultLongitude);
 
   // Navigation settings
   static const String navigationProfile = 'mapbox/driving-traffic';

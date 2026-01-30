@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../config/mapbox_config.dart';
 import '../data/models/route_model.dart';
 import '../data/models/waypoint_model.dart';
 
@@ -423,3 +425,10 @@ class RouteSnappingService {
     return points;
   }
 }
+
+/// Provider for RouteSnappingService
+final routeSnappingServiceProvider = Provider<RouteSnappingService>((ref) {
+  return RouteSnappingService(
+    mapboxAccessToken: MapboxConfig.accessToken,
+  );
+});
