@@ -211,5 +211,178 @@ service cloud.firestore {
       // Only admins can modify config
       allow write: if isAdmin();
     }
+
+    // ============================================
+    // PUBLISHING SUBMISSIONS (New for Tour Manager Rebuild)
+    // ============================================
+
+    match /publishingSubmissions/{submissionId} {
+      // Creators can read their own submissions
+      // Admins can read all submissions
+      allow read: if isAuthenticated() &&
+        (resource.data.creatorId == request.auth.uid || isAdmin());
+
+      // Creators can create submissions for their own tours
+      allow create: if isCreator() &&
+        request.resource.data.creatorId == request.auth.uid &&
+        request.resource.data.status == 'submitted';
+
+      // Creators can update their own submissions (withdraw, resubmit)
+      // Admins can update any submission (review actions)
+      allow update: if isAuthenticated() &&
+        (resource.data.creatorId == request.auth.uid || isAdmin());
+
+      // Only admins can delete submissions
+      allow delete: if isAdmin();
+
+      // Review Feedback subcollection
+      match /reviewFeedback/{feedbackId} {
+        // Creators can read feedback on their submissions
+        // Admins can read all feedback
+        allow read: if isAuthenticated() &&
+          (get(/databases/$(database)/documents/publishingSubmissions/$(submissionId)).data.creatorId == request.auth.uid || isAdmin());
+
+        // Only admins can create feedback
+        allow create: if isAdmin() &&
+          request.resource.data.reviewerId == request.auth.uid;
+
+        // Only admins can update feedback
+        allow update: if isAdmin();
+
+        // Only admins can delete feedback
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ============================================
+    // COLLECTIONS (Curated Tour Collections)
+    // ============================================
+
+    match /collections/{collectionId} {
+      // Anyone can read collections
+      allow read: if true;
+
+      // Only admins can create/update/delete collections
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // ANALYTICS (Tour Analytics)
+    // ============================================
+
+    match /analytics/{tourId} {
+      // Tour owners can read their own analytics
+      // Admins can read all analytics
+      allow read: if isAuthenticated() &&
+        (isTourOwner(tourId) || isAdmin());
+
+      // Only Cloud Functions can write (no client writes)
+      allow write: if false;
+
+      // Analytics periods subcollection
+      match /periods/{periodId} {
+        allow read: if isAuthenticated() &&
+          (isTourOwner(tourId) || isAdmin());
+
+        // Only Cloud Functions can write
+        allow write: if false;
+      }
+    }
+
+    // ============================================
+    // TOUR VERSIONS (Standalone Collection for Routes)
+    // ============================================
+
+    match /versions/{versionId} {
+      // Read if user owns the tour or is admin
+      allow read: if isAuthenticated();
+
+      // Tour owners and admins can write
+      allow write: if isCreator() || isAdmin();
+
+      // Routes subcollection
+      match /routes/{routeId} {
+        allow read: if isAuthenticated();
+        allow write: if isCreator() || isAdmin();
+
+        // Waypoints subcollection
+        match /waypoints/{waypointId} {
+          allow read: if isAuthenticated();
+          allow write: if isCreator() || isAdmin();
+        }
+      }
+    }
+
+    // ============================================
+    // VOICE GENERATIONS
+    // ============================================
+
+    match /stops/{stopId}/voiceGenerations/{voiceGenId} {
+      // Creators can read their own voice generations
+      allow read: if isAuthenticated();
+
+      // Creators can create/update voice generations
+      allow create, update: if isCreator();
+
+      // Only Cloud Functions can write completion status
+      // Creators can delete
+      allow delete: if isCreator() || isAdmin();
+    }
+
+    // ============================================
+    // TOUR PROGRESS (Collection Group for Analytics)
+    // ============================================
+
+    match /{path=**}/tourProgress/{progressId} {
+      // Users can read/write their own progress
+      allow read, write: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================
+    // DOWNLOADS (Collection Group for Analytics)
+    // ============================================
+
+    match /{path=**}/downloads/{downloadId} {
+      // Users can read their own downloads
+      allow read: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+
+      // Users can create downloads
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Users can update/delete their own downloads
+      allow update, delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================
+    // FAVORITES (Collection Group for Analytics)
+    // ============================================
+
+    match /{path=**}/favorites/{favoriteId} {
+      // Users can read their own favorites
+      allow read: if isAuthenticated();
+
+      // Users can create/delete favorites
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+
+      allow delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================
+    // AUDIT LOGS (Admin Only)
+    // ============================================
+
+    match /auditLogs/{logId} {
+      // Only admins can read audit logs
+      allow read: if isAdmin();
+
+      // Only Cloud Functions can write
+      allow write: if false;
+    }
   }
 }

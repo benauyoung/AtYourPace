@@ -20,3 +20,18 @@ export { setupInitialAdmin } from './admin/setupAdmin';
 
 // Export seed data function (temporary - remove after testing)
 export { seedTestTour, seedClamartTour } from './admin/seedData';
+
+// Export publishing workflow functions (Tour Manager Rebuild)
+export {
+  onSubmissionCreated,
+  onSubmissionUpdated,
+  onFeedbackCreated,
+} from './publishing/publishingFunctions';
+
+// Export analytics functions (Tour Manager Rebuild)
+export {
+  aggregateTourAnalytics,
+  triggerTourAnalytics,
+  onTourProgressCreated,
+  onTourProgressUpdated,
+} from './analytics/analyticsFunctions';

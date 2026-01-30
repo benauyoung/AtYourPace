@@ -67,6 +67,17 @@ class FirestoreCollections {
   static const String config = 'config';
   static const String tourProgress = 'tourProgress';
   static const String downloads = 'downloads';
+
+  // New collections for Tour Manager rebuild
+  static const String pricing = 'pricing';
+  static const String routes = 'routes';
+  static const String waypoints = 'waypoints';
+  static const String publishingSubmissions = 'publishingSubmissions';
+  static const String reviewFeedback = 'reviewFeedback';
+  static const String voiceGenerations = 'voiceGenerations';
+  static const String collections = 'collections';
+  static const String analytics = 'analytics';
+  static const String analyticsPeriods = 'periods';
 }
 
 class StoragePaths {
