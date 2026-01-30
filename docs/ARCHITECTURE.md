@@ -89,20 +89,48 @@ The app follows a modified Clean Architecture pattern:
 lib/
 ├── presentation/     # UI Layer
 │   ├── screens/      # Full-page widgets
+│   │   ├── auth/           # Authentication screens
+│   │   ├── tourist/        # Tourist/consumer screens
+│   │   ├── creator/        # Creator dashboard (minimal)
+│   │   ├── admin/          # Admin dashboard (minimal)
+│   │   └── modules/        # NEW: Shared functional modules
+│   │       ├── route_editor/     # ✅ Route creation & editing
+│   │       ├── content_editor/   # ✅ Tour content + voice generation
+│   │       ├── tour_manager/     # ✅ Tour management (creator + admin)
+│   │       ├── publishing/       # ✅ Publishing workflow
+│   │       ├── marketplace/      # ⏳ Tour discovery
+│   │       ├── tour_details/     # ⏳ Unified tour info
+│   │       └── analytics/        # ⏳ Analytics dashboard
 │   ├── widgets/      # Reusable components
-│   ├── providers/    # Riverpod providers
+│   ├── providers/    # Riverpod providers (code generation)
 │   └── router/       # Navigation
 ├── domain/           # Business Logic (minimal currently)
 │   ├── entities/     # Core business objects
 │   └── usecases/     # Business operations
 ├── data/             # Data Layer
 │   ├── models/       # Freezed data classes
+│   │   ├── pricing_model.dart          # NEW
+│   │   ├── route_model.dart            # NEW
+│   │   ├── waypoint_model.dart         # NEW
+│   │   ├── publishing_submission_model.dart  # NEW
+│   │   ├── review_feedback_model.dart  # NEW
+│   │   ├── voice_generation_model.dart # NEW
+│   │   ├── collection_model.dart       # NEW
+│   │   └── tour_analytics_model.dart   # NEW
 │   ├── repositories/ # Data access abstraction
+│   │   ├── pricing_repository.dart     # NEW
+│   │   ├── route_repository.dart       # NEW
+│   │   ├── publishing_repository.dart  # NEW
+│   │   ├── collection_repository.dart  # NEW
+│   │   └── analytics_repository.dart   # NEW
 │   └── local/        # Local storage (Hive)
 ├── services/         # Platform Services
 │   ├── audio_service.dart
 │   ├── location_service.dart
 │   ├── offline_map_service.dart
+│   ├── route_snapping_service.dart     # NEW: Mapbox integration
+│   ├── voice_generation_service.dart   # NEW: ElevenLabs integration
+│   ├── analytics_service.dart          # NEW: Analytics aggregation
 │   └── ...
 ├── core/             # Shared Utilities
 │   ├── constants/
@@ -110,7 +138,12 @@ lib/
 │   ├── errors/
 │   └── utils/
 └── config/           # Configuration
+    ├── mapbox_config.dart              # NEW
+    ├── voice_config.dart               # NEW
+    └── env_config.dart                 # NEW
 ```
+
+> **Note**: See [TOUR_MANAGER_ROADMAP.md](./TOUR_MANAGER_ROADMAP.md) for complete details on the new modular architecture.
 
 ---
 
