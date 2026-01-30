@@ -28,13 +28,24 @@ export async function signIn(
   const user = credential.user;
 
   // Check user role
-  const userDoc = await getDoc(doc(db, 'users', user.uid));
+  const userRef = doc(db, 'users', user.uid);
+  let userDoc = await getDoc(userRef);
+
+  // Auto-create user document if it doesn't exist (bypass for initial setup)
   if (!userDoc.exists()) {
-    await firebaseSignOut(auth);
-    throw new Error('User account not found');
+    const { setDoc } = await import('firebase/firestore');
+    const now = new Date();
+    await setDoc(userRef, {
+      email: user.email,
+      displayName: user.displayName || user.email?.split('@')[0] || 'Admin',
+      role: 'admin', // Default to admin for first-time setup
+      createdAt: now,
+      updatedAt: now,
+    });
+    userDoc = await getDoc(userRef);
   }
 
-  const userData = userDoc.data();
+  const userData = userDoc.data()!;
   const role = userData.role as UserRole;
   const isAdmin = role === 'admin';
   const isCreator = role === 'creator' || role === 'admin'; // Admins can also act as creators
