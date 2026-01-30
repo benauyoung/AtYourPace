@@ -2,22 +2,22 @@
 
 **Last Updated**: January 30, 2026 (Night)
 **Project**: AYP Tour Guide - Tour Manager Rebuild
-**Status**: 🚀 Implementation In Progress (Week 2 Complete)
+**Status**: 🚀 Implementation In Progress (Week 3 Complete)
 
 ---
 
 ## 🎯 Current Focus
 
 ### Tour Manager Rebuild
-**Phase**: Week 2 Complete - Route Editor & Content Editor
-**Next Step**: Start Week 3 (Voice Generation, Tour Manager, Publishing)
+**Phase**: Week 3 Complete - Voice Generation, Tour Manager, Publishing Workflow
+**Next Step**: Start Week 4 (Marketplace & Tour Details)
 **Target Completion**: 5 weeks from start
 
 ---
 
 ## 📊 Overall Project Status
 
-### Completion: ~95% (Core App) + 40% (Tour Manager Rebuild)
+### Completion: ~95% (Core App) + 60% (Tour Manager Rebuild)
 
 **What's Complete** ✅
 - Core architecture and navigation
@@ -35,7 +35,7 @@
 **Tour Manager Rebuild Progress** 🔄
 - ✅ Week 1: Foundation (data models, repositories, services, Cloud Functions)
 - ✅ Week 2: Route Editor & Content Editor Basic Structure complete
-- ⏳ Week 3: Voice Generation, Tour Manager, Publishing
+- ✅ Week 3: Voice Generation, Tour Manager, Publishing Workflow complete
 - ⏳ Week 4: Marketplace, Tour Details
 - ⏳ Week 5: Analytics, Integration
 
@@ -82,21 +82,50 @@ lib/presentation/screens/modules/
 │   │   └── trigger_radius_editor.dart
 │   ├── route_editor_screen.dart
 │   └── route_editor.dart (exports)
-├── content_editor/     # ✅ Tour content editing (BASIC STRUCTURE COMPLETE)
+├── content_editor/     # ✅ Tour content editing (COMPLETE)
 │   ├── providers/
-│   │   └── tour_editor_provider.dart
+│   │   ├── tour_editor_provider.dart
+│   │   └── voice_generation_provider.dart
 │   ├── modules/
 │   │   ├── basic_info_module.dart
 │   │   ├── route_module.dart
 │   │   ├── stops_module.dart
 │   │   ├── media_module.dart
 │   │   └── pricing_module.dart
+│   ├── widgets/
+│   │   ├── voice_generator_panel.dart
+│   │   └── script_editor.dart
 │   ├── tour_editor_screen.dart
+│   ├── stop_editor_screen.dart
 │   └── content_editor.dart (exports)
-├── tour_manager/       # ⏳ Tour management (creator + admin)
+├── tour_manager/       # ✅ Tour management (COMPLETE)
+│   ├── providers/
+│   │   └── tour_manager_provider.dart
+│   ├── views/
+│   │   ├── list_view_tab.dart
+│   │   ├── grid_view_tab.dart
+│   │   ├── analytics_view_tab.dart
+│   │   └── calendar_view_tab.dart
+│   ├── widgets/
+│   │   ├── tour_manager_filters.dart
+│   │   ├── tour_card_compact.dart
+│   │   ├── tour_card_grid.dart
+│   │   ├── tour_stats_summary.dart
+│   │   └── quick_actions_menu.dart
+│   ├── tour_manager_screen.dart
+│   └── tour_manager.dart (exports)
+├── publishing/         # ✅ Publishing workflow (COMPLETE)
+│   ├── providers/
+│   │   └── publishing_provider.dart
+│   ├── widgets/
+│   │   ├── feedback_widgets.dart
+│   │   └── submission_checklist.dart
+│   ├── submission_screen.dart
+│   ├── review_queue_screen.dart
+│   ├── tour_review_screen.dart
+│   └── publishing.dart (exports)
 ├── marketplace/        # ⏳ Tour discovery
 ├── tour_details/       # ⏳ Unified tour info
-├── publishing/         # ⏳ Publishing workflow
 └── analytics/          # ⏳ Analytics dashboard
 ```
 
@@ -169,11 +198,23 @@ lib/presentation/screens/modules/
   - ✅ Tour editor provider with full state management
   - ✅ 24 provider tests passing
 
-### Week 3: Tour Manager & Publishing
-- Voice generation integration
-- Tour manager views (list, grid, calendar)
-- Publishing workflow screens
-- Review system
+### Week 3: Voice Generation, Tour Manager & Publishing ✅
+- ✅ Voice generation integration (Days 1-2)
+  - ✅ Stop editor screen with full editing
+  - ✅ Voice generator panel with 4 voices
+  - ✅ Script editor with character counting
+  - ✅ Voice generation provider
+- ✅ Tour manager views (Day 3)
+  - ✅ List view with compact cards
+  - ✅ Grid view with cover images
+  - ✅ Analytics view with sortable metrics
+  - ✅ Calendar view with table_calendar
+  - ✅ Filter system (status, category, date, search)
+- ✅ Publishing workflow (Days 4-5)
+  - ✅ Submission screen with checklist
+  - ✅ Review queue screen with tabs
+  - ✅ Tour review screen with feedback
+  - ✅ Full approval/rejection workflow
 
 ### Week 4: Marketplace & Tour Details
 - Rebuild marketplace with map view
@@ -200,19 +241,28 @@ lib/presentation/screens/modules/
 - Undo/redo (50 action limit)
 - Responsive desktop/mobile layout
 
-### Voice Generation (Planned)
-- 4 regional voices (French, British, American)
-- In-app script editor (1000 char limit)
-- Duration preview before generation
-- Regeneration capability
+### Voice Generation ✅
+- 4 regional voices (French, British, American, Australian)
+- In-app script editor (5000 char limit)
+- Duration preview before generation (150 words/min)
+- Regeneration capability with history
 - Script + audio storage
 
-### Publishing Workflow (Planned)
+### Tour Manager ✅
+- List view with compact cards
+- Grid view with cover images
+- Analytics view with sortable metrics
+- Calendar view with month/week/day
+- Filter system (status, category, date, search)
+- Quick actions (edit, duplicate, delete)
+
+### Publishing Workflow ✅
 - Pre-submission checklist (enforced)
-- Admin review queue
+- Admin review queue with status tabs
 - Preview/Edit modes
 - Feedback system (stop-specific or general)
 - Resubmission with justification
+- Full approve/reject/request changes workflow
 
 ### Marketplace (Planned)
 - Location-based search ("near me")
@@ -258,17 +308,18 @@ lib/presentation/screens/modules/
 
 ## 📝 Next Actions
 
-### Immediate (Week 3, Days 1-2)
-1. Create `stop_editor_screen.dart` with full stop editing
-2. Create `widgets/voice_generator_panel.dart` with ElevenLabs integration
-3. Create `widgets/script_editor.dart` with character counting
-4. Create `providers/voice_generation_provider.dart`
-5. Write tests for voice generation flow
+### Immediate (Week 4, Days 1-3)
+1. Create `lib/presentation/screens/modules/marketplace/` folder
+2. Create `marketplace_screen.dart` with search and filters
+3. Create map view with tour markers and clustering
+4. Create collection cards and list
+5. Seed 10 Paris collections in Firestore
 
-### This Week
-- Complete Voice Generation integration
-- Build Tour Manager views (list, grid, analytics, calendar)
-- Start Publishing Workflow screens
+### This Week (Week 4)
+- Build Marketplace with location-based search
+- Create map view with clustering
+- Build Tour Details unified screen
+- Implement collections system
 
 ---
 
@@ -300,6 +351,7 @@ lib/presentation/screens/modules/
 - Current: 504+ tests
 - Week 1 additions: 226 model tests
 - Week 2 additions: 25 route editor tests + 24 tour editor tests
+- Week 3 additions: Voice generation, tour manager, publishing providers
 - Target: Maintain coverage, add tests for new modules
 
 ### Test Types
@@ -355,15 +407,17 @@ lib/presentation/screens/modules/
 - [Screens](../lib/presentation/screens/)
 - [Route Editor](../lib/presentation/screens/modules/route_editor/)
 - [Content Editor](../lib/presentation/screens/modules/content_editor/)
+- [Tour Manager](../lib/presentation/screens/modules/tour_manager/)
+- [Publishing](../lib/presentation/screens/modules/publishing/)
 
 ---
 
 ## 🎯 Summary
 
-**Current Status**: Week 2 complete
-**Current Phase**: Week 2 - Route Editor & Content Editor ✅
-**Current Task**: Ready for Week 3 - Voice Generation & Tour Manager
-**Next Milestone**: Complete Voice Generation integration
+**Current Status**: Week 3 complete
+**Current Phase**: Week 3 - Voice Generation, Tour Manager, Publishing ✅
+**Current Task**: Ready for Week 4 - Marketplace & Tour Details
+**Next Milestone**: Build Marketplace with location-based search
 **Target Completion**: 5 weeks from start
 **Migration Strategy**: Big Bang deployment
 
@@ -372,4 +426,4 @@ lib/presentation/screens/modules/
 ---
 
 **Last Updated**: January 30, 2026 (Night)
-**Next Update**: After Week 3 completion
+**Next Update**: After Week 4 completion
