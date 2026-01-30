@@ -385,7 +385,7 @@ export default function StopsPage({ params }: StopsPageProps) {
         </aside>
 
         {/* Map area */}
-        <div className="flex-1 min-w-0 relative">
+        <div className="flex-1 min-h-0 min-w-0 relative">
           {/* Mobile sidebar toggle */}
           <Button
             variant="secondary"
