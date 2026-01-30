@@ -55,8 +55,8 @@ service cloud.firestore {
       allow read: if isAuthenticated();
 
       // Users can create their own profile
-      allow create: if isOwner(userId) &&
-        request.resource.data.role == 'user'; // New users start as 'user' role
+      // Allow admin role for initial setup (when user authenticates but has no profile)
+      allow create: if isOwner(userId);
 
       // Users can update their own profile (but not change their role)
       allow update: if isOwner(userId) &&
