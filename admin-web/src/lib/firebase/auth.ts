@@ -33,14 +33,13 @@ export async function signIn(
 
   // Auto-create user document if it doesn't exist (bypass for initial setup)
   if (!userDoc.exists()) {
-    const { setDoc } = await import('firebase/firestore');
-    const now = new Date();
+    const { setDoc, serverTimestamp } = await import('firebase/firestore');
     await setDoc(userRef, {
       email: user.email,
       displayName: user.displayName || user.email?.split('@')[0] || 'Admin',
       role: 'admin', // Default to admin for first-time setup
-      createdAt: now,
-      updatedAt: now,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
     });
     userDoc = await getDoc(userRef);
   }
