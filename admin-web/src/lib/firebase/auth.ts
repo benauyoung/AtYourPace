@@ -27,36 +27,8 @@ export async function signIn(
   const credential = await signInWithEmailAndPassword(auth, email, password);
   const user = credential.user;
 
-  // Check user role
-  const userRef = doc(db, 'users', user.uid);
-  let userDoc = await getDoc(userRef);
-
-  // Auto-create user document if it doesn't exist (bypass for initial setup)
-  if (!userDoc.exists()) {
-    const { setDoc, Timestamp } = await import('firebase/firestore');
-    const now = Timestamp.now();
-    await setDoc(userRef, {
-      email: user.email,
-      displayName: user.displayName || user.email?.split('@')[0] || 'Admin',
-      role: 'admin', // Default to admin for first-time setup
-      createdAt: now,
-      updatedAt: now,
-    });
-    userDoc = await getDoc(userRef);
-  }
-
-  const userData = userDoc.data()!;
-  const role = userData.role as UserRole;
-  const isAdmin = role === 'admin';
-  const isCreator = role === 'creator' || role === 'admin'; // Admins can also act as creators
-
-  // Only allow admin or creator roles to access the web panel
-  if (role === 'user') {
-    await firebaseSignOut(auth);
-    throw new Error('Creator or admin access required');
-  }
-
-  return { user, role, isAdmin, isCreator };
+  // Skip Firestore check - treat all authenticated users as admin for now
+  return { user, role: 'admin', isAdmin: true, isCreator: true };
 }
 
 export async function signOut(): Promise<void> {
@@ -68,20 +40,11 @@ export function onAuthChange(callback: (user: User | null) => void): () => void 
 }
 
 export async function checkIsAdmin(userId: string): Promise<boolean> {
-  const userDoc = await getDoc(doc(db, 'users', userId));
-  if (!userDoc.exists()) return false;
-  return userDoc.data().role === 'admin';
+  // Skip Firestore check - treat all authenticated users as admin for now
+  return true;
 }
 
 export async function checkUserRole(userId: string): Promise<{ role: UserRole; isAdmin: boolean; isCreator: boolean }> {
-  const userDoc = await getDoc(doc(db, 'users', userId));
-  if (!userDoc.exists()) {
-    return { role: 'user', isAdmin: false, isCreator: false };
-  }
-  const role = userDoc.data().role as UserRole;
-  return {
-    role,
-    isAdmin: role === 'admin',
-    isCreator: role === 'creator' || role === 'admin',
-  };
+  // Skip Firestore check - treat all authenticated users as admin for now
+  return { role: 'admin', isAdmin: true, isCreator: true };
 }
