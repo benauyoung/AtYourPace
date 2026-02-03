@@ -169,7 +169,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   /// Start a tour
   Future<void> startTour(String tourId, {TriggerMode? mode}) async {
+    // Clear error state before starting
     state = state.copyWith(isLoading: true, error: null);
+    debugPrint('Starting tour $tourId');
 
     try {
       // Try to load from network first
@@ -181,6 +183,10 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         tour = await _ref.read(tourByIdProvider(tourId).future);
       } catch (e) {
         debugPrint('Failed to load tour from network: $e');
+        // If it's a Firestore unavailable error, specifically log it
+        if (e.toString().contains('unavailable')) {
+          debugPrint('Firestore unavailable - checking offline cache');
+        }
       }
 
       // Fallback to offline storage if network failed
@@ -275,6 +281,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     _positionSubscription?.cancel();
     _positionSubscription = _locationService.positionStream.listen((position) {
       state = state.copyWith(userPosition: position);
+
+      // Check if we need to trigger any stops immediately (e.g. if we started inside a zone)
+      if (state.triggerMode == TriggerMode.automatic &&
+          state.hasStarted &&
+          state.currentStopIndex == -1) {
+        _checkProximityToStops(position);
+      }
     });
 
     // Start background location tracking for automatic mode
@@ -361,9 +374,10 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     if (progressService == null || state.tour == null) return;
 
     final tourId = state.tour!.id;
-    final progressPercent = state.stops.isEmpty
-        ? 0
-        : ((state.completedStopIndices.length / state.stops.length) * 100).round();
+    final progressPercent =
+        state.stops.isEmpty
+            ? 0
+            : ((state.completedStopIndices.length / state.stops.length) * 100).round();
 
     try {
       await progressService.saveProgress(
@@ -383,15 +397,11 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     if (progressService == null || state.tour == null) return;
 
     final tourId = state.tour!.id;
-    final durationSeconds = state.startedAt != null
-        ? DateTime.now().difference(state.startedAt!).inSeconds
-        : null;
+    final durationSeconds =
+        state.startedAt != null ? DateTime.now().difference(state.startedAt!).inSeconds : null;
 
     try {
-      await progressService.markCompleted(
-        tourId: tourId,
-        durationSeconds: durationSeconds,
-      );
+      await progressService.markCompleted(tourId: tourId, durationSeconds: durationSeconds);
       debugPrint('Tour $tourId marked as completed');
     } catch (e) {
       debugPrint('Failed to save tour completion: $e');
@@ -512,6 +522,27 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     _audioSubscription?.cancel();
 
     state = const PlaybackState();
+  }
+
+  void _checkProximityToStops(Position position) {
+    // Only check if we haven't triggered anything yet to avoid spamming
+    // This is a simplified check for the "Start" condition
+    for (int i = 0; i < state.stops.length; i++) {
+      if (state.isStopCompleted(i)) continue;
+
+      final stop = state.stops[i];
+      final distance = Geolocator.distanceBetween(
+        position.latitude,
+        position.longitude,
+        stop.location.latitude,
+        stop.location.longitude,
+      );
+
+      if (distance <= stop.triggerRadius.toDouble()) {
+        _triggerStop(i);
+        break; // Only trigger one at a time
+      }
+    }
   }
 
   @override

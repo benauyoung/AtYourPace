@@ -69,10 +69,10 @@ class TourMapWidget extends StatefulWidget {
   });
 
   @override
-  State<TourMapWidget> createState() => _TourMapWidgetState();
+  State<TourMapWidget> createState() => TourMapWidgetState();
 }
 
-class _TourMapWidgetState extends State<TourMapWidget> {
+class TourMapWidgetState extends State<TourMapWidget> {
   MapboxMap? _mapboxMap;
   PointAnnotationManager? _pointAnnotationManager;
   PolylineAnnotationManager? _polylineAnnotationManager;
@@ -94,28 +94,24 @@ class _TourMapWidgetState extends State<TourMapWidget> {
     }
 
     // Update user position if changed
-    if (widget.userPosition != oldWidget.userPosition &&
-        widget.userPosition != null) {
+    if (widget.userPosition != oldWidget.userPosition && widget.userPosition != null) {
       _flyToPosition(widget.userPosition!);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final center = widget.initialCenter ??
+    final center =
+        widget.initialCenter ??
         Position(MapboxConfig.defaultLongitude, MapboxConfig.defaultLatitude);
 
     final mapWidget = MapWidget(
       key: const ValueKey('tour_map'),
-      cameraOptions: CameraOptions(
-        center: Point(coordinates: center),
-        zoom: widget.initialZoom,
-      ),
+      cameraOptions: CameraOptions(center: Point(coordinates: center), zoom: widget.initialZoom),
       styleUri: widget.mapStyle ?? MapboxConfig.defaultStyle,
       onMapCreated: _onMapCreated,
       onTapListener: widget.onMapTapped != null ? _onMapTapped : null,
-      onLongTapListener:
-          widget.onMapLongPressed != null ? _onMapLongPressed : null,
+      onLongTapListener: widget.onMapLongPressed != null ? _onMapLongPressed : null,
     );
 
     // If offline indicator is not needed, return map directly
@@ -124,16 +120,7 @@ class _TourMapWidgetState extends State<TourMapWidget> {
     }
 
     // Show offline indicator overlay
-    return Stack(
-      children: [
-        mapWidget,
-        Positioned(
-          top: 8,
-          left: 8,
-          child: _OfflineIndicator(),
-        ),
-      ],
-    );
+    return Stack(children: [mapWidget, Positioned(top: 8, left: 8, child: _OfflineIndicator())]);
   }
 
   void _onMapCreated(MapboxMap mapboxMap) async {
@@ -141,19 +128,13 @@ class _TourMapWidgetState extends State<TourMapWidget> {
 
     // Create annotation managers
     // Create circle manager first so circles are below markers
-    _circleAnnotationManager =
-        await mapboxMap.annotations.createCircleAnnotationManager();
-    _pointAnnotationManager =
-        await mapboxMap.annotations.createPointAnnotationManager();
-    _polylineAnnotationManager =
-        await mapboxMap.annotations.createPolylineAnnotationManager();
+    _circleAnnotationManager = await mapboxMap.annotations.createCircleAnnotationManager();
+    _pointAnnotationManager = await mapboxMap.annotations.createPointAnnotationManager();
+    _polylineAnnotationManager = await mapboxMap.annotations.createPolylineAnnotationManager();
 
     // Set up tap listener for markers
     _pointAnnotationManager?.addOnPointAnnotationClickListener(
-      _PointAnnotationClickListener(
-        markerMap: _markerMap,
-        onStopTapped: widget.onStopTapped,
-      ),
+      _PointAnnotationClickListener(markerMap: _markerMap, onStopTapped: widget.onStopTapped),
     );
 
     // Enable user location if requested
@@ -170,11 +151,7 @@ class _TourMapWidgetState extends State<TourMapWidget> {
 
   Future<void> _enableUserLocation() async {
     await _mapboxMap?.location.updateSettings(
-      LocationComponentSettings(
-        enabled: true,
-        pulsingEnabled: true,
-        showAccuracyRing: true,
-      ),
+      LocationComponentSettings(enabled: true, pulsingEnabled: true, showAccuracyRing: true),
     );
   }
 
@@ -199,9 +176,8 @@ class _TourMapWidgetState extends State<TourMapWidget> {
     }
 
     // Create polyline from coordinates
-    final coordinates = widget.routeCoordinates!
-        .map((coord) => Position(coord[0], coord[1]))
-        .toList();
+    final coordinates =
+        widget.routeCoordinates!.map((coord) => Position(coord[0], coord[1])).toList();
 
     await _polylineAnnotationManager?.create(
       PolylineAnnotationOptions(
@@ -230,9 +206,7 @@ class _TourMapWidgetState extends State<TourMapWidget> {
     for (final stop in widget.stops!) {
       final annotation = await _pointAnnotationManager?.create(
         PointAnnotationOptions(
-          geometry: Point(
-            coordinates: Position(stop.longitude, stop.latitude),
-          ),
+          geometry: Point(coordinates: Position(stop.longitude, stop.latitude)),
           iconSize: 1.5,
           textField: stop.name,
           textOffset: [0, 1.5],
@@ -248,9 +222,9 @@ class _TourMapWidgetState extends State<TourMapWidget> {
 
   /// Draw circles around stops to indicate the trigger radius (geofence)
   Future<void> _drawTriggerRadiusCircles() async {
-    if (_circleAnnotationManager == null ||
-        widget.stops == null ||
-        widget.stops!.isEmpty) return;
+    if (_circleAnnotationManager == null || widget.stops == null || widget.stops!.isEmpty) {
+      return;
+    }
 
     for (final stop in widget.stops!) {
       // Use the stop's triggerRadius or default to 30 meters
@@ -276,9 +250,7 @@ class _TourMapWidgetState extends State<TourMapWidget> {
 
       await _circleAnnotationManager?.create(
         CircleAnnotationOptions(
-          geometry: Point(
-            coordinates: Position(stop.longitude, stop.latitude),
-          ),
+          geometry: Point(coordinates: Position(stop.longitude, stop.latitude)),
           // Convert meters to a visual radius
           // Note: Mapbox circle radius is in screen pixels at zoom level
           // We use circleRadius in pixels and let Mapbox handle scaling
@@ -316,10 +288,7 @@ class _TourMapWidgetState extends State<TourMapWidget> {
 
   Future<void> _flyToPosition(Position position) async {
     await _mapboxMap?.flyTo(
-      CameraOptions(
-        center: Point(coordinates: position),
-        zoom: widget.initialZoom,
-      ),
+      CameraOptions(center: Point(coordinates: position), zoom: widget.initialZoom),
       MapAnimationOptions(duration: 1000),
     );
   }
@@ -392,18 +361,41 @@ class StopMarker {
     this.isCurrent = false,
     this.triggerRadius,
   });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is StopMarker &&
+        other.id == id &&
+        other.name == name &&
+        other.latitude == latitude &&
+        other.longitude == longitude &&
+        other.order == order &&
+        other.isCompleted == isCompleted &&
+        other.isCurrent == isCurrent &&
+        other.triggerRadius == triggerRadius;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        name.hashCode ^
+        latitude.hashCode ^
+        longitude.hashCode ^
+        order.hashCode ^
+        isCompleted.hashCode ^
+        isCurrent.hashCode ^
+        triggerRadius.hashCode;
+  }
 }
 
 /// Click listener for point annotations
-class _PointAnnotationClickListener
-    implements OnPointAnnotationClickListener {
+class _PointAnnotationClickListener implements OnPointAnnotationClickListener {
   final Map<String, StopMarker> markerMap;
   final void Function(StopMarker)? onStopTapped;
 
-  _PointAnnotationClickListener({
-    required this.markerMap,
-    this.onStopTapped,
-  });
+  _PointAnnotationClickListener({required this.markerMap, this.onStopTapped});
 
   @override
   void onPointAnnotationClick(PointAnnotation annotation) {
@@ -434,19 +426,11 @@ class _OfflineIndicator extends StatelessWidget {
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.offline_bolt,
-            size: 14,
-            color: Colors.white,
-          ),
+          Icon(Icons.offline_bolt, size: 14, color: Colors.white),
           SizedBox(width: 4),
           Text(
             'Offline Map',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
           ),
         ],
       ),

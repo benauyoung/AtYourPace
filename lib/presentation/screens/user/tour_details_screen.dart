@@ -6,11 +6,11 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/tour_model.dart';
-import '../../../data/models/tour_version_model.dart';
 import '../../../services/download_manager.dart';
 import '../../providers/tour_providers.dart';
-import '../../widgets/tour/download_button.dart';
+import '../../widgets/tour/creator_pile.dart';
 import '../../widgets/tour/tour_reviews_section.dart';
+import '../../widgets/tour/tour_stop_card.dart';
 
 class TourDetailsScreen extends ConsumerWidget {
   final String tourId;
@@ -18,9 +18,10 @@ class TourDetailsScreen extends ConsumerWidget {
   const TourDetailsScreen({super.key, required this.tourId});
 
   void _shareTour(BuildContext context, TourModel tour) {
-    final location = tour.city != null && tour.country != null
-        ? '${tour.city}, ${tour.country}'
-        : tour.city ?? tour.country ?? 'an amazing location';
+    final location =
+        tour.city != null && tour.country != null
+            ? '${tour.city}, ${tour.country}'
+            : tour.city ?? tour.country ?? 'an amazing location';
 
     final shareText = '''
 Check out this ${tour.category.displayName.toLowerCase()} tour in $location!
@@ -55,126 +56,106 @@ https://ayp.tours/${tour.slug ?? tour.id}
                 expandedHeight: 250,
                 pinned: true,
                 actions: [
-                  // Share button
                   IconButton(
-                    icon: const Icon(Icons.share),
+                    icon: const Icon(Icons.share_outlined),
                     onPressed: () => _shareTour(context, tour),
-                    tooltip: 'Share tour',
                   ),
-                  // Download indicator in app bar
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: TourDownloadButton(
-                      tourId: tourId,
-                      showLabel: false,
-                      size: 24,
-                    ),
+                  IconButton(
+                    icon:
+                        isDownloaded
+                            ? const Icon(Icons.bookmark)
+                            : const Icon(Icons.bookmark_border),
+                    onPressed: () {}, // Todo: Implement bookmark
                   ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(tour.city ?? 'Tour'),
-                  background: Container(
-                    color: context.colorScheme.primaryContainer,
-                    child: Stack(
-                      children: [
-                        Center(
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Map Placeholder (in real app, this should be a static map image or MapView)
+                      Container(
+                        color: Colors.blue[100],
+                        child: Center(
                           child: Icon(
                             tour.tourType.name == 'walking'
                                 ? Icons.directions_walk
                                 : Icons.directions_car,
                             size: 80,
-                            color: context.colorScheme.onPrimaryContainer,
+                            color: Colors.blue[300],
                           ),
                         ),
-                        // Offline indicator
-                        if (isDownloaded)
-                          Positioned(
-                            right: 16,
-                            bottom: 60,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.offline_pin,
-                                    size: 16,
-                                    color: Colors.white,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Available Offline',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                      ),
+                      // Explore Tour Map Button (Overlay)
+                      Positioned(
+                        bottom: 20,
+                        right: 20,
+                        child: FilledButton.icon(
+                          onPressed: () => context.push(RouteNames.tourPlaybackPath(tourId)),
+                          icon: const Icon(Icons.map, size: 16),
+                          label: const Text('Explore Tour Map'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: context.colorScheme.surface,
+                            foregroundColor: context.colorScheme.onSurface,
                           ),
-                      ],
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Chip(label: Text(tour.category.displayName)),
-                          const SizedBox(width: 8),
-                          Chip(label: Text(tour.tourType.displayName)),
-                          const Spacer(),
-                          DownloadIndicator(tourId: tourId),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
+                      // Title
                       Text(
-                        'by ${tour.creatorName}',
-                        style: context.textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Semantics(
-                        label: 'Rating: ${tour.stats.averageRating.toStringAsFixed(1)} stars from ${tour.stats.totalRatings} reviews. ${tour.stats.totalPlays} plays',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 20, semanticLabel: 'Rating'),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${tour.stats.averageRating.toStringAsFixed(1)} (${tour.stats.totalRatings} reviews)',
-                              style: context.textTheme.bodyMedium,
-                            ),
-                            const SizedBox(width: 16),
-                            const Icon(Icons.play_arrow, size: 20, semanticLabel: 'Plays'),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${tour.stats.totalPlays} plays',
-                              style: context.textTheme.bodyMedium,
-                            ),
-                          ],
+                        // Need a robust title logic, falling back to city or category if missing
+                        tour.city ?? 'Amazing Tour',
+                        style: context.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 16),
+
+                      // About the Tour
+                      Text(
+                        'About the Tour',
+                        style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      // Description
+                      _TourVersionDescription(tourId: tourId, versionId: versionId),
+                      const SizedBox(height: 16),
+
+                      // Metrics Grid
+                      _TourVersionMetrics(tourId: tourId, versionId: versionId),
+
+                      const SizedBox(height: 24),
+                      // Meet the Creators
+                      Text(
+                        'Meet the creators',
+                        style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      const CreatorPile(imageUrls: []), // TODO: Add creator images to model
+
                       const SizedBox(height: 24),
 
-                      // Load version details
-                      _TourVersionDetails(
-                        tourId: tourId,
-                        versionId: versionId,
-                        stats: tour.stats,
+                      // Load stops
+                      Text(
+                        'Tour Stops',
+                        style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
+                      const SizedBox(height: 12),
+                      _TourStopsList(tourId: tourId, versionId: versionId),
+
+                      const SizedBox(height: 32),
+                      // Reviews section
+                      TourReviewsSection(tourId: tourId, stats: tour.stats),
+                      const SizedBox(height: 100), // Spacing for bottom bar
                     ],
                   ),
                 ),
@@ -185,42 +166,107 @@ https://ayp.tours/${tour.slug ?? tour.id}
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('Error: $error')),
       ),
-      bottomNavigationBar: tourAsync.when(
-        data: (tour) => tour != null
-            ? SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Start Tour button (primary action)
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: () {
-                            context.push(RouteNames.tourPlaybackPath(tourId));
-                          },
-                          icon: const Icon(Icons.play_arrow),
-                          label: const Text('Start Tour'),
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+      bottomSheet: tourAsync.when(
+        data:
+            (tour) =>
+                tour != null
+                    ? Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.surface,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, -2),
                           ),
+                        ],
+                      ),
+                      child: SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // "Read before you go" Notification
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: context.colorScheme.surfaceContainerHighest.withValues(
+                                  alpha: 0.5,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.notifications_outlined,
+                                    color: context.colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Read this before you go',
+                                      style: context.textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    color: context.colorScheme.onSurfaceVariant,
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            Row(
+                              children: [
+                                // Download Progress/Check
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFC4EED0),
+                                    /* Light Green */
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.check_circle_outline,
+                                      color: Color(0xFF1E2F36),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                // Begin Tour Button
+                                Expanded(
+                                  child: FilledButton(
+                                    onPressed: () {
+                                      context.push(RouteNames.tourPlaybackPath(tourId));
+                                    },
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: const Color(0xFF90F6D7),
+                                      /* Teal Custom Color */
+                                      foregroundColor: const Color(0xFF1E2F36),
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      textStyle: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    child: const Text('Begin Tour'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Download Complete',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      // Download button (secondary action)
-                      SizedBox(
-                        width: double.infinity,
-                        child: TourDownloadButton(
-                          tourId: tourId,
-                          showLabel: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            : null,
+                    )
+                    : null,
         loading: () => null,
         error: (_, __) => null,
       ),
@@ -228,180 +274,147 @@ https://ayp.tours/${tour.slug ?? tour.id}
   }
 }
 
-/// Widget to display tour version details
-class _TourVersionDetails extends ConsumerWidget {
+class _TourVersionDescription extends ConsumerWidget {
   final String tourId;
   final String versionId;
-  final TourStats stats;
 
-  const _TourVersionDetails({
-    required this.tourId,
-    required this.versionId,
-    required this.stats,
-  });
+  const _TourVersionDescription({required this.tourId, required this.versionId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final versionAsync = ref.watch(
-      tourVersionProvider((tourId: tourId, versionId: versionId)),
-    );
-    final stopsAsync = ref.watch(
-      stopsProvider((tourId: tourId, versionId: versionId)),
-    );
+    final versionAsync = ref.watch(tourVersionProvider((tourId: tourId, versionId: versionId)));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        versionAsync.when(
-          data: (version) {
-            if (version == null) {
-              return const Text('Version not found');
-            }
+    return versionAsync.when(
+      data:
+          (version) => Text(
+            version?.description ?? 'No description available.',
+            style: context.textTheme.bodyLarge,
+          ),
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _TourVersionMetrics extends ConsumerWidget {
+  final String tourId;
+  final String versionId;
+
+  const _TourVersionMetrics({required this.tourId, required this.versionId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final versionAsync = ref.watch(tourVersionProvider((tourId: tourId, versionId: versionId)));
+    final stopsAsync = ref.watch(stopsProvider((tourId: tourId, versionId: versionId)));
+
+    return versionAsync.when(
+      data: (version) {
+        if (version == null) return const SizedBox.shrink();
+
+        return stopsAsync.when(
+          data: (stops) {
+            final audioStopsCount = stops.where((s) => s.hasAudio).length;
+
             return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  version.title,
-                  style: context.textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  version.description,
-                  style: context.textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 16),
-                // Tour info chips
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (version.duration != null)
-                      _InfoChip(
-                        icon: Icons.access_time,
-                        label: version.duration!,
-                      ),
-                    if (version.distance != null)
-                      _InfoChip(
-                        icon: Icons.straighten,
-                        label: version.distance!,
-                      ),
-                    _InfoChip(
-                      icon: Icons.terrain,
-                      label: version.difficulty.displayName,
-                    ),
-                    if (version.languages.isNotEmpty)
-                      _InfoChip(
-                        icon: Icons.language,
-                        label: version.languages.join(', '),
-                      ),
-                  ],
+                if (audioStopsCount > 0)
+                  _MetricItem(
+                    icon: Icons.volume_up_outlined,
+                    title: '$audioStopsCount Audio Points',
+                    subtitle: 'Listen to stories at each stop.',
+                  ),
+                if (audioStopsCount > 0) const SizedBox(height: 16),
+
+                if (version.duration != null && version.duration!.isNotEmpty)
+                  _MetricItem(
+                    icon: Icons.access_time,
+                    title: version.duration!,
+                    subtitle: 'Estimated time to complete.',
+                  ),
+                if (version.duration != null && version.duration!.isNotEmpty)
+                  const SizedBox(height: 16),
+
+                _MetricItem(
+                  icon: Icons.terrain,
+                  title: version.difficulty.displayName,
+                  subtitle: 'Tour difficulty level.',
                 ),
               ],
             );
           },
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: CircularProgressIndicator(),
-            ),
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _MetricItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _MetricItem({required this.icon, required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 28, color: const Color(0xFF1E2F36)),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                subtitle,
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
-          error: (error, _) => Text('Error loading version: $error'),
         ),
-        const SizedBox(height: 24),
-        // Stops preview
-        Text(
-          'Stops',
-          style: context.textTheme.titleLarge,
-        ),
-        const SizedBox(height: 12),
-        stopsAsync.when(
-          data: (stops) {
-            if (stops.isEmpty) {
-              return const Text('No stops in this tour');
-            }
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: stops.length,
-              itemBuilder: (context, index) {
-                final stop = stops[index];
-                return Card(
-                  key: ValueKey(stop.id),
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: context.colorScheme.primaryContainer,
-                      child: Text(
-                        '${index + 1}',
-                        style: TextStyle(
-                          color: context.colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    title: Text(stop.name),
-                    subtitle: stop.description.isNotEmpty
-                        ? Text(
-                            stop.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          )
-                        : null,
-                    trailing: stop.hasAudio
-                        ? Semantics(
-                            label: 'Has audio narration',
-                            child: const Icon(Icons.audiotrack, size: 20),
-                          )
-                        : null,
-                  ),
-                );
-              },
-            );
-          },
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: CircularProgressIndicator(),
-            ),
-          ),
-          error: (error, _) => Text('Error loading stops: $error'),
-        ),
-        const SizedBox(height: 32),
-        // Reviews section
-        TourReviewsSection(tourId: tourId, stats: stats),
       ],
     );
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
+class _TourStopsList extends ConsumerWidget {
+  final String tourId;
+  final String versionId;
 
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-  });
+  const _TourStopsList({required this.tourId, required this.versionId});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: context.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: context.textTheme.bodySmall,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stopsAsync = ref.watch(stopsProvider((tourId: tourId, versionId: versionId)));
+
+    return stopsAsync.when(
+      data: (stops) {
+        if (stops.isEmpty) return const Text('No stops in this tour');
+
+        return SizedBox(
+          height: 180, // Height for card + text
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: stops.length,
+            itemBuilder: (context, index) {
+              return TourStopCard(stop: stops[index], index: index);
+            },
           ),
-        ],
-      ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => Text('Error loading stops: $error'),
     );
   }
 }
