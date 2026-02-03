@@ -11,6 +11,7 @@ import {
     FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -137,10 +138,10 @@ export function CoverForm({
 
                         {/* Cover Image */}
                         <div className="space-y-2">
-                            <FormLabel>Cover Image</FormLabel>
-                            <FormDescription>
+                            <Label>Cover Image</Label>
+                            <p className="text-[0.8rem] text-muted-foreground">
                                 Displays as a banner and a square thumbnail. Dimensions: 1920px by 622px.
-                            </FormDescription>
+                            </p>
                             <div className="mt-2">
                                 <CoverImageUpload
                                     imageUrl={version.coverImageUrl}
