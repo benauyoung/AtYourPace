@@ -17,7 +17,7 @@
 
 ## 📊 Overall Project Status
 
-### Completion: ~95% (Core App) + 60% (Tour Manager Rebuild)
+### Completion: ~40% (Core App) + 60% (Tour Manager Rebuild)
 
 **What's Complete** ✅
 - Core architecture and navigation
@@ -36,7 +36,7 @@
 - ✅ Week 1: Foundation (data models, repositories, services, Cloud Functions)
 - ✅ Week 2: Route Editor & Content Editor Basic Structure complete
 - ✅ Week 3: Voice Generation, Tour Manager, Publishing Workflow complete
-- ⏳ Week 4: Marketplace, Tour Details
+- 🔄 Week 4: Marketplace, Tour Details (Tour Taking UI Polished ✅)
 - ⏳ Week 5: Analytics, Integration
 
 ---
