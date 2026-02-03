@@ -1,41 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { format } from 'date-fns';
-import {
-  Search,
-  Star,
-  StarOff,
-  Eye,
-  EyeOff,
-  MoreHorizontal,
-} from 'lucide-react';
 import { AdminLayout } from '@/components/layout/admin-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -44,16 +12,51 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useTours, useFeatureTour, useHideTour, useUnhideTour } from '@/hooks/use-tours';
+import { useDeleteTour, useFeatureTour, useHideTour, useTours, useUnhideTour } from '@/hooks/use-tours';
 import {
+  TourCategory,
   TourModel,
   TourStatus,
-  TourCategory,
   categoryDisplayNames,
   statusDisplayNames,
 } from '@/types';
+import { format } from 'date-fns';
+import {
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+  Search,
+  Star,
+  StarOff,
+  Trash2,
+} from 'lucide-react';
+import { useState } from 'react';
 
 const statusOptions: { value: TourStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All Statuses' },
@@ -95,7 +98,9 @@ export default function ToursPage() {
   const [statusFilter, setStatusFilter] = useState<TourStatus | 'all'>('all');
   const [categoryFilter, setCategoryFilter] = useState<TourCategory | 'all'>('all');
   const [hideDialogOpen, setHideDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedTour, setSelectedTour] = useState<TourModel | null>(null);
+  const [tourToDelete, setTourToDelete] = useState<TourModel | null>(null);
   const [hideReason, setHideReason] = useState('');
 
   const { data: tours, isLoading } = useTours({
@@ -107,6 +112,7 @@ export default function ToursPage() {
   const featureMutation = useFeatureTour();
   const hideMutation = useHideTour();
   const unhideMutation = useUnhideTour();
+  const deleteMutation = useDeleteTour();
 
   const handleFeatureToggle = async (tour: TourModel) => {
     try {
@@ -168,6 +174,28 @@ export default function ToursPage() {
       });
     }
   };
+
+  const handleDelete = async () => {
+    if (!tourToDelete) return;
+
+    try {
+      await deleteMutation.mutateAsync(tourToDelete.id);
+      toast({
+        title: 'Tour deleted',
+        description: 'The tour has been permanently deleted.',
+      });
+      setDeleteDialogOpen(false);
+      setTourToDelete(null);
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to delete tour. Please try again.',
+      });
+    }
+  };
+
+
 
   const filteredTours = tours?.filter((tour) => {
     if (searchQuery) {
@@ -321,6 +349,17 @@ export default function ToursPage() {
                               Hide
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setTourToDelete(tour);
+                              setDeleteDialogOpen(true);
+                            }}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -366,6 +405,42 @@ export default function ToursPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Delete Tour
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this tour? This action cannot be undone.
+              This will permanently remove the tour and all its associated data.
+            </DialogDescription>
+          </DialogHeader>
+          {tourToDelete && (
+            <div className="rounded-md bg-muted p-4">
+              <p className="font-medium">{tourToDelete.creatorName}&apos;s Tour</p>
+              <p className="text-sm text-muted-foreground">{tourToDelete.city || 'Unknown location'}</p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete Tour'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
     </AdminLayout>
   );
 }

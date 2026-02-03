@@ -5,6 +5,7 @@ import {
   addSubmissionFeedback,
   approveTour,
   deleteReviewComment,
+  deleteTour,
   featureTour,
   getPendingTours,
   getReviewComments,
@@ -134,6 +135,19 @@ export function useUnhideTour() {
 
   return useMutation({
     mutationFn: (tourId: string) => unhideTour(tourId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tours'] });
+      queryClient.invalidateQueries({ queryKey: ['tourStats'] });
+      queryClient.invalidateQueries({ queryKey: ['auditLogs'] });
+    },
+  });
+}
+
+export function useDeleteTour() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (tourId: string) => deleteTour(tourId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tours'] });
       queryClient.invalidateQueries({ queryKey: ['tourStats'] });

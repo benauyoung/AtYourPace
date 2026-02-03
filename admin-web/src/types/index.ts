@@ -25,6 +25,7 @@ export type AuditAction =
   | 'tourUnhidden'
   | 'tourFeatured'
   | 'tourUnfeatured'
+  | 'tourDeleted'
   | 'userRoleChanged'
   | 'userBanned'
   | 'userUnbanned'
@@ -527,6 +528,7 @@ export const actionDisplayNames: Record<AuditAction, string> = {
   tourUnhidden: 'Unhid tour',
   tourFeatured: 'Featured tour',
   tourUnfeatured: 'Unfeatured tour',
+  tourDeleted: 'Deleted tour',
   userRoleChanged: 'Changed user role',
   userBanned: 'Banned user',
   userUnbanned: 'Unbanned user',

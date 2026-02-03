@@ -1,29 +1,29 @@
 import {
+  TourCategory,
+  TourDifficulty,
+  TourModel,
+  TourStatus,
+  TourType,
+  TourVersionModel,
+  nullableTimestampToDate,
+  timestampToDate,
+} from '@/types';
+import {
+  addDoc,
   collection,
   doc,
   getDoc,
   getDocs,
-  updateDoc,
-  addDoc,
-  query,
-  where,
   orderBy,
+  query,
   serverTimestamp,
+  updateDoc,
+  where,
   writeBatch,
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, auth, storage } from './config';
-import {
-  TourModel,
-  TourVersionModel,
-  TourStatus,
-  TourCategory,
-  TourType,
-  TourDifficulty,
-  timestampToDate,
-  nullableTimestampToDate,
-} from '@/types';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import ngeohash from 'ngeohash';
+import { auth, db, storage } from './config';
 
 // Collection names
 const COLLECTIONS = {
@@ -107,17 +107,17 @@ export async function getCreatorTours(status?: TourStatus): Promise<TourWithVers
       const version = versionDoc.exists()
         ? parseVersionDoc(tour.id, versionDoc.id, versionDoc.data())
         : {
-            id: tour.draftVersionId,
-            tourId: tour.id,
-            versionNumber: 1,
-            versionType: 'draft' as const,
-            title: 'Untitled Tour',
-            description: '',
-            difficulty: 'moderate' as const,
-            languages: [],
-            createdAt: tour.createdAt,
-            updatedAt: tour.updatedAt,
-          };
+          id: tour.draftVersionId,
+          tourId: tour.id,
+          versionNumber: 1,
+          versionType: 'draft' as const,
+          title: 'Untitled Tour',
+          description: '',
+          difficulty: 'moderate' as const,
+          languages: [],
+          createdAt: tour.createdAt,
+          updatedAt: tour.updatedAt,
+        };
       return { tour, version };
     })
   );
@@ -160,7 +160,7 @@ export async function createTour(input: CreateTourInput): Promise<string> {
   const creatorName = userDoc.data()?.displayName || 'Unknown Creator';
 
   // Generate geohash from location
-  const geohash = ngeohash.encode(input.startLocation.latitude, input.startLocation.longitude, 7);
+  const geohash = ngeohash.encode(input.startLocation.latitude, input.startLocation.longitude, 9);
 
   // Create the tour document
   const tourRef = doc(collection(db, COLLECTIONS.tours));
@@ -258,7 +258,7 @@ export async function updateTour(tourId: string, input: UpdateTourInput): Promis
 
   if (input.startLocation !== undefined) {
     tourUpdate.startLocation = input.startLocation;
-    tourUpdate.geohash = ngeohash.encode(input.startLocation.latitude, input.startLocation.longitude, 7);
+    tourUpdate.geohash = ngeohash.encode(input.startLocation.latitude, input.startLocation.longitude, 9);
   }
 
   // If tour was approved and is being edited, change status to pending_review

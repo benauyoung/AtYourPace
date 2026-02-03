@@ -345,11 +345,19 @@ export function subscribeToPendingTours(
 export async function approveTour(tourId: string, notes?: string): Promise<void> {
   await verifyAdminRole();
 
+  const tourDoc = await getDoc(doc(db, COLLECTIONS.tours, tourId));
+  if (!tourDoc.exists()) throw new Error('Tour not found');
+  const tourData = tourDoc.data();
+
   await updateDoc(doc(db, COLLECTIONS.tours, tourId), {
     status: 'approved',
     approvedAt: serverTimestamp(),
     lastReviewedAt: serverTimestamp(),
     approvedBy: auth.currentUser!.uid,
+    // Promote draft to live
+    liveVersionId: tourData.draftVersionId,
+    liveVersion: tourData.draftVersion,
+    publishedAt: serverTimestamp(),
     ...(notes && { approvalNotes: notes }),
   });
 
@@ -416,6 +424,23 @@ export async function unhideTour(tourId: string): Promise<void> {
 
   await logAction({
     action: 'tourUnhidden',
+    targetId: tourId,
+    targetType: 'tour',
+  });
+}
+
+export async function deleteTour(tourId: string): Promise<void> {
+  await verifyAdminRole();
+
+  // Note: This only deletes the top-level document. Subcollections (versions/stops) remain orphaned in Firestore
+  // unless a Cloud Function handles cleanup. For this admin tool, we'll accept this limitation or should warn the user.
+  // Ideally, we'd mark as deleted (soft delete) if we want to preserve data, but users usually expect "delete" to remove it.
+  // Given we have "Hide" for soft-removal, "Delete" implies hard removal.
+
+  await deleteDoc(doc(db, COLLECTIONS.tours, tourId));
+
+  await logAction({
+    action: 'tourDeleted' as AuditAction, // Ensure AuditAction type includes this or cast it if restricted
     targetId: tourId,
     targetType: 'tour',
   });
