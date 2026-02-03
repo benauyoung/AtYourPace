@@ -315,7 +315,7 @@ export async function getPendingTours(): Promise<TourModel[]> {
 }
 
 export function subscribeToPendingTours(
-  callback: (tours: TourModel[]) => void
+  callback: (tours: (TourModel & { versionTitle?: string })[]) => void
 ): () => void {
   const q = query(
     collection(db, COLLECTIONS.tours),
@@ -323,9 +323,22 @@ export function subscribeToPendingTours(
     orderBy('updatedAt', 'asc')
   );
 
-  return onSnapshot(q, (snapshot) => {
+  return onSnapshot(q, async (snapshot) => {
     const tours = snapshot.docs.map((doc) => parseTourDoc(doc.id, doc.data()));
-    callback(tours);
+
+    // Fetch version titles for each tour
+    const toursWithTitles = await Promise.all(
+      tours.map(async (tour) => {
+        try {
+          const version = await getTourVersion(tour.id, tour.draftVersionId);
+          return { ...tour, versionTitle: version?.title };
+        } catch {
+          return { ...tour, versionTitle: undefined };
+        }
+      })
+    );
+
+    callback(toursWithTitles);
   });
 }
 
@@ -779,6 +792,17 @@ export async function updateSubmissionStatus(
   }
 ): Promise<void> {
   await verifyAdminRole();
+
+  // Handle legacy submissions - directly update tour status
+  if (submissionId.startsWith('legacy-')) {
+    const tourId = submissionId.replace('legacy-', '');
+    if (status === 'approved') {
+      await approveTour(tourId);
+    } else if (status === 'rejected') {
+      await rejectTour(tourId, data?.rejectionReason || 'Rejected', false);
+    }
+    return; // Done - no publishingSubmissions doc to update
+  }
 
   const updates: Record<string, any> = {
     status,

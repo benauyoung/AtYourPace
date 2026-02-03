@@ -72,7 +72,7 @@ export default function ReviewQueuePage() {
         submittedAt: t.updatedAt, // Best approximation
         resubmissionCount: 0,
         creatorIgnoredSuggestions: false,
-        tourTitle: t.slug || 'Untitled Legacy Tour', // Legacy tours might not have title easily accessible without fetching version
+        tourTitle: t.versionTitle || t.slug || 'Untitled Tour', // Use fetched version title
         feedback: [],
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
