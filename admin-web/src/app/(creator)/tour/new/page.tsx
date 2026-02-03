@@ -1,50 +1,72 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { StartTourModal } from '@/components/creator/StartTourModal';
 import { CreatorPageWrapper } from '@/components/layout/creator-page-wrapper';
-import { TourForm } from '@/components/creator/tour-form';
-import { Button } from '@/components/ui/button';
 import { useCreateTour } from '@/hooks/use-creator-tours';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function NewTourPage() {
   const router = useRouter();
   const { toast } = useToast();
   const createTour = useCreateTour();
+  const [open, setOpen] = useState(false);
 
-  const handleSave = async (data: {
+  // Auto-open modal on mount
+  useEffect(() => {
+    setOpen(true);
+  }, []);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      // Logic: If they close the modal without creating, go back to dashboard
+      // We can check if we are navigating away or just closed.
+      // For now, let's assume close = cancel = back to dashboard
+      // But we need a way to distinguish "success close" vs "cancel close".
+      // The modal props I wrote handles validation internally. 
+      // Actually, onCreate calls onOpenChange(false).
+      // Let's rely on the routing in handleCreate to move away.
+      // If the user manually closes, we redirect. Needs a flag or just handle it here.
+      // Simplest: If !isOpen and not redirected, go back. 
+      // But router.push is async. 
+
+      // Let's simply redirect to my-tours if closed.
+      // We will handle the "success" case by redirecting BEFORE closing or avoiding this callback.
+    }
+  };
+
+  // Custom close handler for "Cancel" or backdrop click
+  const handleCancel = () => {
+    setOpen(false);
+    router.push('/my-tours');
+  };
+
+  const handleCreate = async (data: {
     title: string;
-    description: string;
-    category: 'history' | 'nature' | 'ghost' | 'food' | 'art' | 'architecture' | 'other';
-    tourType: 'walking' | 'driving';
-    difficulty: 'easy' | 'moderate' | 'challenging';
-    city?: string;
-    region?: string;
-    country?: string;
-    startLatitude: number;
-    startLongitude: number;
+    destination: string;
+    price?: string;
+    transportMode: 'walking' | 'driving';
   }) => {
     try {
+      // Maps defaults for fields not yet in the start modal
       const tourId = await createTour.mutateAsync({
         title: data.title,
-        description: data.description,
-        category: data.category,
-        tourType: data.tourType,
-        difficulty: data.difficulty,
-        city: data.city,
-        region: data.region,
-        country: data.country,
+        description: '',
+        category: 'other',
+        tourType: data.transportMode, // Map 'walking' | 'driving'
+        difficulty: 'moderate',
+        city: data.destination, // Store the text input as city for now
         startLocation: {
-          latitude: data.startLatitude,
-          longitude: data.startLongitude,
+          latitude: 0, // Default to 0, user sets on map
+          longitude: 0,
         },
       });
 
       toast({
         title: 'Tour created',
-        description: 'Your tour has been created. You can now add stops.',
+        description: 'Draft created. Now you can design your route.',
       });
 
       // Redirect to the edit page
@@ -55,33 +77,20 @@ export default function NewTourPage() {
         title: 'Failed to create tour',
         description: error instanceof Error ? error.message : 'An error occurred',
       });
+      // Re-open if failed?
     }
   };
 
   return (
     <CreatorPageWrapper title="Create Tour">
-      <div className="mx-auto max-w-3xl space-y-6">
-        {/* Back button */}
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/my-tours">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to My Tours
-          </Link>
-        </Button>
+      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+        {/* Show a placeholder or loading state while modal is open */}
+        <p className="text-muted-foreground">Opening tour creator...</p>
 
-        {/* Header */}
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Create New Tour</h2>
-          <p className="text-muted-foreground">
-            Fill in the basic information to create your tour. You can add stops and media after.
-          </p>
-        </div>
-
-        {/* Form */}
-        <TourForm
-          onSave={handleSave}
-          isSaving={createTour.isPending}
-          isNew
+        <StartTourModal
+          open={open}
+          onOpenChange={(val) => !val ? handleCancel() : setOpen(val)}
+          onCreate={handleCreate}
         />
       </div>
     </CreatorPageWrapper>

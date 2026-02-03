@@ -47,14 +47,13 @@ import {
 } from '@/types';
 import { format } from 'date-fns';
 import {
-  AlertTriangle,
   Eye,
   EyeOff,
   MoreHorizontal,
   Search,
   Star,
   StarOff,
-  Trash2,
+  Trash2
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -406,39 +405,7 @@ export default function ToursPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              Delete Tour
-            </DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this tour? This action cannot be undone.
-              This will permanently remove the tour and all its associated data.
-            </DialogDescription>
-          </DialogHeader>
-          {tourToDelete && (
-            <div className="rounded-md bg-muted p-4">
-              <p className="font-medium">{tourToDelete.creatorName}&apos;s Tour</p>
-              <p className="text-sm text-muted-foreground">{tourToDelete.city || 'Unknown location'}</p>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete Tour'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
 
     </AdminLayout>

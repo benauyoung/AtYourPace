@@ -193,6 +193,11 @@ export interface TourVersionModel {
   duration?: string;
   distance?: string;
   difficulty: TourDifficulty;
+  // Logistics / Tips
+  startLocationInstructions?: string;
+  bestTime?: string;
+  precautions?: string;
+  foodOptions?: string;
   languages: string[];
   route?: TourRoute; // Keeping generic for now, might migrate to routeId reference
   routeId?: string; // Reference to RouteModel

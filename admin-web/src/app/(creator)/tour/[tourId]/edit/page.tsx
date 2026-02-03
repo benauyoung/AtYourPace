@@ -1,294 +1,258 @@
 'use client';
 
-import Link from 'next/link';
-import { ArrowLeft, Loader2, MapPin, Eye, Send, Undo2 } from 'lucide-react';
-import { CreatorPageWrapper } from '@/components/layout/creator-page-wrapper';
-import { TourForm } from '@/components/creator/tour-form';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CreatorLayout, CreatorNavItem } from '@/components/creator/CreatorLayout';
+import { CoverForm } from '@/components/creator/forms/CoverForm';
+import { TipsForm } from '@/components/creator/forms/TipsForm';
+import { MapEditor } from '@/components/creator/map-editor';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   useCreatorTour,
+  useSubmitTourForReview,
   useUpdateTour,
   useUploadCoverImage,
-  useSubmitTourForReview,
   useWithdrawTour,
 } from '@/hooks/use-creator-tours';
 import { useToast } from '@/hooks/use-toast';
-import { statusDisplayNames } from '@/types';
+import { GeoPoint, statusDisplayNames } from '@/types';
+import { ArrowLeft, Image as ImageIcon, Loader2, Map, Send, Sun } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 interface EditTourPageProps {
   params: { tourId: string };
 }
 
+type Tab = 'cover' | 'route' | 'tips' | 'publish';
+
 export default function EditTourPage({ params }: EditTourPageProps) {
   const { tourId } = params;
   const { toast } = useToast();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<Tab>('cover');
 
-  const { data, isLoading, error } = useCreatorTour(tourId);
+  const { data: tourData, isLoading, error } = useCreatorTour(tourId);
   const updateTour = useUpdateTour();
   const uploadCoverImage = useUploadCoverImage();
   const submitForReview = useSubmitTourForReview();
   const withdrawTour = useWithdrawTour();
 
-  const handleSave = async (formData: {
-    title?: string;
-    description?: string;
-    category?: 'history' | 'nature' | 'ghost' | 'food' | 'art' | 'architecture' | 'other';
-    tourType?: 'walking' | 'driving';
-    difficulty?: 'easy' | 'moderate' | 'challenging';
-    city?: string;
-    region?: string;
-    country?: string;
-    duration?: string;
-    distance?: string;
-    startLatitude?: number;
-    startLongitude?: number;
-  }) => {
+  const handleUpdateTour = async (data: Partial<any>) => {
+    // Map flattened form data back to nested structure if needed, or just pass partials
+    // The useUpdateTour hook expects specific input structure.
+
+    // We need to construct the input based on what's changed.
+    // For now, these forms pass flat data that matches the input type mostly.
+
     try {
       await updateTour.mutateAsync({
         tourId,
-        input: {
-          title: formData.title,
-          description: formData.description,
-          category: formData.category,
-          tourType: formData.tourType,
-          difficulty: formData.difficulty,
-          city: formData.city,
-          region: formData.region,
-          country: formData.country,
-          duration: formData.duration,
-          distance: formData.distance,
-          startLocation:
-            formData.startLatitude !== undefined && formData.startLongitude !== undefined
-              ? { latitude: formData.startLatitude, longitude: formData.startLongitude }
-              : undefined,
-        },
+        input: data,
       });
 
       toast({
-        title: 'Tour saved',
-        description: 'Your changes have been saved.',
+        title: 'Saved',
+        description: 'Changes saved successfully.',
       });
-    } catch (error) {
+    } catch (e) {
       toast({
         variant: 'destructive',
-        title: 'Failed to save tour',
-        description: error instanceof Error ? error.message : 'An error occurred',
+        title: 'Error',
+        description: 'Failed to save changes.',
       });
-      throw error; // Re-throw so auto-save knows it failed
+      console.error(e);
     }
   };
 
-  const handleImageUpload = async (file: File) => {
-    try {
-      await uploadCoverImage.mutateAsync({ tourId, file });
-      toast({
-        title: 'Image uploaded',
-        description: 'Cover image has been updated.',
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to upload image',
-        description: error instanceof Error ? error.message : 'An error occurred',
-      });
-    }
+  const handleCoverSave = async (data: any) => {
+    await handleUpdateTour(data);
   };
 
-  const handleSubmitForReview = async () => {
-    try {
-      await submitForReview.mutateAsync(tourId);
-      toast({
-        title: 'Tour submitted',
-        description: 'Your tour has been submitted for review.',
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to submit tour',
-        description: error instanceof Error ? error.message : 'An error occurred',
-      });
-    }
+  const handleTipsSave = async (data: any) => {
+    await handleUpdateTour(data);
   };
 
-  const handleWithdraw = async () => {
-    try {
-      await withdrawTour.mutateAsync(tourId);
-      toast({
-        title: 'Submission withdrawn',
-        description: 'Your tour has been moved back to draft. You can now edit it.',
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed to withdraw submission',
-        description: error instanceof Error ? error.message : 'An error occurred',
-      });
-    }
+  const handleStopAdd = (location: GeoPoint, name: string) => {
+    // TODO: Connect this to actual mutation
+    console.log('Stop added at', location, name);
+    toast({
+      title: 'Stop Added',
+      description: 'Stops management will be updated in next iteration',
+    });
+  };
+
+  const handleStopMove = (stopId: string, location: GeoPoint) => {
+    // TODO: Connect this to actual mutation
+    console.log('Stop moved', stopId, location);
   };
 
   if (isLoading) {
     return (
-      <CreatorPageWrapper title="Edit Tour">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      </CreatorPageWrapper>
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 
-  if (error || !data) {
+  if (error || !tourData) {
     return (
-      <CreatorPageWrapper title="Edit Tour">
-        <div className="mx-auto max-w-3xl">
-          <Card className="border-destructive">
-            <CardContent className="pt-6">
-              <p className="text-destructive">
-                {error instanceof Error ? error.message : 'Tour not found'}
-              </p>
-              <Button variant="outline" asChild className="mt-4">
-                <Link href="/my-tours">Back to My Tours</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </CreatorPageWrapper>
+      <div className="flex h-screen items-center justify-center flex-col gap-4">
+        <p className="text-destructive">Failed to load tour</p>
+        <Link href="/my-tours"><Button>Back to Dashboard</Button></Link>
+      </div>
     );
   }
 
-  const { tour, version } = data;
-  const canEdit = tour.status !== 'pending_review';
-  const canSubmit = tour.status === 'draft' || tour.status === 'rejected';
-  const canWithdraw = tour.status === 'pending_review';
+  const { tour, version } = tourData;
+
 
   return (
-    <CreatorPageWrapper title="Edit Tour">
-      <div className="mx-auto max-w-3xl space-y-6">
-        {/* Back button */}
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/my-tours">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to My Tours
-          </Link>
-        </Button>
+    <CreatorLayout
+      tourId={tourId}
+      tourTitle={version.title}
+    >
+      <div className="flex h-full">
+        {/* Sidebar Navigation - Overriding the slot approach for now by just placing it here. 
+             If Component separation was strict, we'd pass this as a prop or portal, but this is fine.
+             Actually, CreatorLayout renders children. We should construct the Sidebar HERE and pass it,
+             OR we change CreatorLayout to accept nav items.
+             Let's use the provided slots/structure of CreatorLayout (sidebar is fixed there).
+             WAIT. CreatorLayout content is fixed sidebar + children main.
+             We need to inject buttons into that sidebar.
+             Let's change CreatorLayout to accept "nav" prop?
+             Or just implement the sidebar here if we didn't make it reusable enough.
+             
+             Let's re-read CreatorLayout. It has a hardcoded sidebar.
+             I'll assume I can edit CreatorLayout.tsx to take children or slots, OR I just use a layout wrapper here.
+             
+             Actually, let's just make the sidebar part of this page's layout using a generic "TwoColumnLayout" if we wanted.
+             But since I already wrote CreatorLayout with fixed sidebar, let me rewrite CreatorLayout to accept 'navItems' or similar.
+             
+             Wait, I wrote CreatorLayout to check `id="creator-nav-slot"`.
+             I could use a React Portal? No, that's overengineering.
+             
+             Let's just render a custom layout here that looks like the planned one, reusing the sidebar *style* but keeping logic here.
+         */}
+        <aside className="w-64 border-r bg-muted/10 flex flex-col h-full bg-white">
+          <div className="p-4 border-b h-14 flex items-center">
+            <Link href="/my-tours" className="flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Dashboard
+            </Link>
+          </div>
 
-        {/* Header with status */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-2xl font-bold tracking-tight">
+          <div className="p-4 space-y-4">
+            <div>
+              <h2 className="font-semibold px-2 mb-1 truncate" title={version.title}>
                 {version.title || 'Untitled Tour'}
               </h2>
-              <Badge variant={tour.status === 'approved' ? 'default' : 'secondary'}>
-                {statusDisplayNames[tour.status]}
-              </Badge>
-            </div>
-            <p className="text-muted-foreground">
-              Edit your tour details and settings
-            </p>
-          </div>
-        </div>
-
-        {/* Status-specific messages */}
-        {tour.status === 'pending_review' && (
-          <Card className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
-            <CardContent className="pt-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <p className="text-yellow-800 dark:text-yellow-200">
-                  This tour is currently under review. You cannot make changes until the review is complete.
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={handleWithdraw}
-                  disabled={withdrawTour.isPending}
-                  className="shrink-0"
-                >
-                  {withdrawTour.isPending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Undo2 className="mr-2 h-4 w-4" />
-                  )}
-                  Withdraw Submission
-                </Button>
+              <div className="px-2">
+                <Badge variant="outline" className="text-xs">
+                  {statusDisplayNames[tour.status]}
+                </Badge>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
 
-        {tour.status === 'rejected' && tour.rejectionReason && (
-          <Card className="border-destructive bg-destructive/10">
-            <CardHeader>
-              <CardTitle className="text-destructive">Tour Rejected</CardTitle>
-              <CardDescription>{tour.rejectionReason}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Please address the feedback above and resubmit your tour for review.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+            <nav className="space-y-1">
+              <CreatorNavItem
+                icon={ImageIcon}
+                label="Cover"
+                isActive={activeTab === 'cover'}
+                onClick={() => setActiveTab('cover')}
+              />
+              <CreatorNavItem
+                icon={Map}
+                label="Route Map"
+                isActive={activeTab === 'route'}
+                onClick={() => setActiveTab('route')}
+              />
+              <CreatorNavItem
+                icon={Sun}
+                label="Tips"
+                isActive={activeTab === 'tips'}
+                onClick={() => setActiveTab('tips')}
+              />
+              <CreatorNavItem
+                icon={Send}
+                label="Publish"
+                isActive={activeTab === 'publish'}
+                onClick={() => setActiveTab('publish')}
+              />
+            </nav>
+          </div>
+        </aside>
 
-        {tour.status === 'approved' && (
-          <Card className="border-green-500 bg-green-50 dark:bg-green-950/20">
-            <CardContent className="pt-6">
-              <p className="text-green-800 dark:text-green-200">
-                This tour is approved and live. Making changes will require re-approval.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        <main className="flex-1 overflow-auto bg-slate-50 relative">
+          <div className="h-full">
+            {activeTab === 'cover' && (
+              <div className="p-8 max-w-5xl mx-auto">
+                <CoverForm
+                  version={version}
+                  onSave={handleCoverSave}
+                  onCoverImageUpload={(file) => uploadCoverImage.mutateAsync({ tourId, file })}
+                  isSaving={updateTour.isPending}
+                />
+              </div>
+            )}
 
-        {/* Action buttons */}
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" asChild>
-            <Link href={`/tour/${tourId}/stops`}>
-              <MapPin className="mr-2 h-4 w-4" />
-              Manage Stops
-            </Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href={`/tour/${tourId}/preview`}>
-              <Eye className="mr-2 h-4 w-4" />
-              Preview
-            </Link>
-          </Button>
-          {canSubmit && (
-            <Button
-              onClick={handleSubmitForReview}
-              disabled={submitForReview.isPending}
-            >
-              {submitForReview.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="mr-2 h-4 w-4" />
-              )}
-              Submit for Review
-            </Button>
-          )}
-        </div>
+            {activeTab === 'route' && (
+              <div className="h-full w-full relative">
+                {/* Map Editor fills the space */}
+                <MapEditor
+                  stops={tourData.stops}
+                  selectedStopId={null} // Managing state here later
+                  onStopSelect={() => { }}
+                  onStopAdd={handleStopAdd}
+                  onStopMove={handleStopMove}
+                  centerLocation={tour.startLocation}
+                  isAddMode={false}
+                  tourType={tour.tourType}
+                />
+              </div>
+            )}
 
-        {/* Form */}
-        {canEdit ? (
-          <TourForm
-            tour={tour}
-            version={version}
-            onSave={handleSave}
-            onCoverImageUpload={handleImageUpload}
-            coverImageUrl={version.coverImageUrl}
-            isSaving={updateTour.isPending}
-          />
-        ) : (
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-muted-foreground text-center py-8">
-                Editing is disabled while the tour is under review.
-              </p>
-            </CardContent>
-          </Card>
-        )}
+            {activeTab === 'tips' && (
+              <div className="p-8 max-w-5xl mx-auto">
+                <TipsForm
+                  version={version}
+                  onSave={handleTipsSave}
+                  isSaving={updateTour.isPending}
+                />
+              </div>
+            )}
+
+            {activeTab === 'publish' && (
+              <div className="p-8 max-w-3xl mx-auto">
+                <Card>
+                  <CardContent className="pt-6 space-y-4">
+                    <h3 className="text-lg font-medium">Ready to publish?</h3>
+                    <p className="text-muted-foreground">
+                      Once you submit your tour, our team will review it to ensure it meets our quality standards.
+                    </p>
+                    <div className="flex gap-4 pt-4">
+                      <Button
+                        onClick={() => submitForReview.mutateAsync(tourId)}
+                        disabled={submitForReview.isPending || tour.status === 'pending_review'}
+                      >
+                        {submitForReview.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        Submit for Review
+                      </Button>
+
+                      {tour.status === 'pending_review' && (
+                        <Button variant="outline" onClick={() => withdrawTour.mutateAsync(tourId)}>
+                          Withdraw Submission
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
-    </CreatorPageWrapper>
+    </CreatorLayout>
   );
 }
