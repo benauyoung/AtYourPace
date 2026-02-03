@@ -701,6 +701,52 @@ export function subscribeToSubmissions(
 
 export async function getSubmission(submissionId: string): Promise<PublishingSubmissionModel | null> {
   await verifyAdminRole();
+
+  // Handle legacy submissions (mapped from pending tours)
+  if (submissionId.startsWith('legacy-')) {
+    const tourId = submissionId.replace('legacy-', '');
+    const tour = await getTour(tourId);
+    if (!tour) return null;
+
+    const version = await getTourVersion(tourId, tour.draftVersionId);
+
+    // Fetch legacy comments and adapt to feedback
+    const legacyComments = await getReviewComments(tourId, tour.draftVersionId);
+    const feedback: ReviewFeedbackModel[] = legacyComments.map(c => ({
+      id: c.id,
+      submissionId,
+      reviewerId: c.authorId,
+      reviewerName: c.authorName,
+      type: 'issue' as FeedbackType, // Default
+      message: c.content,
+      stopId: c.stopId,
+      priority: 'medium' as FeedbackPriority,
+      resolved: c.resolved,
+      resolvedAt: c.resolvedAt,
+      resolvedBy: c.resolvedBy,
+      createdAt: c.createdAt,
+    }));
+
+    return {
+      id: submissionId,
+      tourId: tour.id,
+      versionId: tour.draftVersionId,
+      creatorId: tour.creatorId,
+      creatorName: tour.creatorName,
+      status: 'submitted' as SubmissionStatus, // Map pending_review -> submitted
+      submittedAt: tour.updatedAt,
+      reviewedAt: tour.lastReviewedAt,
+      reviewerId: undefined, // Legacy didn't track active reviewer on the tour doc specifically same way
+      feedback,
+      resubmissionCount: 0,
+      creatorIgnoredSuggestions: false,
+      tourTitle: version?.title,
+      tourDescription: version?.description,
+      createdAt: tour.createdAt,
+      updatedAt: tour.updatedAt,
+    };
+  }
+
   const docRef = doc(db, COLLECTIONS.publishingSubmissions, submissionId);
   const snapshot = await getDoc(docRef);
 
