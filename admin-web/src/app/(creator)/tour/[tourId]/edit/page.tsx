@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Loader2, MapPin, Eye, Send } from 'lucide-react';
+import { ArrowLeft, Loader2, MapPin, Eye, Send, Undo2 } from 'lucide-react';
 import { CreatorPageWrapper } from '@/components/layout/creator-page-wrapper';
 import { TourForm } from '@/components/creator/tour-form';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
   useUpdateTour,
   useUploadCoverImage,
   useSubmitTourForReview,
+  useWithdrawTour,
 } from '@/hooks/use-creator-tours';
 import { useToast } from '@/hooks/use-toast';
 import { statusDisplayNames } from '@/types';
@@ -28,6 +29,7 @@ export default function EditTourPage({ params }: EditTourPageProps) {
   const updateTour = useUpdateTour();
   const uploadCoverImage = useUploadCoverImage();
   const submitForReview = useSubmitTourForReview();
+  const withdrawTour = useWithdrawTour();
 
   const handleSave = async (formData: {
     title?: string;
@@ -110,6 +112,22 @@ export default function EditTourPage({ params }: EditTourPageProps) {
     }
   };
 
+  const handleWithdraw = async () => {
+    try {
+      await withdrawTour.mutateAsync(tourId);
+      toast({
+        title: 'Submission withdrawn',
+        description: 'Your tour has been moved back to draft. You can now edit it.',
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to withdraw submission',
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <CreatorPageWrapper title="Edit Tour">
@@ -142,6 +160,7 @@ export default function EditTourPage({ params }: EditTourPageProps) {
   const { tour, version } = data;
   const canEdit = tour.status !== 'pending_review';
   const canSubmit = tour.status === 'draft' || tour.status === 'rejected';
+  const canWithdraw = tour.status === 'pending_review';
 
   return (
     <CreatorPageWrapper title="Edit Tour">
@@ -175,9 +194,24 @@ export default function EditTourPage({ params }: EditTourPageProps) {
         {tour.status === 'pending_review' && (
           <Card className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
             <CardContent className="pt-6">
-              <p className="text-yellow-800 dark:text-yellow-200">
-                This tour is currently under review. You cannot make changes until the review is complete.
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <p className="text-yellow-800 dark:text-yellow-200">
+                  This tour is currently under review. You cannot make changes until the review is complete.
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={handleWithdraw}
+                  disabled={withdrawTour.isPending}
+                  className="shrink-0"
+                >
+                  {withdrawTour.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Undo2 className="mr-2 h-4 w-4" />
+                  )}
+                  Withdraw Submission
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}

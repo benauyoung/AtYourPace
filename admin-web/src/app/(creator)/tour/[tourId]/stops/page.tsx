@@ -19,9 +19,12 @@ import { useCreatorTour } from '@/hooks/use-creator-tours';
 import {
   useCreateStop,
   useDeleteStop,
+  useDeleteStopImage,
+  useReorderStopImages,
   useReorderStops,
   useTourStops,
   useUpdateStop,
+  useUploadStopImage,
 } from '@/hooks/use-stops';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -33,7 +36,7 @@ import {
   useUndoRedo,
 } from '@/hooks/use-undo-redo';
 import { DEFAULT_TRIGGER_RADIUS } from '@/lib/mapbox/config';
-import { GeoPoint } from '@/types';
+import { GeoPoint, StopImage } from '@/types';
 import { ArrowLeft, Loader2, PanelLeft, PanelLeftClose, Redo2, Undo2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
@@ -55,6 +58,9 @@ export default function StopsPage({ params }: StopsPageProps) {
   const updateStopMutation = useUpdateStop();
   const deleteStopMutation = useDeleteStop();
   const reorderStopsMutation = useReorderStops();
+  const uploadStopImageMutation = useUploadStopImage();
+  const deleteStopImageMutation = useDeleteStopImage();
+  const reorderStopImagesMutation = useReorderStopImages();
 
   // Undo/redo
   const { execute, undo, redo, canUndo, canRedo } = useUndoRedo<string | void>();
@@ -107,6 +113,7 @@ export default function StopsPage({ params }: StopsPageProps) {
       try {
         const newStopId = await execute(command);
         setSelectedStopId(newStopId as string);
+        setEditingStopId(newStopId as string); // Auto-open details modal
         toast({
           title: 'Stop added',
           description: `"${name}" has been added to the tour.`,
@@ -208,6 +215,44 @@ export default function StopsPage({ params }: StopsPageProps) {
       }
     },
     [tourId, updateStopMutation, toast]
+  );
+
+  // Image handlers for stop detail modal
+  const handleImageUpload = useCallback(
+    async (file: File, order: number) => {
+      if (!editingStopId) throw new Error('No stop selected');
+      return uploadStopImageMutation.mutateAsync({
+        tourId,
+        stopId: editingStopId,
+        file,
+        order,
+      });
+    },
+    [tourId, editingStopId, uploadStopImageMutation]
+  );
+
+  const handleImageDelete = useCallback(
+    async (imageUrl: string) => {
+      if (!editingStopId) throw new Error('No stop selected');
+      await deleteStopImageMutation.mutateAsync({
+        tourId,
+        stopId: editingStopId,
+        imageUrl,
+      });
+    },
+    [tourId, editingStopId, deleteStopImageMutation]
+  );
+
+  const handleImagesReorder = useCallback(
+    async (images: StopImage[]) => {
+      if (!editingStopId) throw new Error('No stop selected');
+      await reorderStopImagesMutation.mutateAsync({
+        tourId,
+        stopId: editingStopId,
+        images,
+      });
+    },
+    [tourId, editingStopId, reorderStopImagesMutation]
   );
 
   // Handler for confirming delete
@@ -451,6 +496,9 @@ export default function StopsPage({ params }: StopsPageProps) {
         onClose={() => setEditingStopId(null)}
         onSave={handleStopSave}
         isSaving={isSaving}
+        onImageUpload={handleImageUpload}
+        onImageDelete={handleImageDelete}
+        onImagesReorder={handleImagesReorder}
       />
 
       <AlertDialog open={!!deleteStopId} onOpenChange={() => setDeleteStopId(null)}>

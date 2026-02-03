@@ -15,8 +15,9 @@ A standalone web admin panel for the AYP Tour Guide application, built with Next
 ## Features
 
 - **Dashboard** - Quick stats, pending reviews alert, quick actions
-- **Review Queue** - Real-time list of pending tours with approve/reject
+- **Review Queue** - Real-time list of submitted tours with feedback and approval workflow
 - **Tour Management** - Browse all tours, filter by status/category, feature/hide tours
+- **Collections Manager** - Curate and manage collections of tours (geographic, thematic, etc.)
 - **User Management** - User list, role changes, ban/unban actions
 - **Settings** - Maintenance mode, registration, quotas, app version control
 - **Audit Logs** - Filterable admin action history

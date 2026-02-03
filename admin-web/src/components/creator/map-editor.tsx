@@ -22,7 +22,7 @@ import { GeoPoint, StopModel } from '@/types';
 import { AlertCircle, Layers, Loader2, Locate, Navigation, Plus, ZoomIn, ZoomOut } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 // Set the token globally
 mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -39,7 +39,7 @@ interface MapEditorProps {
   tourType?: 'walking' | 'driving';
 }
 
-export function MapEditor({
+export const MapEditor = memo(function MapEditor({
   stops,
   selectedStopId,
   onStopSelect,
@@ -58,6 +58,13 @@ export function MapEditor({
   const stopsRef = useRef(stops);
   const [mapStyle, setMapStyle] = useState<MapStyleKey>('streets');
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [mapStatus, setMapStatus] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle');
+  const [mapErrorMessage, setMapErrorMessage] = useState<string | null>(null);
+  const [containerSize, setContainerSize] = useState<{ width: number; height: number } | null>(null);
+  const [layersReady, setLayersReady] = useState(false);
+  const prevMapStyleRef = useRef<MapStyleKey | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
+  const [webglSupported, setWebglSupported] = useState<boolean | null>(null);
   const [snapToRoads, setSnapToRoads] = useState<boolean>(() => {
     // Load preference from localStorage
     if (typeof window !== 'undefined') {
@@ -68,10 +75,19 @@ export function MapEditor({
   });
   const [isSnapping, setIsSnapping] = useState(false);
   const snapToRoadsRef = useRef(snapToRoads);
+  const tourTypeRef = useRef(tourType);
   const routeGeometryRef = useRef<GeoJSON.LineString | null>(null);
   const stopsForRadiusRef = useRef<StopModel[]>([]);
   const draggingStopIdRef = useRef<string | null>(null);
   const dragDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const debugEnabled = params.get('mapDebug') === '1' || localStorage.getItem('mapDebug') === 'true';
+    setShowDebug(debugEnabled);
+    setWebglSupported(mapboxgl.supported());
+  }, []);
 
   // Route calculation hook
   const {
@@ -103,6 +119,10 @@ export function MapEditor({
     snapToRoadsRef.current = snapToRoads;
   }, [snapToRoads]);
 
+  useEffect(() => {
+    tourTypeRef.current = tourType;
+  }, [tourType]);
+
   // Keep refs in sync for style reload
   useEffect(() => {
     routeGeometryRef.current = routeGeometry;
@@ -129,7 +149,38 @@ export function MapEditor({
       });
     }
 
-    // Add route line layer
+    // Add directional arrows layer
+    if (!map.getLayer('route-arrows')) {
+      // Load arrow image if not exists
+      if (!map.hasImage('arrow')) {
+        // Simple arrow SVG
+        const arrow = new Image(20, 20);
+        arrow.onload = () => {
+          if (!map.hasImage('arrow')) map.addImage('arrow', arrow);
+        };
+        arrow.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzU1NCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIj48cGF0aCBkPSZNMTIgNEw0IDE4bDggLTJsOCAyVjR6Ii8+PC9zdmc+'; // White/Grey arrow
+      }
+
+      map.addLayer({
+        id: 'route-arrows',
+        type: 'symbol',
+        source: 'route',
+        layout: {
+          'symbol-placement': 'line',
+          'symbol-spacing': 100,
+          'icon-image': 'arrow',
+          'icon-size': 0.6,
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+          'visibility': 'none',
+        },
+        paint: {
+          'icon-opacity': 0.8,
+        },
+      });
+    }
+
+    // Add route line layer (start hidden, show when geometry ready)
     if (!map.getLayer('route-line')) {
       map.addLayer({
         id: 'route-line',
@@ -138,6 +189,7 @@ export function MapEditor({
         layout: {
           'line-join': 'round',
           'line-cap': 'round',
+          'visibility': 'none',
         },
         paint: {
           'line-color': ROUTE_LINE_STYLE.color,
@@ -165,8 +217,8 @@ export function MapEditor({
         type: 'fill',
         source: 'trigger-radius',
         paint: {
-          'fill-color': MARKER_COLORS.default,
-          'fill-opacity': 0.1,
+          'fill-color': MARKER_COLORS.selected, // Use accent color for audio zones
+          'fill-opacity': 0.15,
         },
       });
     }
@@ -178,9 +230,9 @@ export function MapEditor({
         type: 'line',
         source: 'trigger-radius',
         paint: {
-          'line-color': MARKER_COLORS.default,
+          'line-color': MARKER_COLORS.selected, // Match fill color
           'line-width': 2,
-          'line-opacity': 0.5,
+          'line-opacity': 0.8,
           'line-dasharray': [2, 2],
         },
       });
@@ -189,72 +241,147 @@ export function MapEditor({
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || mapRef.current) return;
+    if (!mapContainer.current) return;
 
-    const center = centerLocation
-      ? [centerLocation.longitude, centerLocation.latitude] as [number, number]
-      : DEFAULT_MAP_CONFIG.center;
+    // Skip if map already exists (prevents double-init in React Strict Mode)
+    if (mapRef.current) {
+      return;
+    }
 
-    const map = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: MAP_STYLES[mapStyle],
-      center,
-      zoom: DEFAULT_MAP_CONFIG.zoom,
-    });
+    if (!mapboxgl.supported()) {
+      setMapStatus('error');
+      setMapErrorMessage('WebGL is not supported in this browser.');
+      return;
+    }
 
-    console.log('[MapEditor] Initializing map with:', {
-      container: mapContainer.current?.getBoundingClientRect(),
-      style: MAP_STYLES[mapStyle],
-      center,
-      tokenExists: !!MAPBOX_TOKEN
-    });
+    // Cancellation flag for cleanup
+    let cancelled = false;
 
-    map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+    const updateContainerSize = () => {
+      if (!mapContainer.current) return;
+      const rect = mapContainer.current.getBoundingClientRect();
+      setContainerSize({ width: Math.round(rect.width), height: Math.round(rect.height) });
+      return rect;
+    };
 
-    map.on('load', () => {
-      console.log('[MapEditor] Map loaded successfully');
-      setIsMapLoaded(true);
-      addMapSourcesAndLayers(map);
-      // Force immediate resize to ensure map tiles render correctly in the container
-      map.resize();
-    });
+    const initializeMap = () => {
+      // Check cancellation flag first
+      if (cancelled) {
+        return;
+      }
 
-    map.on('error', (e) => {
-      console.error('[MapEditor] Mapbox error:', e.error);
-    });
+      if (!mapContainer.current || mapRef.current) return;
+
+      const rect = updateContainerSize();
+
+      // Wait for container to have non-zero dimensions
+      if (!rect || rect.width === 0 || rect.height === 0) {
+        requestAnimationFrame(initializeMap);
+        return;
+      }
+
+      setMapStatus('loading');
+
+      const center = centerLocation
+        ? [centerLocation.longitude, centerLocation.latitude] as [number, number]
+        : DEFAULT_MAP_CONFIG.center;
+
+      const map = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: MAP_STYLES[mapStyle],
+        center,
+        zoom: DEFAULT_MAP_CONFIG.zoom,
+      });
+
+      // Store ref immediately to prevent double-init
+      mapRef.current = map;
+
+      map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+      map.on('load', () => {
+        // Check if this map instance is still the active one
+        if (cancelled || mapRef.current !== map) {
+          return;
+        }
+        setIsMapLoaded(true);
+        setMapStatus('loaded');
+        setMapErrorMessage(null);
+        addMapSourcesAndLayers(map);
+        setLayersReady(true);
+        // Delay resize to ensure CSS has fully settled
+        setTimeout(() => {
+          if (mapRef.current === map) {
+            map.resize();
+          }
+        }, 200);
+      });
+
+      map.on('error', (e) => {
+        if (cancelled || mapRef.current !== map) return;
+        console.error('[MapEditor] Mapbox error:', e.error);
+        const error = e.error as { message?: string; status?: number } | undefined;
+        const message = error?.message || (error?.status ? `HTTP ${error.status}` : 'Unknown Mapbox error');
+        setMapStatus('error');
+        setMapErrorMessage(message);
+      });
+    };
 
     // Handle container resize to prevent blank map issues
+    let resizeTimeout: NodeJS.Timeout | null = null;
     const resizeObserver = new ResizeObserver(() => {
-      if (mapRef.current) {
-        console.log('[MapEditor] Container resized, calling map.resize()');
-        mapRef.current.resize();
-      }
+      if (cancelled) return;
+      updateContainerSize();
+      // Debounce resize calls to wait for CSS transitions to complete
+      if (resizeTimeout) clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        if (mapRef.current && !cancelled) {
+          mapRef.current.resize();
+        }
+      }, 100);
     });
 
     if (mapContainer.current) {
       resizeObserver.observe(mapContainer.current);
     }
 
-    mapRef.current = map;
+    // Start initialization (will wait for non-zero size)
+    initializeMap();
 
     return () => {
+      cancelled = true;
+      if (resizeTimeout) clearTimeout(resizeTimeout);
       resizeObserver.disconnect();
-      map.remove();
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update map style
+  // Update map style (only when style actually changes, not on initial load)
   useEffect(() => {
     if (!mapRef.current || !isMapLoaded) return;
+
+    // Skip if this is the initial load (style already set during map creation)
+    if (prevMapStyleRef.current === null) {
+      prevMapStyleRef.current = mapStyle;
+      return;
+    }
+
+    // Skip if style hasn't actually changed
+    if (prevMapStyleRef.current === mapStyle) return;
+    prevMapStyleRef.current = mapStyle;
+
     const map = mapRef.current;
 
     map.setStyle(MAP_STYLES[mapStyle]);
+    setLayersReady(false);
 
     // Re-add sources and layers after style change
     map.once('style.load', () => {
       addMapSourcesAndLayers(map);
+      setLayersReady(true);
 
       // Re-apply route geometry
       const routeSource = map.getSource('route') as mapboxgl.GeoJSONSource;
@@ -302,6 +429,45 @@ export function MapEditor({
       map.off('click', handleMapClick);
     };
   }, [isMapLoaded, onStopAdd, onAddModeChange]);
+
+  // Ghost marker for Add Mode
+  useEffect(() => {
+    if (!mapRef.current || !isMapLoaded) return;
+    const map = mapRef.current;
+
+    const ghostEl = document.createElement('div');
+    ghostEl.className = 'w-6 h-6 rounded-full bg-primary/50 border-2 border-primary shadow-lg pointer-events-none transition-opacity duration-200';
+    ghostEl.style.opacity = '0'; // Start hidden
+
+    const ghostMarker = new mapboxgl.Marker({
+      element: ghostEl,
+      offset: [0, 0], // Center
+    })
+      .setLngLat([0, 0])
+      .addTo(map);
+
+    const handleMouseMove = (e: mapboxgl.MapMouseEvent) => {
+      if (!isAddModeRef.current) {
+        ghostEl.style.opacity = '0';
+        return;
+      }
+      ghostEl.style.opacity = '1';
+      ghostMarker.setLngLat(e.lngLat);
+    };
+
+    const handleMouseLeave = () => {
+      ghostEl.style.opacity = '0';
+    };
+
+    map.on('mousemove', handleMouseMove);
+    map.on('mouseout', handleMouseLeave);
+
+    return () => {
+      map.off('mousemove', handleMouseMove);
+      map.off('mouseout', handleMouseLeave);
+      ghostMarker.remove();
+    };
+  }, [isMapLoaded, isAddMode]); // Re-run when mode changes to ensure visibility update
 
   // Update markers when stops change
   useEffect(() => {
@@ -365,30 +531,33 @@ export function MapEditor({
 
   // Update route visibility and geometry
   useEffect(() => {
-    if (!mapRef.current || !isMapLoaded) return;
+    if (!mapRef.current || !isMapLoaded || !layersReady) return;
     const map = mapRef.current;
 
-    // Check if we have route geometry
-    if (!routeGeometryRef.current || stops.length < 2) {
-      if (map.getLayer('route')) map.setLayoutProperty('route', 'visibility', 'none');
-      if (map.getLayer('route-casing')) map.setLayoutProperty('route-casing', 'visibility', 'none');
+    // Ensure source and layer exist before any operations
+    const source = map.getSource('route') as mapboxgl.GeoJSONSource | undefined;
+    const layer = map.getLayer('route-line');
+    if (!source || !layer) return;
+
+    // Check if we have valid route geometry
+    if (!routeGeometry || !routeGeometry.coordinates?.length || stops.length < 2) {
+      map.setLayoutProperty('route-line', 'visibility', 'none');
       return;
     }
 
-    // Show route layers
-    if (map.getLayer('route')) map.setLayoutProperty('route', 'visibility', 'visible');
-    if (map.getLayer('route-casing')) map.setLayoutProperty('route-casing', 'visibility', 'visible');
+    // Update geometry and show route layer
+    source.setData({
+      type: 'Feature',
+      properties: {},
+      geometry: routeGeometry,
+    });
+    map.setLayoutProperty('route-line', 'visibility', 'visible');
 
-    // Update geometry
-    const source = map.getSource('route') as mapboxgl.GeoJSONSource;
-    if (source) {
-      source.setData({
-        type: 'Feature',
-        properties: {},
-        geometry: routeGeometryRef.current,
-      });
+    // Show arrows if we have route
+    if (map.getLayer('route-arrows')) {
+      map.setLayoutProperty('route-arrows', 'visibility', 'visible');
     }
-  }, [stops, isMapLoaded]);
+  }, [stops, routeGeometry, isMapLoaded, layersReady]);
 
   // Update trigger radius circles when stops change
   useEffect(() => {
@@ -430,9 +599,23 @@ export function MapEditor({
           .setLngLat([wp.lng, wp.lat])
           .addTo(mapRef.current!);
 
-        // Handle drag
-        marker.on('dragend', () => {
-          const lngLat = marker.getLngLat();
+        // Handle drag with optional snap-to-road
+        marker.on('dragend', async () => {
+          let lngLat = marker.getLngLat();
+
+          if (snapToRoadsRef.current) {
+            setIsSnapping(true);
+            try {
+              const snapped = await snapToRoad(lngLat.lng, lngLat.lat, tourTypeRef.current);
+              if (snapped.snapped) {
+                lngLat = new mapboxgl.LngLat(snapped.lng, snapped.lat);
+                marker.setLngLat(lngLat);
+              }
+            } finally {
+              setIsSnapping(false);
+            }
+          }
+
           updateWaypoint(wp.id, lngLat.lat, lngLat.lng);
         });
 
@@ -544,9 +727,9 @@ export function MapEditor({
   };
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-slate-200">
+    <div className="absolute inset-0 overflow-hidden bg-slate-200" style={{ width: '100%', height: '100%' }}>
       {/* Map container */}
-      <div ref={mapContainer} className="absolute inset-0 z-0" />
+      <div ref={mapContainer} className="absolute inset-0 z-0" style={{ width: '100%', height: '100%' }} />
 
       {/* Map controls */}
       <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
@@ -662,6 +845,40 @@ export function MapEditor({
         </div>
       )}
 
+      {showDebug && (
+        <div className="absolute top-4 right-4 mt-36 z-30 max-w-xs rounded-lg border bg-background/95 p-3 text-xs shadow-md backdrop-blur">
+          <div className="text-xs font-semibold text-foreground">Mapbox Debug</div>
+          <div className="mt-2 space-y-1 text-muted-foreground">
+            <div>
+              Token:{' '}
+              {MAPBOX_TOKEN
+                ? `set (${MAPBOX_TOKEN.slice(0, 4)}…${MAPBOX_TOKEN.slice(-4)})`
+                : 'missing'}
+            </div>
+            <div>Status: {mapStatus}</div>
+            <div>
+              WebGL:{' '}
+              {webglSupported === null
+                ? 'unknown'
+                : webglSupported
+                  ? 'supported'
+                  : 'not supported'}
+            </div>
+            <div>
+              Container:{' '}
+              {containerSize ? `${containerSize.width}x${containerSize.height}` : 'unknown'}
+            </div>
+            <div>Style: {MAP_STYLES[mapStyle]}</div>
+            {mapErrorMessage && (
+              <div className="text-red-600">Error: {mapErrorMessage}</div>
+            )}
+          </div>
+          <div className="mt-2 text-[10px] text-muted-foreground">
+            Enable with ?mapDebug=1 or localStorage.mapDebug=true
+          </div>
+        </div>
+      )}
+
       {/* No token warning */}
       {!MAPBOX_TOKEN && (
         <div className="absolute inset-0 flex items-center justify-center bg-muted/80">
@@ -675,7 +892,7 @@ export function MapEditor({
       )}
     </div>
   );
-}
+});
 
 // Helper function to create custom marker element
 function createMarkerElement(number: number, isSelected: boolean): HTMLDivElement {

@@ -1,24 +1,29 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  getTours,
-  getTour,
-  getTourVersion,
-  getTourStops,
-  getPendingTours,
-  approveTour,
-  rejectTour,
-  hideTour,
-  unhideTour,
-  featureTour,
-  getTourStats,
-  getReviewComments,
   addReviewComment,
+  addSubmissionFeedback,
+  approveTour,
   deleteReviewComment,
+  featureTour,
+  getPendingTours,
+  getReviewComments,
+  // New Publishing Workflow
+  getSubmission,
+  getTour,
+  getTours,
+  getTourStats,
+  getTourStops,
+  getTourVersion,
+  hideTour,
+  rejectTour,
   resolveReviewComment,
+  resolveSubmissionFeedback,
+  unhideTour,
+  updateSubmissionStatus,
 } from '@/lib/firebase/admin';
-import { TourStatus, TourCategory } from '@/types';
+import { SubmissionStatus, TourCategory, TourStatus } from '@/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface ToursFilters {
   status?: TourStatus;
@@ -222,6 +227,80 @@ export function useResolveReviewComment() {
       queryClient.invalidateQueries({
         queryKey: ['reviewComments', variables.tourId, variables.versionId],
       });
+    },
+  });
+}
+// ==================== Publishing Submissions ====================
+
+export function useSubmission(submissionId: string | null) {
+  return useQuery({
+    queryKey: ['submission', submissionId],
+    queryFn: () => (submissionId ? getSubmission(submissionId) : null),
+    enabled: !!submissionId,
+  });
+}
+
+export function useUpdateSubmissionStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      submissionId,
+      status,
+      data,
+    }: {
+      submissionId: string;
+      status: SubmissionStatus;
+      data?: {
+        reviewerId?: string;
+        reviewerName?: string;
+        rejectionReason?: string;
+      };
+    }) => updateSubmissionStatus(submissionId, status, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['submission', variables.submissionId] });
+      // Invalidate tour queries as well since approval/rejection updates tour status
+      queryClient.invalidateQueries({ queryKey: ['tours'] });
+      queryClient.invalidateQueries({ queryKey: ['tour'] });
+      queryClient.invalidateQueries({ queryKey: ['tourVersion'] });
+    },
+  });
+}
+
+export function useAddSubmissionFeedback() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      submissionId,
+      feedback,
+    }: {
+      submissionId: string;
+      feedback: Omit<import('@/types').ReviewFeedbackModel, 'id' | 'createdAt' | 'submissionId'>;
+    }) => addSubmissionFeedback(submissionId, feedback),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['submission', variables.submissionId] });
+    },
+  });
+}
+
+export function useResolveSubmissionFeedback() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      submissionId,
+      feedbackId,
+      resolvedBy,
+      note,
+    }: {
+      submissionId: string;
+      feedbackId: string;
+      resolvedBy: string;
+      note?: string;
+    }) => resolveSubmissionFeedback(submissionId, feedbackId, resolvedBy, note),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['submission', variables.submissionId] });
     },
   });
 }

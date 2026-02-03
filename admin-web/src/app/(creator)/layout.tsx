@@ -48,7 +48,7 @@ export default function CreatorLayout({ children }: CreatorLayoutProps) {
     >
       <div className="flex h-screen bg-background">
         <CreatorSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col min-h-0">
           {children}
         </div>
       </div>

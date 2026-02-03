@@ -1,30 +1,36 @@
 'use client';
 
-import Link from 'next/link';
-import {
-  ClipboardList,
-  Map,
-  Users,
-  Star,
-  Play,
-  Ban,
-} from 'lucide-react';
+import { DashboardCharts } from '@/components/dashboard/dashboard-charts';
+import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { AdminLayout } from '@/components/layout/admin-layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useTourStats, usePendingTours } from '@/hooks/use-tours';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePendingTours, useTourStats } from '@/hooks/use-tours';
 import { useUserStats } from '@/hooks/use-users';
+import {
+  Ban,
+  ClipboardList,
+  DollarSign,
+  Map,
+  Play,
+  Star,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
+import Link from 'next/link';
 
 function StatCard({
   title,
   value,
   icon: Icon,
   description,
+  trend,
 }: {
   title: string;
   value: number | string;
   icon: React.ElementType;
   description?: string;
+  trend?: string;
 }) {
   return (
     <Card>
@@ -34,8 +40,11 @@ function StatCard({
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground">{description}</p>
+        {(description || trend) && (
+          <div className="flex items-center text-xs text-muted-foreground mt-1">
+            {trend && <span className="text-green-500 font-medium mr-2 flex items-center"><TrendingUp className="h-3 w-3 mr-1" />{trend}</span>}
+            <span>{description}</span>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -51,120 +60,99 @@ export default function DashboardPage() {
 
   return (
     <AdminLayout title="Dashboard">
-      {isLoading ? (
-        <div className="flex items-center justify-center py-8">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Quick Actions */}
-          {pendingTours && pendingTours.length > 0 && (
-            <Card className="border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950">
-              <CardContent className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-3">
-                  <ClipboardList className="h-5 w-5 text-orange-600" />
-                  <span className="font-medium">
-                    {pendingTours.length} tour{pendingTours.length !== 1 ? 's' : ''} pending review
-                  </span>
+      <div className="flex flex-col space-y-8">
+
+        {/* Quick Actions / Notifications */}
+        {pendingTours && pendingTours.length > 0 && (
+          <Card className="border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/50">
+            <CardContent className="flex items-center justify-between py-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 dark:bg-orange-900 rounded-full">
+                  <ClipboardList className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                 </div>
-                <Link href="/review-queue">
-                  <Button size="sm">Review Now</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Tour Stats */}
-          <div>
-            <h3 className="mb-4 text-lg font-semibold">Tour Statistics</h3>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                title="Total Tours"
-                value={tourStats?.totalTours ?? 0}
-                icon={Map}
-              />
-              <StatCard
-                title="Pending Review"
-                value={tourStats?.pendingTours ?? 0}
-                icon={ClipboardList}
-                description="Awaiting admin review"
-              />
-              <StatCard
-                title="Live Tours"
-                value={tourStats?.liveTours ?? 0}
-                icon={Play}
-                description="Published and active"
-              />
-              <StatCard
-                title="Featured"
-                value={tourStats?.featuredTours ?? 0}
-                icon={Star}
-                description="Highlighted tours"
-              />
-            </div>
-          </div>
-
-          {/* User Stats */}
-          <div>
-            <h3 className="mb-4 text-lg font-semibold">User Statistics</h3>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                title="Total Users"
-                value={userStats?.totalUsers ?? 0}
-                icon={Users}
-              />
-              <StatCard
-                title="Creators"
-                value={userStats?.creators ?? 0}
-                icon={Map}
-                description="Tour creators"
-              />
-              <StatCard
-                title="Admins"
-                value={userStats?.admins ?? 0}
-                icon={Users}
-              />
-              <StatCard
-                title="Banned"
-                value={userStats?.bannedUsers ?? 0}
-                icon={Ban}
-                description="Banned accounts"
-              />
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h3 className="mb-4 text-lg font-semibold">Quick Actions</h3>
-            <div className="grid gap-4 md:grid-cols-3">
+                <div>
+                  <h4 className="font-semibold text-orange-900 dark:text-orange-100">Action Required</h4>
+                  <p className="text-sm text-orange-700 dark:text-orange-300">
+                    {pendingTours.length} tour{pendingTours.length !== 1 ? 's' : ''} awaiting moderation
+                  </p>
+                </div>
+              </div>
               <Link href="/review-queue">
-                <Card className="cursor-pointer transition-colors hover:bg-muted">
-                  <CardContent className="flex items-center gap-3 py-4">
-                    <ClipboardList className="h-5 w-5" />
-                    <span>Review Queue</span>
-                  </CardContent>
-                </Card>
+                <Button size="sm" variant="default" className="bg-orange-600 hover:bg-orange-700 text-white">Review Queue</Button>
               </Link>
-              <Link href="/tours">
-                <Card className="cursor-pointer transition-colors hover:bg-muted">
-                  <CardContent className="flex items-center gap-3 py-4">
-                    <Map className="h-5 w-5" />
-                    <span>Manage Tours</span>
-                  </CardContent>
-                </Card>
-              </Link>
-              <Link href="/users">
-                <Card className="cursor-pointer transition-colors hover:bg-muted">
-                  <CardContent className="flex items-center gap-3 py-4">
-                    <Users className="h-5 w-5" />
-                    <span>Manage Users</span>
-                  </CardContent>
-                </Card>
-              </Link>
-            </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Top Stats Row */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Total Revenue"
+            value="$12,450"
+            icon={DollarSign}
+            trend="+12.5%"
+            description="from last month"
+          />
+          <StatCard
+            title="Active Users"
+            value={userStats?.totalUsers ?? 0}
+            icon={Users}
+            trend="+4.3%"
+            description="from last month"
+          />
+          <StatCard
+            title="Live Tours"
+            value={tourStats?.liveTours ?? 0}
+            icon={Play}
+            description="Published and active"
+          />
+          <StatCard
+            title="Creators"
+            value={userStats?.creators ?? 0}
+            icon={Map}
+            description="Registered creators"
+          />
+        </div>
+
+        {/* Charts & Activity Section */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          <div className="col-span-4 lg:col-span-4">
+            <DashboardCharts />
+          </div>
+          <div className="col-span-4 lg:col-span-3">
+            <RecentActivity />
           </div>
         </div>
-      )}
+
+        {/* Detailed Stats Section (Collapsible or Tabbed in future) */}
+        <div>
+          <h3 className="mb-4 text-lg font-semibold tracking-tight">Content Overview</h3>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              title="Total Tours"
+              value={tourStats?.totalTours ?? 0}
+              icon={Map}
+            />
+            <StatCard
+              title="Featured"
+              value={tourStats?.featuredTours ?? 0}
+              icon={Star}
+              description="Staff picks"
+            />
+            <StatCard
+              title="Banned Users"
+              value={userStats?.bannedUsers ?? 0}
+              icon={Ban}
+              description="Restricted accounts"
+            />
+            <StatCard
+              title="Admins"
+              value={userStats?.admins ?? 0}
+              icon={Users}
+            />
+          </div>
+        </div>
+      </div>
     </AdminLayout>
   );
 }

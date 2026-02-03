@@ -4,8 +4,9 @@ import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { MapPin, Save, Loader2, Volume2, Mic, Upload, Play, Pause, X, Sparkles } from 'lucide-react';
-import { StopModel } from '@/types';
+import { MapPin, Save, Loader2, Volume2, Mic, Upload, Play, Pause, X, Sparkles, ImageIcon } from 'lucide-react';
+import { StopModel, StopImage } from '@/types';
+import { StopImagesPanel } from './stop-images-panel';
 import {
   DEFAULT_TRIGGER_RADIUS,
   MIN_TRIGGER_RADIUS,
@@ -62,6 +63,9 @@ interface StopDetailModalProps {
   onClose: () => void;
   onSave: (stopId: string, data: Partial<StopFormValues> & { audioUrl?: string }) => Promise<void>;
   isSaving?: boolean;
+  onImageUpload?: (file: File, order: number) => Promise<string>;
+  onImageDelete?: (imageUrl: string) => Promise<void>;
+  onImagesReorder?: (images: StopImage[]) => Promise<void>;
 }
 
 export function StopDetailModal({
@@ -70,7 +74,11 @@ export function StopDetailModal({
   onClose,
   onSave,
   isSaving,
+  onImageUpload,
+  onImageDelete,
+  onImagesReorder,
 }: StopDetailModalProps) {
+  const [showImagesPanel, setShowImagesPanel] = useState(false);
   const form = useForm<StopFormValues>({
     resolver: zodResolver(stopFormSchema),
     defaultValues: {
@@ -613,6 +621,53 @@ export function StopDetailModal({
               )}
             </div>
 
+            {/* Images Section */}
+            {stop && onImageUpload && onImageDelete && onImagesReorder && (
+              <div className="rounded-lg border p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium flex items-center gap-2">
+                    <ImageIcon className="h-4 w-4" />
+                    Images ({stop.media?.images?.length || 0})
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowImagesPanel(true)}
+                  >
+                    {(stop.media?.images?.length || 0) > 0 ? 'Edit Images' : 'Add Images'}
+                  </Button>
+                </div>
+                {(stop.media?.images?.length || 0) > 0 ? (
+                  <div className="grid grid-cols-4 gap-1">
+                    {stop.media.images.slice(0, 4).map((image, index) => (
+                      <div
+                        key={image.url}
+                        className="relative aspect-square rounded overflow-hidden bg-muted"
+                      >
+                        <img
+                          src={image.url}
+                          alt={image.caption || `Image ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                    {stop.media.images.length > 4 && (
+                      <div className="aspect-square rounded bg-muted flex items-center justify-center">
+                        <span className="text-sm text-muted-foreground">
+                          +{stop.media.images.length - 4}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No images added yet. Click &quot;Add Images&quot; to upload photos for this stop.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Location info (read-only) */}
             {stop && (
               <div className="rounded-lg bg-muted p-3 text-sm">
@@ -647,6 +702,19 @@ export function StopDetailModal({
           </form>
         </Form>
       </DialogContent>
+
+      {/* Images Panel Modal */}
+      {stop && onImageUpload && onImageDelete && onImagesReorder && (
+        <StopImagesPanel
+          stopName={stop.name}
+          images={stop.media?.images || []}
+          onImageUpload={onImageUpload}
+          onImageDelete={onImageDelete}
+          onImagesReorder={onImagesReorder}
+          isOpen={showImagesPanel}
+          onClose={() => setShowImagesPanel(false)}
+        />
+      )}
     </Dialog>
   );
 }

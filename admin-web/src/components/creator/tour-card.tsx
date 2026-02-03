@@ -13,6 +13,7 @@ import {
   MapPin,
   Clock,
   Eye,
+  Undo2,
 } from 'lucide-react';
 import { TourModel, TourVersionModel, statusDisplayNames, categoryDisplayNames } from '@/types';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -39,8 +40,10 @@ interface TourCardProps {
   version?: TourVersionModel;
   onDuplicate?: (tourId: string) => void;
   onDelete?: (tourId: string) => void;
+  onWithdraw?: (tourId: string) => void;
   isDeleting?: boolean;
   isDuplicating?: boolean;
+  isWithdrawing?: boolean;
 }
 
 const statusColors: Record<TourModel['status'], string> = {
@@ -56,13 +59,17 @@ export function TourCard({
   version,
   onDuplicate,
   onDelete,
+  onWithdraw,
   isDeleting,
   isDuplicating,
+  isWithdrawing,
 }: TourCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
 
   const canDelete = tour.status === 'draft' || tour.status === 'rejected';
   const canEdit = tour.status !== 'pending_review';
+  const canWithdraw = tour.status === 'pending_review';
 
   const handleDuplicate = () => {
     onDuplicate?.(tour.id);
@@ -71,6 +78,11 @@ export function TourCard({
   const handleDelete = () => {
     setShowDeleteDialog(false);
     onDelete?.(tour.id);
+  };
+
+  const handleWithdraw = () => {
+    setShowWithdrawDialog(false);
+    onWithdraw?.(tour.id);
   };
 
   const locationText = [tour.city, tour.region, tour.country]
@@ -153,6 +165,18 @@ export function TourCard({
                   <Copy className="mr-2 h-4 w-4" />
                   {isDuplicating ? 'Duplicating...' : 'Duplicate'}
                 </DropdownMenuItem>
+                {canWithdraw && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setShowWithdrawDialog(true)}
+                      disabled={isWithdrawing}
+                    >
+                      <Undo2 className="mr-2 h-4 w-4" />
+                      {isWithdrawing ? 'Withdrawing...' : 'Withdraw Submission'}
+                    </DropdownMenuItem>
+                  </>
+                )}
                 {canDelete && (
                   <>
                     <DropdownMenuSeparator />
@@ -219,6 +243,27 @@ export function TourCard({
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
               {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Withdraw Confirmation Dialog */}
+      <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Withdraw Submission</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to withdraw &quot;{version?.title || 'this tour'}&quot; from review?
+              It will be moved back to draft status and you can continue editing it.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowWithdrawDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleWithdraw} disabled={isWithdrawing}>
+              {isWithdrawing ? 'Withdrawing...' : 'Withdraw'}
             </Button>
           </DialogFooter>
         </DialogContent>

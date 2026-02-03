@@ -9,6 +9,7 @@ import {
   deleteTour,
   duplicateTour,
   submitTourForReview,
+  withdrawTourSubmission,
   uploadCoverImage,
   CreateTourInput,
   UpdateTourInput,
@@ -84,6 +85,18 @@ export function useSubmitTourForReview() {
 
   return useMutation({
     mutationFn: (tourId: string) => submitTourForReview(tourId),
+    onSuccess: (_, tourId) => {
+      queryClient.invalidateQueries({ queryKey: ['creatorTours'] });
+      queryClient.invalidateQueries({ queryKey: ['creatorTour', tourId] });
+    },
+  });
+}
+
+export function useWithdrawTour() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (tourId: string) => withdrawTourSubmission(tourId),
     onSuccess: (_, tourId) => {
       queryClient.invalidateQueries({ queryKey: ['creatorTours'] });
       queryClient.invalidateQueries({ queryKey: ['creatorTour', tourId] });

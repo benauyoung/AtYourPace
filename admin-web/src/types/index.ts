@@ -9,6 +9,14 @@ export type TourCategory = 'history' | 'nature' | 'ghost' | 'food' | 'art' | 'ar
 export type VersionType = 'draft' | 'live' | 'archived';
 export type TourDifficulty = 'easy' | 'moderate' | 'challenging';
 export type AudioSource = 'recorded' | 'elevenlabs' | 'uploaded';
+export type PricingType = 'free' | 'paid' | 'subscription' | 'pay_what_you_want';
+export type SubmissionStatus = 'draft' | 'submitted' | 'under_review' | 'changes_requested' | 'approved' | 'rejected' | 'withdrawn';
+export type FeedbackType = 'issue' | 'suggestion' | 'compliment' | 'required';
+export type FeedbackPriority = 'low' | 'medium' | 'high' | 'critical';
+export type VoiceGenerationStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type CollectionType = 'geographic' | 'thematic' | 'seasonal' | 'custom';
+export type RouteSnapMode = 'none' | 'roads' | 'walking' | 'manual';
+export type AnalyticsPeriod = 'day' | 'week' | 'month' | 'quarter' | 'year' | 'all_time' | 'custom';
 
 export type AuditAction =
   | 'tourApproved'
@@ -51,6 +59,30 @@ export interface UserModel {
   bannedAt?: Date;
   bannedBy?: string;
   banReason?: string;
+}
+
+// Pricing Types
+export interface PricingTier {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  features: string[];
+  sortOrder: number;
+}
+
+export interface PricingModel {
+  id: string;
+  tourId: string;
+  type: PricingType;
+  price?: number;
+  currency: string;
+  allowPayWhatYouWant: boolean;
+  suggestedPrice?: number;
+  minimumPrice?: number;
+  tiers: PricingTier[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Tour Types
@@ -103,10 +135,44 @@ export interface TourModel {
   featuredBy?: string;
 }
 
-// Tour Version Types
+// Route Types
 export interface RouteWaypoint {
   lat: number;
   lng: number;
+}
+
+// Legacy TourRoute interface (kept for compatibility if needed, but RouteModel is preferred)
+export interface TourRoute {
+  encodedPolyline?: string;
+  boundingBox?: BoundingBox;
+  waypoints: RouteWaypoint[];
+}
+
+export interface RouteModel {
+  id: string;
+  tourId: string;
+  versionId: string;
+  waypoints: WaypointModel[]; // Utilizing the shared WaypointModel
+  routePolyline: GeoPoint[]; // LatLng list
+  snapMode: RouteSnapMode;
+  totalDistance: number;
+  estimatedDuration: number;
+  metadata?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface WaypointModel {
+  id: string;
+  tourId: string;
+  routeId: string;
+  order: number;
+  location: GeoPoint;
+  triggerRadius: number;
+  isStop: boolean;
+  stopId?: string; // If this waypoint is a stop
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface BoundingBox {
@@ -114,12 +180,7 @@ export interface BoundingBox {
   southwest: GeoPoint;
 }
 
-export interface TourRoute {
-  encodedPolyline?: string;
-  boundingBox?: BoundingBox;
-  waypoints: RouteWaypoint[];
-}
-
+// Tour Version Types
 export interface TourVersionModel {
   id: string;
   tourId: string;
@@ -132,7 +193,8 @@ export interface TourVersionModel {
   distance?: string;
   difficulty: TourDifficulty;
   languages: string[];
-  route?: TourRoute;
+  route?: TourRoute; // Keeping generic for now, might migrate to routeId reference
+  routeId?: string; // Reference to RouteModel
   submittedAt?: Date;
   reviewedAt?: Date;
   reviewedBy?: string;
@@ -180,7 +242,180 @@ export interface StopModel {
   updatedAt: Date;
 }
 
-// Review Comment Types
+// Publishing & Feedback Types
+export interface ReviewFeedbackModel {
+  id: string;
+  submissionId: string;
+  reviewerId: string;
+  reviewerName: string;
+  type: FeedbackType;
+  message: string;
+  stopId?: string;
+  stopName?: string;
+  priority: FeedbackPriority;
+  resolved: boolean;
+  resolvedAt?: Date;
+  resolvedBy?: string;
+  resolutionNote?: string;
+  createdAt: Date;
+}
+
+export interface PublishingSubmissionModel {
+  id: string;
+  tourId: string;
+  versionId: string;
+  creatorId: string;
+  creatorName: string;
+  status: SubmissionStatus;
+  submittedAt: Date;
+  reviewedAt?: Date;
+  reviewerId?: string;
+  reviewerName?: string;
+  feedback: ReviewFeedbackModel[];
+  rejectionReason?: string;
+  resubmissionJustification?: string;
+  resubmissionCount: number;
+  creatorIgnoredSuggestions: boolean;
+  tourTitle?: string;
+  tourDescription?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Collection Types
+export interface CollectionModel {
+  id: string;
+  name: string;
+  description: string;
+  coverImageUrl?: string;
+  tourIds: string[];
+  isCurated: boolean;
+  curatorId?: string;
+  curatorName?: string;
+  isFeatured: boolean;
+  tags: string[];
+  type: CollectionType;
+  sortOrder: number;
+  city?: string;
+  region?: string;
+  country?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Voice Generation Types
+export interface VoiceOption {
+  id: string;
+  name: string;
+  description: string;
+  accent: string;
+  gender: string;
+  previewUrl: string;
+  elevenLabsId: string;
+}
+
+export interface VoiceGenerationHistory {
+  script: string;
+  voiceId: string;
+  audioUrl: string;
+  audioDuration: number;
+  generatedAt: Date;
+}
+
+export interface VoiceGenerationModel {
+  id: string;
+  stopId: string;
+  tourId: string;
+  script: string;
+  voiceId: string;
+  voiceName: string;
+  audioUrl?: string;
+  audioDuration?: number;
+  status: VoiceGenerationStatus;
+  errorMessage?: string;
+  regenerationCount: number;
+  history: VoiceGenerationHistory[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Analytics Types
+export interface TimeSeriesPoint {
+  date: Date;
+  value: number;
+}
+
+export interface PlayMetrics {
+  total: number;
+  unique: number;
+  averageDuration: number;
+  completions: number;
+  completionRate: number;
+  changeFromPrevious: number;
+}
+
+export interface DownloadMetrics {
+  total: number;
+  unique: number;
+  storageUsed: number;
+  changeFromPrevious: number;
+}
+
+export interface FavoriteMetrics {
+  total: number;
+  changeFromPrevious: number;
+}
+
+export interface RevenueMetrics {
+  total: number;
+  transactions: number;
+  averageTransaction: number;
+  byPricingTier: Record<string, number>;
+  changeFromPrevious: number;
+}
+
+export interface CompletionMetrics {
+  completionRate: number;
+  dropOffByStop: Record<number, number>;
+  averageCompletionTime: number;
+}
+
+export interface GeographicMetrics {
+  byCity: Record<string, number>;
+  byCountry: Record<string, number>;
+}
+
+export interface TimeSeriesData {
+  plays: TimeSeriesPoint[];
+  downloads: TimeSeriesPoint[];
+  favorites: TimeSeriesPoint[];
+}
+
+export interface UserFeedbackMetrics {
+  averageRating: number;
+  totalReviews: number;
+  ratingDistribution: Record<number, number>;
+}
+
+export interface TourAnalyticsModel {
+  id: string;
+  tourId: string;
+  period: AnalyticsPeriod;
+  startDate: Date;
+  endDate: Date;
+  plays: PlayMetrics;
+  downloads: DownloadMetrics;
+  favorites: FavoriteMetrics;
+  revenue: RevenueMetrics;
+  completion: CompletionMetrics;
+  geographic: GeographicMetrics;
+  timeSeries: TimeSeriesData;
+  feedback: UserFeedbackMetrics;
+  generatedAt: Date;
+  cachedUntil?: Date;
+}
+
+// Review Comment Types (Legacy? Or still used in basic reviews)
 export interface ReviewCommentModel {
   id: string;
   tourId: string;
@@ -240,8 +475,8 @@ export interface UserStatsOverview {
 
 // Helper to convert Firestore Timestamp to Date
 export function timestampToDate(value: unknown): Date {
-  if (value instanceof Timestamp) {
-    return value.toDate();
+  if (value && typeof value === 'object' && 'toDate' in value) {
+    return (value as Timestamp).toDate();
   }
   if (typeof value === 'string') {
     return new Date(value);

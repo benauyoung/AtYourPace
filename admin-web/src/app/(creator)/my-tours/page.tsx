@@ -12,6 +12,7 @@ import {
   useCreatorTours,
   useDeleteTour,
   useDuplicateTour,
+  useWithdrawTour,
 } from '@/hooks/use-creator-tours';
 import { useToast } from '@/hooks/use-toast';
 import { TourStatus, statusDisplayNames } from '@/types';
@@ -34,6 +35,7 @@ export default function MyToursPage() {
 
   const deleteTour = useDeleteTour();
   const duplicateTour = useDuplicateTour();
+  const withdrawTour = useWithdrawTour();
 
   const handleDuplicate = async (tourId: string) => {
     try {
@@ -62,6 +64,22 @@ export default function MyToursPage() {
       toast({
         variant: 'destructive',
         title: 'Failed to delete tour',
+        description: error instanceof Error ? error.message : 'An error occurred',
+      });
+    }
+  };
+
+  const handleWithdraw = async (tourId: string) => {
+    try {
+      await withdrawTour.mutateAsync(tourId);
+      toast({
+        title: 'Submission withdrawn',
+        description: 'Your tour has been moved back to draft. You can now edit it.',
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to withdraw submission',
         description: error instanceof Error ? error.message : 'An error occurred',
       });
     }
@@ -172,8 +190,10 @@ export default function MyToursPage() {
                 version={version}
                 onDuplicate={handleDuplicate}
                 onDelete={handleDelete}
+                onWithdraw={handleWithdraw}
                 isDuplicating={duplicateTour.isPending}
                 isDeleting={deleteTour.isPending}
+                isWithdrawing={withdrawTour.isPending}
               />
             ))}
           </div>

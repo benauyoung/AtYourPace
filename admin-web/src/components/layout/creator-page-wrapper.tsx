@@ -16,7 +16,7 @@ export function CreatorPageWrapper({ title, children, noPadding = false }: Creat
   return (
     <>
       <CreatorHeader title={title} onMenuClick={open} />
-      <main className={noPadding ? "flex-1 overflow-hidden relative flex flex-col" : "flex-1 overflow-auto p-4 lg:p-6"}>{children}</main>
+      <main className={noPadding ? "flex-1 overflow-hidden relative flex flex-col min-h-0" : "flex-1 overflow-auto p-4 lg:p-6"}>{children}</main>
     </>
   );
 }
