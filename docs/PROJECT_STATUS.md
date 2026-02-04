@@ -36,7 +36,7 @@
 - ✅ Week 1: Foundation (data models, repositories, services, Cloud Functions)
 - ✅ Week 2: Route Editor & Content Editor Basic Structure complete
 - ✅ Week 3: Voice Generation, Tour Manager, Publishing Workflow complete
-- 🔄 Week 4: Marketplace, Tour Details (Tour Taking UI Polished ✅)
+- 🔄 Week 4: Marketplace, Tour Details (Marketplace & Collections ✅)
 - ⏳ Week 5: Analytics, Integration
 
 ---
@@ -217,9 +217,9 @@ lib/presentation/screens/modules/
   - ✅ Full approval/rejection workflow
 
 ### Week 4: Marketplace & Tour Details
-- Rebuild marketplace with map view
-- Create unified tour details
-- Implement collections
+- ✅ Rebuild marketplace with map view
+- ✅ Create unified tour details (Partial)
+- ✅ Implement collections
 
 ### Week 5: Analytics & Integration
 - Build analytics dashboard
@@ -264,12 +264,12 @@ lib/presentation/screens/modules/
 - Resubmission with justification
 - Full approve/reject/request changes workflow
 
-### Marketplace (Planned)
-- Location-based search ("near me")
-- Map view with clustering
-- Advanced filters
-- 10 Paris collections
-- Featured tours
+### Marketplace (In Progress)
+- ✅ Location-based search ("near me") & Filters
+- ✅ Map view with clustering
+- ✅ 10 Paris collections (Mocked)
+- ✅ Collections System & UI
+- ⏳ Featured tours (Dynamic)
 
 ### Analytics Dashboard (Planned)
 - Modular metrics (plays, downloads, favorites, revenue)
@@ -316,10 +316,10 @@ lib/presentation/screens/modules/
 5. Seed 10 Paris collections in Firestore
 
 ### This Week (Week 4)
-- Build Marketplace with location-based search
-- Create map view with clustering
-- Build Tour Details unified screen
-- Implement collections system
+- ✅ Build Marketplace with location-based search
+- ✅ Create map view with clustering
+- ✅ Implement collections system
+- ⏳ Build Tour Details unified screen
 
 ---
 

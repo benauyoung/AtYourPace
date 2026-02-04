@@ -1,5 +1,48 @@
 # Development Session Log
 
+## Session: February 4, 2026 (Mid-Day) - Marketplace & Collections System
+
+### Summary
+
+Implemented the complete **Marketplace** experience with a robust **Collections System** and advanced **Map Visualization**. The Discover tab now features a fully interactive Mapbox map with clustering, category filters, and a "Best of Paris" collections showcase.
+
+### What Was Accomplished
+
+#### 1. Marketplace Map View (`MarketplaceMapView`)
+- **Mapbox Integration**: Implemented `mapbox_maps_flutter` with a custom style.
+- **Clustering**: Efficiently handles large numbers of tours using GeoJSON clustering (circles with counts).
+- **Interactions**:
+    - **Cluster Click**: Zooms in to expand the cluster.
+    - **Tour Click**: Navigates to the Tour Details screen.
+    - **Update Logic**: Map updates dynamically as filters or search query change.
+
+#### 2. Collections System (`CollectionModel` + `CollectionDetailsScreen`)
+- **Data Model**: Created `CollectionModel` to group tours (e.g., "Best of Paris", "Hidden Gems").
+- **UI**: Added "Curated Collections" section to the Marketplace list view.
+- **Details Screen**: Created a dedicated `CollectionDetailsScreen` with hero header, curator info, and tour list.
+- **Navigation**: Added deep-linkable route `/discover/collection/:id`.
+
+#### 3. Search & Discovery
+- **Search Bar**: Real-time filtering by title and fields.
+- **Category Filters**: "Pills" UI to filter tours by category (Nature, History, Food, etc.).
+- **View Modes**: Toggle between List and Map views.
+
+### Files Created/Modified
+
+| File | Changes |
+|------|---------|
+| `lib/presentation/screens/modules/marketplace/marketplace_screen.dart` | Main container with view toggle and search |
+| `lib/presentation/screens/modules/marketplace/widgets/marketplace_map_view.dart` | Mapbox implementation with clustering |
+| `lib/presentation/screens/modules/marketplace/widgets/marketplace_list_view.dart` | UI with Collections and filtered tour list |
+| `lib/presentation/screens/modules/marketplace/collection_details_screen.dart` | New screen for viewing collection contents |
+| `lib/presentation/providers/collections_provider.dart` | Mock data provider for "Best of Paris" |
+| `lib/presentation/router/app_router.dart` | Added collection routes |
+
+### Build Status: ✅ Passing
+Marketplace is fully functional with mock data for collections and real data for tours.
+
+---
+
 ## Session: February 4, 2026 (Morning) - Media Library Integration
 
 ### Summary
