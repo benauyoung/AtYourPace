@@ -1,6 +1,6 @@
 'use client';
 
-import { CreatorLayout, CreatorNavItem } from '@/components/creator/CreatorLayout';
+import { CreatorNavItem } from '@/components/creator/CreatorLayout';
 import { CoverForm } from '@/components/creator/forms/CoverForm';
 import { TipsForm } from '@/components/creator/forms/TipsForm';
 import { MapEditor } from '@/components/creator/map-editor';
@@ -111,153 +111,131 @@ export default function EditTourPage({ params }: EditTourPageProps) {
 
 
   return (
-    <CreatorLayout
-      tourId={tourId}
-      tourTitle={version.title}
-    >
-      <div className="flex h-full">
-        {/* Sidebar Navigation - Overriding the slot approach for now by just placing it here. 
+    <div className="flex h-screen bg-background">
+      {/* Sidebar Navigation - Overriding the slot approach by just placing it here. 
              If Component separation was strict, we'd pass this as a prop or portal, but this is fine.
-             Actually, CreatorLayout renders children. We should construct the Sidebar HERE and pass it,
-             OR we change CreatorLayout to accept nav items.
-             Let's use the provided slots/structure of CreatorLayout (sidebar is fixed there).
-             WAIT. CreatorLayout content is fixed sidebar + children main.
-             We need to inject buttons into that sidebar.
-             Let's change CreatorLayout to accept "nav" prop?
-             Or just implement the sidebar here if we didn't make it reusable enough.
-             
-             Let's re-read CreatorLayout. It has a hardcoded sidebar.
-             I'll assume I can edit CreatorLayout.tsx to take children or slots, OR I just use a layout wrapper here.
-             
-             Actually, let's just make the sidebar part of this page's layout using a generic "TwoColumnLayout" if we wanted.
-             But since I already wrote CreatorLayout with fixed sidebar, let me rewrite CreatorLayout to accept 'navItems' or similar.
-             
-             Wait, I wrote CreatorLayout to check `id="creator-nav-slot"`.
-             I could use a React Portal? No, that's overengineering.
-             
-             Let's just render a custom layout here that looks like the planned one, reusing the sidebar *style* but keeping logic here.
+             We removed CreatorLayout wrapper because it forced a duplicate sidebar.
          */}
-        <aside className="w-64 border-r bg-muted/10 flex flex-col h-full bg-white">
-          <div className="p-4 border-b h-14 flex items-center">
-            <Link href="/my-tours" className="flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Dashboard
-            </Link>
-          </div>
+      <aside className="w-64 border-r bg-muted/10 flex flex-col h-full bg-white">
+        <div className="p-4 border-b h-14 flex items-center">
+          <Link href="/my-tours" className="flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Dashboard
+          </Link>
+        </div>
 
-          <div className="p-4 space-y-4">
-            <div>
-              <h2 className="font-semibold px-2 mb-1 truncate" title={version.title}>
-                {version.title || 'Untitled Tour'}
-              </h2>
-              <div className="px-2">
-                <Badge variant="outline" className="text-xs">
-                  {statusDisplayNames[tour.status]}
-                </Badge>
-              </div>
+        <div className="p-4 space-y-4">
+          <div>
+            <h2 className="font-semibold px-2 mb-1 truncate" title={version.title}>
+              {version.title || 'Untitled Tour'}
+            </h2>
+            <div className="px-2">
+              <Badge variant="outline" className="text-xs">
+                {statusDisplayNames[tour.status]}
+              </Badge>
             </div>
-
-            <nav className="space-y-1">
-              <CreatorNavItem
-                icon={ImageIcon}
-                label="Cover"
-                isActive={activeTab === 'cover'}
-                onClick={() => setActiveTab('cover')}
-              />
-              <CreatorNavItem
-                icon={Map}
-                label="Route Map"
-                isActive={activeTab === 'route'}
-                onClick={() => setActiveTab('route')}
-              />
-              <CreatorNavItem
-                icon={Sun}
-                label="Tips"
-                isActive={activeTab === 'tips'}
-                onClick={() => setActiveTab('tips')}
-              />
-              <CreatorNavItem
-                icon={Send}
-                label="Publish"
-                isActive={activeTab === 'publish'}
-                onClick={() => setActiveTab('publish')}
-              />
-            </nav>
           </div>
-        </aside>
 
-        <main className="flex-1 overflow-auto bg-slate-50 relative">
-          <div className="h-full">
-            {activeTab === 'cover' && (
-              <div className="p-8 max-w-5xl mx-auto">
-                <CoverForm
-                  version={version}
-                  onSave={handleCoverSave}
-                  onCoverImageUpload={(file) => uploadCoverImage.mutateAsync({ tourId, file })}
-                  onCoverImageSelect={async (url) => {
-                    await handleCoverSave({ coverImageUrl: url });
-                  }}
-                  isSaving={updateTour.isPending}
-                />
-              </div>
-            )}
+          <nav className="space-y-1">
+            <CreatorNavItem
+              icon={ImageIcon}
+              label="Cover"
+              isActive={activeTab === 'cover'}
+              onClick={() => setActiveTab('cover')}
+            />
+            <CreatorNavItem
+              icon={Map}
+              label="Route Map"
+              isActive={activeTab === 'route'}
+              onClick={() => setActiveTab('route')}
+            />
+            <CreatorNavItem
+              icon={Sun}
+              label="Tips"
+              isActive={activeTab === 'tips'}
+              onClick={() => setActiveTab('tips')}
+            />
+            <CreatorNavItem
+              icon={Send}
+              label="Publish"
+              isActive={activeTab === 'publish'}
+              onClick={() => setActiveTab('publish')}
+            />
+          </nav>
+        </div>
+      </aside>
 
-            {activeTab === 'route' && (
-              <div className="h-full w-full relative">
-                {/* Map Editor fills the space */}
-                <MapEditor
-                  stops={stops}
-                  selectedStopId={null} // Managing state here later
-                  onStopSelect={() => { }}
-                  onStopAdd={handleStopAdd}
-                  onStopMove={handleStopMove}
-                  centerLocation={tour.startLocation}
-                  isAddMode={false}
-                  tourType={tour.tourType}
-                />
-              </div>
-            )}
+      <main className="flex-1 overflow-auto bg-slate-50 relative">
+        <div className="h-full">
+          {activeTab === 'cover' && (
+            <div className="p-8 max-w-5xl mx-auto">
+              <CoverForm
+                version={version}
+                onSave={handleCoverSave}
+                onCoverImageUpload={(file) => uploadCoverImage.mutateAsync({ tourId, file })}
+                onCoverImageSelect={async (url) => {
+                  await handleCoverSave({ coverImageUrl: url });
+                }}
+                isSaving={updateTour.isPending}
+              />
+            </div>
+          )}
 
-            {activeTab === 'tips' && (
-              <div className="p-8 max-w-5xl mx-auto">
-                <TipsForm
-                  version={version}
-                  onSave={handleTipsSave}
-                  isSaving={updateTour.isPending}
-                />
-              </div>
-            )}
+          {activeTab === 'route' && (
+            <div className="h-full w-full relative">
+              {/* Map Editor fills the space */}
+              <MapEditor
+                stops={stops}
+                selectedStopId={null} // Managing state here later
+                onStopSelect={() => { }}
+                onStopAdd={handleStopAdd}
+                onStopMove={handleStopMove}
+                centerLocation={tour.startLocation}
+                isAddMode={false}
+                tourType={tour.tourType}
+              />
+            </div>
+          )}
 
-            {activeTab === 'publish' && (
-              <div className="p-8 max-w-3xl mx-auto">
-                <Card>
-                  <CardContent className="pt-6 space-y-4">
-                    <h3 className="text-lg font-medium">Ready to publish?</h3>
-                    <p className="text-muted-foreground">
-                      Once you submit your tour, our team will review it to ensure it meets our quality standards.
-                    </p>
-                    <div className="flex gap-4 pt-4">
-                      <Button
-                        onClick={() => submitForReview.mutateAsync(tourId)}
-                        disabled={submitForReview.isPending || tour.status === 'pending_review'}
-                      >
-                        {submitForReview.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                        Submit for Review
+          {activeTab === 'tips' && (
+            <div className="p-8 max-w-5xl mx-auto">
+              <TipsForm
+                version={version}
+                onSave={handleTipsSave}
+                isSaving={updateTour.isPending}
+              />
+            </div>
+          )}
+
+          {activeTab === 'publish' && (
+            <div className="p-8 max-w-3xl mx-auto">
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <h3 className="text-lg font-medium">Ready to publish?</h3>
+                  <p className="text-muted-foreground">
+                    Once you submit your tour, our team will review it to ensure it meets our quality standards.
+                  </p>
+                  <div className="flex gap-4 pt-4">
+                    <Button
+                      onClick={() => submitForReview.mutateAsync(tourId)}
+                      disabled={submitForReview.isPending || tour.status === 'pending_review'}
+                    >
+                      {submitForReview.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                      Submit for Review
+                    </Button>
+
+                    {tour.status === 'pending_review' && (
+                      <Button variant="outline" onClick={() => withdrawTour.mutateAsync(tourId)}>
+                        Withdraw Submission
                       </Button>
-
-                      {tour.status === 'pending_review' && (
-                        <Button variant="outline" onClick={() => withdrawTour.mutateAsync(tourId)}>
-                          Withdraw Submission
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-    </CreatorLayout>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
