@@ -172,7 +172,9 @@ export default function EditTourPage({ params }: EditTourPageProps) {
               <CoverForm
                 version={version}
                 onSave={handleCoverSave}
-                onCoverImageUpload={(file) => uploadCoverImage.mutateAsync({ tourId, file })}
+                onCoverImageUpload={async (file) => {
+                  await uploadCoverImage.mutateAsync({ tourId, file });
+                }}
                 onCoverImageSelect={async (url) => {
                   await handleCoverSave({ coverImageUrl: url });
                 }}
