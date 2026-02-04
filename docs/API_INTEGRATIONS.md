@@ -45,7 +45,7 @@ Additionally, we use **Firebase Cloud Functions** for server-side processing.
 
 **Implementation**:
 ```dart
-// lib/presentation/screens/modules/route_editor/widgets/interactive_map.dart
+// Route editor map widget (see lib/presentation/screens/modules/route_editor/widgets/)
 
 import 'package:mapbox_gl/mapbox_gl.dart';
 
@@ -89,7 +89,7 @@ class _InteractiveMapState extends State<InteractiveMap> {
 
 **Configuration**:
 ```dart
-// lib/core/config/mapbox_config.dart
+// lib/config/mapbox_config.dart
 
 class MapboxConfig {
   static const String accessToken = String.fromEnvironment(
@@ -115,7 +115,7 @@ class MapboxConfig {
 
 **Implementation**:
 ```dart
-// lib/data/services/route_snapping_service.dart
+// lib/services/route_snapping_service.dart
 
 import 'package:dio/dio.dart';
 import 'package:latlong2/latlong.dart';
@@ -262,7 +262,7 @@ xi-api-key: YOUR_API_KEY
 ### Implementation
 
 ```dart
-// lib/data/services/voice_generation_service.dart
+// lib/services/voice_generation_service.dart
 
 import 'package:dio/dio.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -398,7 +398,7 @@ class VoiceInfo {
 
 **Predefined Voices**:
 ```dart
-// lib/core/config/voice_config.dart
+// Voice configuration (defined in lib/data/models/voice_generation_model.dart as VoiceOptions)
 
 class VoiceConfig {
   static const List<VoiceOption> availableVoices = [
@@ -643,18 +643,18 @@ exports.onSubmissionCreated = functions.firestore
 ### Global Error Handler
 
 ```dart
-// lib/core/error/api_error_handler.dart
+// API error handling pattern (not yet extracted to separate file)
 
 class ApiErrorHandler {
   static String getErrorMessage(dynamic error) {
-    if (error is DioError) {
+    if (error is DioException) {
       switch (error.type) {
-        case DioErrorType.connectTimeout:
-        case DioErrorType.sendTimeout:
-        case DioErrorType.receiveTimeout:
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
           return 'Connection timeout. Please check your internet connection.';
-        
-        case DioErrorType.response:
+
+        case DioExceptionType.badResponse:
           final statusCode = error.response?.statusCode;
           if (statusCode == 401) {
             return 'Authentication failed. Please check your API keys.';
@@ -665,7 +665,7 @@ class ApiErrorHandler {
           }
           return 'Request failed: ${error.response?.statusMessage}';
         
-        case DioErrorType.cancel:
+        case DioExceptionType.cancel:
           return 'Request cancelled.';
         
         default:
@@ -685,7 +685,7 @@ class ApiErrorHandler {
 ### Client-Side Rate Limiting
 
 ```dart
-// lib/core/utils/rate_limiter.dart
+// Rate limiting pattern (not yet extracted to separate file)
 
 class RateLimiter {
   final Map<String, List<DateTime>> _requests = {};
@@ -763,7 +763,7 @@ STRIPE_SECRET_KEY=sk_test_...
 
 **Configuration**:
 ```dart
-// lib/core/config/env_config.dart
+// Environment configuration pattern (keys configured in lib/config/)
 
 class EnvConfig {
   static const String mapboxToken = String.fromEnvironment(
@@ -861,7 +861,7 @@ class MockVoiceGenerationService extends Mock implements VoiceGenerationService 
 ### API Usage Tracking
 
 ```dart
-// lib/core/monitoring/api_usage_tracker.dart
+// API usage tracking pattern (not yet extracted to separate file)
 
 class ApiUsageTracker {
   static final Map<String, int> _usage = {};

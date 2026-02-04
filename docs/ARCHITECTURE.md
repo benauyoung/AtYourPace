@@ -139,8 +139,7 @@ lib/
 │   └── utils/
 └── config/           # Configuration
     ├── mapbox_config.dart              # NEW
-    ├── voice_config.dart               # NEW
-    └── env_config.dart                 # NEW
+    └── app_config.dart
 ```
 
 > **Note**: See [TOUR_MANAGER_ROADMAP.md](./TOUR_MANAGER_ROADMAP.md) for complete details on the new modular architecture.

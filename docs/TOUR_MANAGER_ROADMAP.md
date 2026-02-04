@@ -666,7 +666,6 @@ lib/presentation/screens/user/
 ## References
 
 - [Data Models Documentation](./DATA_MODELS.md)
-- [Module Specifications](./MODULE_SPECIFICATIONS.md)
 - [API Integrations](./API_INTEGRATIONS.md)
 - [Implementation Checklist](./IMPLEMENTATION_CHECKLIST.md)
 - [Architecture Documentation](./ARCHITECTURE.md)

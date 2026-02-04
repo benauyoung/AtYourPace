@@ -1,23 +1,24 @@
 # Project Status Summary
 
-**Last Updated**: January 30, 2026 (Night)
+**Last Updated**: February 4, 2026
 **Project**: AYP Tour Guide - Tour Manager Rebuild
-**Status**: 🚀 Implementation In Progress (Week 3 Complete)
+**Status**: 🚀 Implementation In Progress (Week 4 In Progress)
 
 ---
 
 ## 🎯 Current Focus
 
 ### Tour Manager Rebuild
-**Phase**: Week 3 Complete - Voice Generation, Tour Manager, Publishing Workflow
-**Next Step**: Start Week 4 (Marketplace & Tour Details)
+**Phase**: Week 4 In Progress - Marketplace & Tour Details
+**Current Issue**: Marketplace module has Mapbox API compatibility errors on mobile build
+**Next Step**: Fix marketplace build, then Tour Details & Analytics (Week 5)
 **Target Completion**: 5 weeks from start
 
 ---
 
 ## 📊 Overall Project Status
 
-### Completion: ~40% (Core App) + 60% (Tour Manager Rebuild)
+### Completion: ~85% (Core App complete, Tour Manager Rebuild ~65%)
 
 **What's Complete** ✅
 - Core architecture and navigation
@@ -50,8 +51,7 @@
 3. **DATA_MODELS.md** - All 8 new Freezed models
 4. **API_INTEGRATIONS.md** - Mapbox, ElevenLabs, Stripe specs
 5. **IMPLEMENTATION_CHECKLIST.md** - Week-by-week tasks (updated)
-6. **.cascade/context_loading_order.md** - AI context loading guide
-7. **ARCHITECTURE.md** - Updated with new modules
+6. **ARCHITECTURE.md** - Updated with new modules
 
 ### Documentation Reading Order
 
@@ -124,7 +124,7 @@ lib/presentation/screens/modules/
 │   ├── review_queue_screen.dart
 │   ├── tour_review_screen.dart
 │   └── publishing.dart (exports)
-├── marketplace/        # ⏳ Tour discovery
+├── marketplace/        # 🔄 Tour discovery (build issues on mobile)
 ├── tour_details/       # ⏳ Unified tour info
 └── analytics/          # ⏳ Analytics dashboard
 ```
@@ -264,11 +264,12 @@ lib/presentation/screens/modules/
 - Resubmission with justification
 - Full approve/reject/request changes workflow
 
-### Marketplace (In Progress)
+### Marketplace (In Progress - Build Issues)
 - ✅ Location-based search ("near me") & Filters
 - ✅ Map view with clustering
 - ✅ 10 Paris collections (Mocked)
 - ✅ Collections System & UI
+- ⚠️ Mobile build fails due to Mapbox API compatibility (temporarily disabled on mobile)
 - ⏳ Featured tours (Dynamic)
 
 ### Analytics Dashboard (Planned)
@@ -414,10 +415,10 @@ lib/presentation/screens/modules/
 
 ## 🎯 Summary
 
-**Current Status**: Week 3 complete
-**Current Phase**: Week 3 - Voice Generation, Tour Manager, Publishing ✅
-**Current Task**: Ready for Week 4 - Marketplace & Tour Details
-**Next Milestone**: Build Marketplace with location-based search
+**Current Status**: Week 4 in progress
+**Current Phase**: Week 4 - Marketplace & Tour Details
+**Current Issue**: Marketplace has Mapbox API compatibility errors on mobile build
+**Next Milestone**: Fix marketplace build, then Tour Details & Analytics
 **Target Completion**: 5 weeks from start
 **Migration Strategy**: Big Bang deployment
 
@@ -425,5 +426,5 @@ lib/presentation/screens/modules/
 
 ---
 
-**Last Updated**: January 30, 2026 (Night)
-**Next Update**: After Week 4 completion
+**Last Updated**: February 4, 2026
+**Next Update**: After marketplace build fix and Week 5 completion

@@ -2,7 +2,7 @@
 
 **Purpose**: This is the master index for all AYP Tour Guide documentation. Read this first, then follow the recommended reading order based on your role or task.
 
-**Last Updated**: January 30, 2026
+**Last Updated**: February 4, 2026
 
 ---
 
@@ -16,10 +16,9 @@
 3. **Current Architecture** → `ARCHITECTURE.md`
 4. **Tour Manager Rebuild** → `TOUR_MANAGER_ROADMAP.md` ⭐ **CURRENT FOCUS**
 5. **Data Models** → `DATA_MODELS.md`
-6. **Module Specs** → `MODULE_SPECIFICATIONS.md`
-7. **API Integrations** → `API_INTEGRATIONS.md`
-8. **Implementation Tasks** → `IMPLEMENTATION_CHECKLIST.md`
-9. **Completion Plan** → `COMPLETION_PLAN.md` (legacy, being updated)
+6. **API Integrations** → `API_INTEGRATIONS.md`
+7. **Implementation Tasks** → `IMPLEMENTATION_CHECKLIST.md`
+8. **Completion Plan** → `COMPLETION_PLAN.md` (legacy, being updated)
 
 ### For Developers
 **Read based on what you're working on:**
@@ -33,9 +32,8 @@
 #### Working on Tour Manager Rebuild
 1. `TOUR_MANAGER_ROADMAP.md` - Complete rebuild plan
 2. `DATA_MODELS.md` - All new data models
-3. `MODULE_SPECIFICATIONS.md` - Detailed module specs
-4. `API_INTEGRATIONS.md` - External API integration details
-5. `IMPLEMENTATION_CHECKLIST.md` - Week-by-week tasks
+3. `API_INTEGRATIONS.md` - External API integration details
+4. `IMPLEMENTATION_CHECKLIST.md` - Week-by-week tasks
 
 #### Bug Fixes or Features
 1. `ARCHITECTURE.md` - Understand the system
@@ -101,20 +99,6 @@
 - **Read When**: Implementing data layer, understanding data structure
 - **Status**: ✅ Complete
 
-#### `MODULE_SPECIFICATIONS.md`
-- **Purpose**: Detailed specifications for each module
-- **Contains**:
-  - Tour Manager (list/grid/analytics/calendar views)
-  - Route Editor (Mapbox, auto-snap, trigger radius)
-  - Content Editor (tabs, voice generation)
-  - Publishing Workflow (submission, review, feedback)
-  - Marketplace (search, filters, collections)
-  - Tour Details (mobile-optimized)
-  - Analytics Dashboard (modular metrics, CSV export)
-  - UI mockups, component trees, provider specs
-- **Read When**: Implementing specific modules
-- **Status**: 🔄 In progress
-
 #### `API_INTEGRATIONS.md`
 - **Purpose**: External API integration specifications
 - **Contains**:
@@ -165,9 +149,8 @@
 ### "I'm implementing the Tour Manager rebuild"
 1. Read `TOUR_MANAGER_ROADMAP.md` (full read)
 2. Read `DATA_MODELS.md`
-3. Read `MODULE_SPECIFICATIONS.md` for your module
-4. Check `IMPLEMENTATION_CHECKLIST.md` for current tasks
-5. Reference `API_INTEGRATIONS.md` as needed
+3. Check `IMPLEMENTATION_CHECKLIST.md` for current tasks
+4. Reference `API_INTEGRATIONS.md` as needed
 
 ### "I'm fixing a bug"
 1. Check `SESSION_LOG.md` for recent changes
@@ -190,17 +173,18 @@
 
 ## 📊 Current Project Status
 
-### Overall Completion: ~95%
+### Overall Completion: ~85%
 - Core features: ✅ Complete
-- Tour Manager: 🔄 **60% Complete (Week 3 Done)**
+- Tour Manager Rebuild: 🔄 **~65% Complete (Weeks 1-3 Done, Marketplace partially done)**
 - Admin features: ✅ Complete
 - Tourist features: ✅ Complete
-- Testing: ✅ 504 tests, 31.5% coverage
+- Testing: ✅ 500+ tests
 
-### Tour Manager Rebuild Status: Week 3 Complete
-- **Phase**: Week 3 Complete (Voice Generation, Tour Manager, Publishing)
-- **Completed**: Voice generation, Tour manager views, Publishing workflow
-- **Next Task**: Marketplace & Tour Details (Week 4)
+### Tour Manager Rebuild Status: Week 4 In Progress
+- **Phase**: Week 4 (Marketplace & Tour Details)
+- **Completed**: Voice generation, Tour manager views, Publishing workflow, Marketplace (partial - build issues)
+- **Current Issue**: Marketplace module has Mapbox API compatibility errors on mobile
+- **Next Task**: Fix marketplace build, Tour Details, Analytics (Week 5)
 - **Target Completion**: 5 weeks from start
 
 ### Key Decisions Made
@@ -238,11 +222,6 @@
 - New models are added
 - Existing models are significantly changed
 - Firestore schema changes
-
-**Update `MODULE_SPECIFICATIONS.md` when:**
-- Module requirements change
-- New modules are added
-- UI/UX specifications change
 
 **Update `IMPLEMENTATION_CHECKLIST.md` when:**
 - Tasks are completed (check them off!)
@@ -291,8 +270,7 @@
 ### Tour Manager Rebuild Questions
 1. Check `TOUR_MANAGER_ROADMAP.md` for big picture
 2. Check `DATA_MODELS.md` for data structure
-3. Check `MODULE_SPECIFICATIONS.md` for module details
-4. Check `IMPLEMENTATION_CHECKLIST.md` for current tasks
+3. Check `IMPLEMENTATION_CHECKLIST.md` for current tasks
 
 ---
 
@@ -343,13 +321,12 @@
 3. ARCHITECTURE.md (system design)
 4. TOUR_MANAGER_ROADMAP.md (current focus) ⭐
 5. DATA_MODELS.md (data structures)
-6. MODULE_SPECIFICATIONS.md (module details)
-7. API_INTEGRATIONS.md (external APIs)
-8. IMPLEMENTATION_CHECKLIST.md (tasks)
+6. API_INTEGRATIONS.md (external APIs)
+7. IMPLEMENTATION_CHECKLIST.md (tasks)
 ```
 
 **Current Focus:** Tour Manager Rebuild - Week 4 (Marketplace & Tour Details)
-**Next Milestone:** Build Marketplace with location-based search
+**Current Issue:** Marketplace module has Mapbox API compatibility errors on mobile build
 **Target:** 5-week complete rebuild with Big Bang deployment
 
 ---

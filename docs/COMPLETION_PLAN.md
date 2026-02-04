@@ -1,6 +1,6 @@
 # Application Completion Plan
 
-Roadmap for completing the AYP Tour Guide application from current state (~92%) to production release.
+Roadmap for completing the AYP Tour Guide application from current state (~85%) to production release.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ Roadmap for completing the AYP Tour Guide application from current state (~92%) 
 
 ## Current Status
 
-**Completion: ~92%** (Updated January 26, 2026 - Phase 6.5.4 offline maps confirmed complete)
+**Completion: ~85%** (Updated February 4, 2026 - Tour Manager rebuild ~65% complete)
 
 ### Completed
 
