@@ -219,7 +219,7 @@ class _MarketplaceMapViewState extends ConsumerState<MarketplaceMapView> {
           return {
             "type": "Feature",
             "id": tour.id,
-            "properties": {"id": tour.id, "title": tour.title, "imageUrl": tour.coverImageUrl},
+            "properties": {"id": tour.id, "title": tour.city ?? "Tour", "imageUrl": ""},
             "geometry": {
               "type": "Point",
               "coordinates": [tour.startLocation.longitude, tour.startLocation.latitude],

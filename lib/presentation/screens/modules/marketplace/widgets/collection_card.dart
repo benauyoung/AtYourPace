@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../config/theme/app_spacing.dart';
-import '../../../../config/theme/neumorphic.dart';
-import '../../../../data/models/collection_model.dart';
+import '../../../../../config/theme/app_spacing.dart';
+import '../../../../../config/theme/neumorphic.dart';
+import '../../../../../data/models/collection_model.dart';
 
 class CollectionCard extends StatelessWidget {
   final CollectionModel collection;

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../config/theme/app_spacing.dart';
-import '../../../../core/constants/route_names.dart';
-import '../../../../data/models/collection_model.dart';
+import '../../../../../config/theme/app_spacing.dart';
+import '../../../../../core/constants/route_names.dart';
+import '../../../../../data/models/collection_model.dart';
 import '../../../providers/collections_provider.dart';
 import '../../../providers/tour_providers.dart';
 import '../../../widgets/common/error_view.dart';
