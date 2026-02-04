@@ -4,7 +4,7 @@ import '../../../../core/extensions/context_extensions.dart';
 import '../../../../data/models/stop_model.dart';
 import '../../../providers/playback_provider.dart';
 
-class PlaybackBottomSheet extends StatefulWidget {
+class PlaybackBottomSheet extends StatelessWidget {
   final PlaybackState playbackState;
   final void Function(int index) onStopTap;
   final Function(bool isManual) onModeToggle;
@@ -17,30 +17,13 @@ class PlaybackBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<PlaybackBottomSheet> createState() => _PlaybackBottomSheetState();
-}
-
-class _PlaybackBottomSheetState extends State<PlaybackBottomSheet>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final completedCount = playbackState.completedStopIndices.length;
+    final totalCount = playbackState.stops.length;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.4,
-      minChildSize: 0.2, // Collapsed state
+      minChildSize: 0.2,
       maxChildSize: 0.85,
       builder: (context, scrollController) {
         return Container(
@@ -70,59 +53,46 @@ class _PlaybackBottomSheetState extends State<PlaybackBottomSheet>
                 ),
               ),
 
-              // Tabs
+              // Tour Stops Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicator: BoxDecoration(
-                      color: const Color(0xFF1E2F36), // Dark color from screenshot
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    labelColor: Colors.white,
-                    unselectedLabelColor: const Color(0xFF1E2F36),
-                    dividerColor: Colors.transparent,
-                    tabs: const [Tab(text: 'Audio Points'), Tab(text: 'Highlights')],
-                  ),
-                ),
-              ),
-
-              // Filters Row
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _FilterChip(label: 'All', isSelected: true),
-                      const SizedBox(width: 8),
-                      _FilterChip(label: 'Bookmark'),
-                      const SizedBox(width: 8),
-                      _FilterChip(label: 'Tour Stops'),
-                      const SizedBox(width: 8),
-                      _FilterChip(label: 'Waterfalls'),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Content List
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
                   children: [
-                    // Audio Points Tab
-                    _buildStopsList(scrollController),
-                    // Highlights Tab (Mock content)
-                    const Center(child: Text('Highlights coming soon')),
+                    Text(
+                      'Tour Stops',
+                      style: context.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '$completedCount/$totalCount',
+                      style: context.textTheme.titleMedium?.copyWith(
+                        color: context.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ],
+                ),
+              ),
+
+              // Stops List
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: playbackState.stops.length,
+                  itemBuilder: (context, index) {
+                    final stop = playbackState.stops[index];
+                    final isCompleted = playbackState.completedStopIndices.contains(index);
+                    final isCurrent = playbackState.currentStopIndex == index;
+                    return _StopListItem(
+                      stop: stop,
+                      index: index,
+                      isCompleted: isCompleted,
+                      isCurrent: isCurrent,
+                      onTap: () => onStopTap(index),
+                    );
+                  },
                 ),
               ),
 
@@ -137,15 +107,15 @@ class _PlaybackBottomSheetState extends State<PlaybackBottomSheet>
                   children: [
                     Expanded(
                       child: Text(
-                        '${widget.playbackState.version?.title ?? "Tour"} in progress...',
+                        '${playbackState.tour?.city ?? "Tour"} in progress...',
                         style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Switch(
-                      value: widget.playbackState.triggerMode == TriggerMode.automatic,
-                      onChanged: (val) => widget.onModeToggle(!val),
+                      value: playbackState.triggerMode == TriggerMode.automatic,
+                      onChanged: (val) => onModeToggle(!val),
                       activeColor: Colors.green,
                     ),
                   ],
@@ -157,53 +127,35 @@ class _PlaybackBottomSheetState extends State<PlaybackBottomSheet>
       },
     );
   }
-
-  Widget _buildStopsList(ScrollController scrollController) {
-    return ListView.builder(
-      controller: scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: widget.playbackState.stops.length,
-      itemBuilder: (context, index) {
-        final stop = widget.playbackState.stops[index];
-        return _StopListItem(stop: stop, onTap: () => widget.onStopTap(index));
-      },
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-
-  const _FilterChip({required this.label, this.isSelected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color:
-            isSelected
-                ? const Color(0xFF2B8C98)
-                : context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.white : context.colorScheme.onSurface,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-    );
-  }
 }
 
 class _StopListItem extends StatelessWidget {
   final StopModel stop;
+  final int index;
+  final bool isCompleted;
+  final bool isCurrent;
   final VoidCallback onTap;
 
-  const _StopListItem({required this.stop, required this.onTap});
+  const _StopListItem({
+    required this.stop,
+    required this.index,
+    required this.isCompleted,
+    required this.isCurrent,
+    required this.onTap,
+  });
+
+  String get _statusLabel {
+    if (isCompleted) return 'Completed';
+    if (isCurrent) return 'Now Playing';
+    if (stop.hasAudio) return 'Audio available';
+    return 'No audio';
+  }
+
+  Color _statusColor(BuildContext context) {
+    if (isCompleted) return Colors.green;
+    if (isCurrent) return context.colorScheme.primary;
+    return context.colorScheme.onSurfaceVariant;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -212,7 +164,7 @@ class _StopListItem extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Thumbnail
             ClipRRect(
@@ -235,29 +187,43 @@ class _StopListItem extends StatelessWidget {
                 children: [
                   Text(stop.name, style: context.textTheme.titleMedium),
                   const SizedBox(height: 4),
-                  Text(
-                    'STOP', // Category placeholder
-                    style: context.textTheme.labelSmall?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  // Distance placeholder - logic needs access to user position
-                  Text(
-                    '-- mi.', // Distance placeholder
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant,
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        isCompleted
+                            ? Icons.check_circle
+                            : isCurrent
+                                ? Icons.play_circle_filled
+                                : stop.hasAudio
+                                    ? Icons.volume_up_outlined
+                                    : Icons.volume_off_outlined,
+                        size: 14,
+                        color: _statusColor(context),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _statusLabel,
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: _statusColor(context),
+                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            // Bookmark Icon
-            IconButton(
-              icon: const Icon(Icons.bookmark_border),
-              onPressed: () {}, // Todo: Implement bookmark
-            ),
+            // Play button
+            if (stop.hasAudio)
+              IconButton(
+                icon: Icon(
+                  isCurrent ? Icons.pause_circle_filled : Icons.play_circle_outline,
+                  color: isCurrent ? context.colorScheme.primary : context.colorScheme.onSurfaceVariant,
+                  size: 36,
+                ),
+                onPressed: onTap,
+                tooltip: isCurrent ? 'Playing' : 'Play audio',
+              ),
           ],
         ),
       ),

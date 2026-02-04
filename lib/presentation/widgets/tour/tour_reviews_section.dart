@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/review_model.dart';
 import '../../../data/models/tour_model.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/review_providers.dart';
 
 class TourReviewsSection extends ConsumerWidget {
@@ -21,28 +20,16 @@ class TourReviewsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reviewsAsync = ref.watch(tourReviewsProvider(tourId));
-    final currentUser = ref.watch(currentUserProvider).value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header with rating summary
-        Row(
-          children: [
-            Text(
-              'Reviews',
-              style: context.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Spacer(),
-            if (currentUser != null)
-              TextButton.icon(
-                onPressed: () => _showWriteReviewDialog(context, ref),
-                icon: const Icon(Icons.rate_review),
-                label: const Text('Write Review'),
-              ),
-          ],
+        Text(
+          'Reviews',
+          style: context.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 8),
 
@@ -54,11 +41,7 @@ class TourReviewsSection extends ConsumerWidget {
         reviewsAsync.when(
           data: (reviews) {
             if (reviews.isEmpty) {
-              return _EmptyReviews(
-                onWriteReview: currentUser != null
-                    ? () => _showWriteReviewDialog(context, ref)
-                    : null,
-              );
+              return const _EmptyReviews();
             }
 
             return Column(
@@ -89,26 +72,6 @@ class TourReviewsSection extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  void _showWriteReviewDialog(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => WriteReviewSheet(
-        tourId: tourId,
-        onSubmit: (rating, comment) async {
-          // Submit review to Firestore
-          final submitService = ref.read(submitReviewProvider);
-          await submitService.submitReview(
-            tourId: tourId,
-            rating: rating,
-            comment: comment.isNotEmpty ? comment : null,
-          );
-        },
-      ),
     );
   }
 
@@ -311,9 +274,7 @@ class _ReviewCard extends StatelessWidget {
 }
 
 class _EmptyReviews extends StatelessWidget {
-  final VoidCallback? onWriteReview;
-
-  const _EmptyReviews({this.onWriteReview});
+  const _EmptyReviews();
 
   @override
   Widget build(BuildContext context) {
@@ -339,14 +300,6 @@ class _EmptyReviews extends StatelessWidget {
                 color: context.colorScheme.onSurfaceVariant,
               ),
             ),
-            if (onWriteReview != null) ...[
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: onWriteReview,
-                icon: const Icon(Icons.edit),
-                label: const Text('Write a Review'),
-              ),
-            ],
           ],
         ),
       ),

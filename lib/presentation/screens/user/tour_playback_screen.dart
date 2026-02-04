@@ -6,15 +6,14 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import '../../../core/extensions/context_extensions.dart';
 import '../../../services/audio_service.dart';
 import '../../providers/playback_provider.dart';
-import '../../providers/review_providers.dart';
 import '../../widgets/map/tour_map_widget.dart';
-import '../../widgets/tour/tour_reviews_section.dart';
 import 'widgets/playback_bottom_sheet.dart';
 
 class TourPlaybackScreen extends ConsumerStatefulWidget {
   final String tourId;
+  final bool previewMode;
 
-  const TourPlaybackScreen({super.key, required this.tourId});
+  const TourPlaybackScreen({super.key, required this.tourId, this.previewMode = false});
 
   @override
   ConsumerState<TourPlaybackScreen> createState() => _TourPlaybackScreenState();
@@ -30,7 +29,10 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
     super.initState();
     // Start the tour
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(playbackStateProvider.notifier).startTour(widget.tourId);
+      ref.read(playbackStateProvider.notifier).startTour(
+        widget.tourId,
+        previewMode: widget.previewMode,
+      );
     });
   }
 
@@ -144,10 +146,14 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
             routeCoordinates: routeCoordinates,
             stops: markers,
             showUserLocation: true,
-            onStopTapped: (marker) {
-              // Map tap interaction
-              ref.read(playbackStateProvider.notifier).triggerStop(marker.order);
-            },
+            onStopTapped: widget.previewMode
+                ? null
+                : (marker) {
+                    ref.read(playbackStateProvider.notifier).triggerStop(marker.order);
+                    if (marker.order < stops.length && !stops[marker.order].hasAudio) {
+                      context.showInfoSnackBar('No audio available for this stop');
+                    }
+                  },
           ),
 
           // Top bar with tour info
@@ -175,8 +181,10 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: () => showEndTourDialog(context),
-                        tooltip: 'End tour',
+                        onPressed: widget.previewMode
+                            ? () => GoRouter.of(context).pop()
+                            : () => showEndTourDialog(context),
+                        tooltip: widget.previewMode ? 'Close preview' : 'End tour',
                       ),
                       Expanded(
                         child: Column(
@@ -190,7 +198,9 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              '${playbackState.completedStopIndices.length}/${playbackState.stops.length} stops',
+                              widget.previewMode
+                                  ? 'Preview Mode'
+                                  : '${playbackState.completedStopIndices.length}/${playbackState.stops.length} stops',
                               style: context.textTheme.bodySmall?.copyWith(
                                 color: context.colorScheme.onSurfaceVariant,
                               ),
@@ -198,30 +208,31 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                           ],
                         ),
                       ),
-                      // Trigger mode toggle
-                      IconButton(
-                        icon: Icon(
-                          playbackState.triggerMode == TriggerMode.automatic
-                              ? Icons.gps_fixed
-                              : Icons.touch_app,
-                        ),
-                        onPressed: () {
-                          final newMode =
-                              playbackState.triggerMode == TriggerMode.automatic
-                                  ? TriggerMode.manual
-                                  : TriggerMode.automatic;
-                          ref.read(playbackStateProvider.notifier).setTriggerMode(newMode);
-                          context.showSuccessSnackBar(
-                            newMode == TriggerMode.automatic
-                                ? 'Auto-trigger enabled'
-                                : 'Manual mode enabled',
-                          );
-                        },
-                        tooltip:
+                      // Trigger mode toggle (only in full playback mode)
+                      if (!widget.previewMode)
+                        IconButton(
+                          icon: Icon(
                             playbackState.triggerMode == TriggerMode.automatic
-                                ? 'Switch to manual mode'
-                                : 'Switch to auto mode',
-                      ),
+                                ? Icons.gps_fixed
+                                : Icons.touch_app,
+                          ),
+                          onPressed: () {
+                            final newMode =
+                                playbackState.triggerMode == TriggerMode.automatic
+                                    ? TriggerMode.manual
+                                    : TriggerMode.automatic;
+                            ref.read(playbackStateProvider.notifier).setTriggerMode(newMode);
+                            context.showSuccessSnackBar(
+                              newMode == TriggerMode.automatic
+                                  ? 'Auto-trigger enabled'
+                                  : 'Manual mode enabled',
+                            );
+                          },
+                          tooltip:
+                              playbackState.triggerMode == TriggerMode.automatic
+                                  ? 'Switch to manual mode'
+                                  : 'Switch to auto mode',
+                        ),
                     ],
                   ),
                 ),
@@ -234,45 +245,34 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
               padding: const EdgeInsets.only(top: 80, right: 16), // Below top bar
               child: Align(
                 alignment: Alignment.topRight,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _MapOverlayButton(
-                      icon: Icons.search,
-                      onPressed: () => _showSearchSheet(context, stops),
-                    ),
-                    const SizedBox(height: 12),
-                    _MapOverlayButton(
-                      icon: Icons.near_me_outlined,
-                      onPressed: () {
-                        _mapKey.currentState?.centerOnUserLocation();
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    _MapOverlayButton(
-                      icon: Icons.settings_outlined,
-                      onPressed: () {}, // TODO: Settings
-                    ),
-                  ],
+                child: _MapOverlayButton(
+                  icon: Icons.near_me_outlined,
+                  onPressed: () {
+                    _mapKey.currentState?.centerOnUserLocation();
+                  },
                 ),
               ),
             ),
           ),
-          // Bottom Sheet
-          PlaybackBottomSheet(
-            playbackState: playbackState,
-            onStopTap: (index) {
-              ref.read(playbackStateProvider.notifier).triggerStop(index);
-            },
-            onModeToggle: (isAutomatic) {
-              ref
-                  .read(playbackStateProvider.notifier)
-                  .setTriggerMode(isAutomatic ? TriggerMode.automatic : TriggerMode.manual);
-            },
-          ),
+          // Bottom Sheet (only in full playback mode)
+          if (!widget.previewMode)
+            PlaybackBottomSheet(
+              playbackState: playbackState,
+              onStopTap: (index) {
+                ref.read(playbackStateProvider.notifier).triggerStop(index);
+                if (index < stops.length && !stops[index].hasAudio) {
+                  context.showInfoSnackBar('No audio available for this stop');
+                }
+              },
+              onModeToggle: (isAutomatic) {
+                ref
+                    .read(playbackStateProvider.notifier)
+                    .setTriggerMode(isAutomatic ? TriggerMode.automatic : TriggerMode.manual);
+              },
+            ),
 
-          // Completed Overlay
-          if (playbackState.isCompleted)
+          // Completed Overlay (only in full playback mode)
+          if (!widget.previewMode && playbackState.isCompleted)
             _TourCompletedOverlay(tour: tour, onDone: () => GoRouter.of(context).pop()),
         ],
       ),
@@ -304,48 +304,6 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
     );
   }
 
-  void _showSearchSheet(BuildContext context, List<dynamic> stops) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder:
-          (context) => DraggableScrollableSheet(
-            initialChildSize: 0.9,
-            minChildSize: 0.5,
-            maxChildSize: 0.95,
-            expand: false,
-            builder: (context, scrollController) {
-              return Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text('Search Stops', style: context.textTheme.titleLarge),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      controller: scrollController,
-                      itemCount: stops.length,
-                      itemBuilder: (context, index) {
-                        final stop = stops[index];
-                        return ListTile(
-                          leading: CircleAvatar(child: Text('${index + 1}')),
-                          title: Text(stop.name),
-                          subtitle: Text(stop.hasAudio ? 'Audio available' : 'No audio'),
-                          onTap: () {
-                            Navigator.pop(context);
-                            ref.read(playbackStateProvider.notifier).triggerStop(index);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-    );
-  }
 }
 
 class _MapOverlayButton extends StatelessWidget {
@@ -375,14 +333,14 @@ class _MapOverlayButton extends StatelessWidget {
   }
 }
 
-class _TourCompletedOverlay extends ConsumerWidget {
+class _TourCompletedOverlay extends StatelessWidget {
   final dynamic tour;
   final VoidCallback onDone;
 
   const _TourCompletedOverlay({required this.tour, required this.onDone});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Container(
       color: Colors.black54,
       child: Center(
@@ -407,18 +365,7 @@ class _TourCompletedOverlay extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () => showReviewSheet(context, ref),
-                      icon: const Icon(Icons.star),
-                      label: const Text('Rate Tour'),
-                    ),
-                    const SizedBox(width: 16),
-                    FilledButton(onPressed: onDone, child: const Text('Done')),
-                  ],
-                ),
+                FilledButton(onPressed: onDone, child: const Text('Done')),
               ],
             ),
           ),
@@ -427,25 +374,4 @@ class _TourCompletedOverlay extends ConsumerWidget {
     );
   }
 
-  void showReviewSheet(BuildContext context, WidgetRef ref) {
-    final tourId = tour.id as String;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder:
-          (context) => WriteReviewSheet(
-            tourId: tourId,
-            onSubmit: (rating, comment) async {
-              final submitService = ref.read(submitReviewProvider);
-              await submitService.submitReview(
-                tourId: tourId,
-                rating: rating,
-                comment: comment.isNotEmpty ? comment : null,
-              );
-            },
-          ),
-    );
-  }
 }

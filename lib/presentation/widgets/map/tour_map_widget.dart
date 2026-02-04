@@ -109,7 +109,22 @@ class TourMapWidgetState extends State<TourMapWidget> {
       key: const ValueKey('tour_map'),
       cameraOptions: CameraOptions(center: Point(coordinates: center), zoom: widget.initialZoom),
       styleUri: widget.mapStyle ?? MapboxConfig.defaultStyle,
+      androidHostingMode: AndroidPlatformViewHostingMode.TLHC_HC,
       onMapCreated: _onMapCreated,
+      onStyleLoadedListener: (_) {
+        debugPrint('[TourMap] Style loaded successfully');
+      },
+      onMapLoadedListener: (_) {
+        debugPrint('[TourMap] Map fully loaded');
+      },
+      onMapLoadErrorListener: (error) {
+        debugPrint('[TourMap] MAP LOAD ERROR: type=${error.type}, message=${error.message}, sourceId=${error.sourceId}');
+      },
+      onResourceRequestListener: (event) {
+        if (event.response?.error != null) {
+          debugPrint('[TourMap] RESOURCE ERROR: ${event.request.url} -> ${event.response?.error}');
+        }
+      },
       onTapListener: widget.onMapTapped != null ? _onMapTapped : null,
       onLongTapListener: widget.onMapLongPressed != null ? _onMapLongPressed : null,
     );
@@ -124,6 +139,7 @@ class TourMapWidgetState extends State<TourMapWidget> {
   }
 
   void _onMapCreated(MapboxMap mapboxMap) async {
+    debugPrint('[TourMap] Map created, style: ${widget.mapStyle ?? MapboxConfig.defaultStyle}');
     _mapboxMap = mapboxMap;
 
     // Create annotation managers
@@ -227,23 +243,18 @@ class TourMapWidgetState extends State<TourMapWidget> {
     }
 
     for (final stop in widget.stops!) {
-      // Use the stop's triggerRadius or default to 30 meters
       final radius = stop.triggerRadius ?? 30.0;
 
-      // Determine circle color based on stop state
       Color circleColor;
       double circleOpacity;
 
       if (stop.isCurrent) {
-        // Current stop - bright blue
         circleColor = Colors.blue;
         circleOpacity = 0.3;
       } else if (stop.isCompleted) {
-        // Completed stop - green
         circleColor = Colors.green;
         circleOpacity = 0.2;
       } else {
-        // Upcoming stop - light gray/blue
         circleColor = Colors.blueGrey;
         circleOpacity = 0.15;
       }
@@ -251,11 +262,6 @@ class TourMapWidgetState extends State<TourMapWidget> {
       await _circleAnnotationManager?.create(
         CircleAnnotationOptions(
           geometry: Point(coordinates: Position(stop.longitude, stop.latitude)),
-          // Convert meters to a visual radius
-          // Note: Mapbox circle radius is in screen pixels at zoom level
-          // We use circleRadius in pixels and let Mapbox handle scaling
-          // For a more accurate geographic circle, you'd need to use a fill layer
-          // with a GeoJSON polygon, but this approximation works well for UI
           circleRadius: _metersToPixelsAtZoom(radius, stop.latitude, widget.initialZoom),
           circleColor: circleColor.value,
           circleOpacity: circleOpacity,
@@ -268,22 +274,16 @@ class TourMapWidgetState extends State<TourMapWidget> {
   }
 
   /// Convert meters to approximate pixels at a given zoom level and latitude
-  /// This is an approximation - Mapbox uses Web Mercator projection
   double _metersToPixelsAtZoom(double meters, double latitude, double zoom) {
-    // At zoom 0, the world is 512 pixels wide
-    // Each zoom level doubles the size
-    // Earth's circumference at equator is ~40,075,016 meters
     const double earthCircumference = 40075016.686;
     const double tileSize = 512.0;
 
-    // Adjust for latitude (Mercator projection)
     final double latitudeRadians = latitude * 3.14159265359 / 180.0;
     final double metersPerPixel =
         earthCircumference * math.cos(latitudeRadians.abs()) / (tileSize * (1 << zoom.toInt()));
 
-    // Return radius in pixels, with a minimum size for visibility
     final double pixels = meters / metersPerPixel;
-    return pixels.clamp(10.0, 500.0); // Ensure reasonable bounds
+    return pixels.clamp(10.0, 500.0);
   }
 
   Future<void> _flyToPosition(Position position) async {

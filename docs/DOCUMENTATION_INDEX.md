@@ -6,329 +6,132 @@
 
 ---
 
-## 🎯 Quick Start - Context Loading Order
+## Current Project State
+
+### Mobile App: CRITICAL ISSUES
+
+The mobile app has blocking issues that must be fixed before real testing:
+
+| Issue | Status |
+|-------|--------|
+| Map tiles not rendering | 3 fixes applied, untested |
+| Audio not playing | Data issue - Firestore has null audioUrls |
+| Tour cover images not loading | Not investigated |
+| Center-on-user button broken | Not investigated |
+| Dead-end buttons everywhere | Not fixed |
+
+**See [PROJECT_STATUS.md](./PROJECT_STATUS.md) for full details.**
+
+### Tour Manager Rebuild: ~65%
+
+Creator/admin tools rebuild is separate from mobile issues:
+- Route Editor: Complete
+- Content Editor: Complete
+- Voice Generation: Complete
+- Tour Manager: Complete
+- Publishing Workflow: Complete
+- Marketplace: Disabled (API compat issues)
+- Analytics Dashboard: Not started
+
+---
+
+## Quick Start - Context Loading Order
 
 ### For AI Assistants (Claude/Cascade)
-**Read these files in this exact order to understand the project:**
+
+**Read these files in this exact order:**
 
 1. **START HERE** → `DOCUMENTATION_INDEX.md` (this file)
-2. **Project Overview** → `README.md` (root directory)
-3. **Current Architecture** → `ARCHITECTURE.md`
-4. **Tour Manager Rebuild** → `TOUR_MANAGER_ROADMAP.md` ⭐ **CURRENT FOCUS**
-5. **Data Models** → `DATA_MODELS.md`
-6. **API Integrations** → `API_INTEGRATIONS.md`
-7. **Implementation Tasks** → `IMPLEMENTATION_CHECKLIST.md`
-8. **Completion Plan** → `COMPLETION_PLAN.md` (legacy, being updated)
+2. **Current Issues** → `PROJECT_STATUS.md` (blocking mobile issues)
+3. **Session History** → `SESSION_LOG.md` (recent changes)
+4. **Memory** → `.claude/projects/.../memory/MEMORY.md` (priority issues)
+5. **Architecture** → `ARCHITECTURE.md` (system design)
 
 ### For Developers
-**Read based on what you're working on:**
 
-#### Understanding the Project
-1. `README.md` - Project overview, tech stack, features
-2. `ARCHITECTURE.md` - System architecture, patterns, conventions
-3. `SETUP.md` - Development environment setup
-4. `TESTING.md` - Testing strategy and guidelines
+#### Fixing Mobile Issues
+1. `PROJECT_STATUS.md` - List of blocking issues
+2. `SESSION_LOG.md` - What was tried
+3. `MEMORY.md` - Priority fixes
 
 #### Working on Tour Manager Rebuild
 1. `TOUR_MANAGER_ROADMAP.md` - Complete rebuild plan
 2. `DATA_MODELS.md` - All new data models
-3. `API_INTEGRATIONS.md` - External API integration details
-4. `IMPLEMENTATION_CHECKLIST.md` - Week-by-week tasks
-
-#### Bug Fixes or Features
-1. `ARCHITECTURE.md` - Understand the system
-2. `SESSION_LOG.md` - Recent changes and decisions
-3. Relevant module documentation
+3. `IMPLEMENTATION_CHECKLIST.md` - Week-by-week tasks
 
 ---
 
-## 📚 Documentation Files
+## Documentation Files
 
 ### Core Documentation
 
-#### `README.md` (Root)
-- **Purpose**: Project overview and quick start
-- **Contains**: Features, tech stack, project structure, development status
-- **Read When**: First time on project, need high-level overview
-- **Status**: ✅ Up to date
+| File | Purpose | Status |
+|------|---------|--------|
+| `README.md` (Root) | Project overview, tech stack | Needs update |
+| `PROJECT_STATUS.md` | Current issues, honest assessment | Updated |
+| `SESSION_LOG.md` | Recent changes, decisions | Updated |
+| `ARCHITECTURE.md` | System design, patterns | Needs update |
+| `SETUP.md` | Development environment | Up to date |
+| `TESTING.md` | Testing strategy | Up to date |
 
-#### `ARCHITECTURE.md`
-- **Purpose**: System architecture and design patterns
-- **Contains**: Layer architecture, state management, navigation, data flow, offline support
-- **Read When**: Understanding system design, making architectural decisions
-- **Status**: 🔄 Needs update for new modules
+### Tour Manager Rebuild Documentation
 
-#### `SETUP.md`
-- **Purpose**: Development environment setup
-- **Contains**: Prerequisites, installation steps, configuration
-- **Read When**: Setting up development environment
-- **Status**: ✅ Up to date
+| File | Purpose | Status |
+|------|---------|--------|
+| `TOUR_MANAGER_ROADMAP.md` | Master plan for rebuild | Complete |
+| `DATA_MODELS.md` | 8 new Freezed models | Complete |
+| `API_INTEGRATIONS.md` | Mapbox, ElevenLabs, Stripe | In progress |
+| `IMPLEMENTATION_CHECKLIST.md` | Week-by-week tasks | In progress |
 
-#### `TESTING.md`
-- **Purpose**: Testing strategy and guidelines
-- **Contains**: Test structure, running tests, writing tests
-- **Read When**: Writing or running tests
-- **Status**: ✅ Up to date
+### Legacy Documentation
 
----
-
-### Tour Manager Rebuild Documentation (NEW)
-
-#### `TOUR_MANAGER_ROADMAP.md` ⭐
-- **Purpose**: Master plan for Tour Manager rebuild
-- **Contains**: 
-  - Executive summary
-  - Problem statement and solution
-  - Complete architecture with folder structure
-  - Module specifications overview
-  - 5-week implementation plan
-  - Success criteria
-- **Read When**: Starting Tour Manager work, need big picture
-- **Status**: ✅ Complete - **READ THIS FIRST FOR REBUILD**
-
-#### `DATA_MODELS.md`
-- **Purpose**: Complete specification of all new data models
-- **Contains**:
-  - 7 new Freezed models with full Dart code
-  - PricingModel, RouteModel, WaypointModel
-  - PublishingSubmissionModel, ReviewFeedbackModel
-  - VoiceGenerationModel, CollectionModel
-  - TourAnalyticsModel
-  - Firestore schema and relationships
-  - Usage examples
-- **Read When**: Implementing data layer, understanding data structure
-- **Status**: ✅ Complete
-
-#### `API_INTEGRATIONS.md`
-- **Purpose**: External API integration specifications
-- **Contains**:
-  - Mapbox GL JS and Directions API
-  - ElevenLabs voice generation
-  - Stripe payment integration (placeholder)
-  - Firebase Cloud Functions
-  - API keys, rate limits, error handling
-- **Read When**: Integrating external services
-- **Status**: 🔄 In progress
-
-#### `IMPLEMENTATION_CHECKLIST.md`
-- **Purpose**: Week-by-week implementation tasks
-- **Contains**:
-  - 5-week breakdown with daily tasks
-  - Checkboxes for tracking progress
-  - Dependencies between tasks
-  - Testing requirements per phase
-- **Read When**: Daily work planning, tracking progress
-- **Status**: 🔄 In progress
+| File | Purpose | Status |
+|------|---------|--------|
+| `COMPLETION_PLAN.md` | Original completion plan | Outdated - see PROJECT_STATUS |
 
 ---
 
-### Legacy Documentation (Being Updated)
+## Navigation Guide
 
-#### `COMPLETION_PLAN.md`
-- **Purpose**: Original completion plan (pre-rebuild)
-- **Contains**: Phase-by-phase completion plan for original architecture
-- **Read When**: Understanding project history
-- **Status**: ⚠️ Being superseded by Tour Manager rebuild docs
-- **Note**: Still valid for non-Tour Manager features
-
-#### `SESSION_LOG.md`
-- **Purpose**: Log of development sessions and decisions
-- **Contains**: Recent changes, decisions, bug fixes
-- **Read When**: Understanding recent work, debugging
-- **Status**: ✅ Active, updated regularly
-
----
-
-## 🗺️ Navigation Guide
-
-### "I want to understand the project"
-1. Read `README.md`
-2. Read `ARCHITECTURE.md`
-3. Skim `TOUR_MANAGER_ROADMAP.md` for current direction
+### "I want to fix the mobile app"
+1. Read `PROJECT_STATUS.md` for the issue list
+2. Read `SESSION_LOG.md` for what was tried
+3. Check `MEMORY.md` for priority fixes
 
 ### "I'm implementing the Tour Manager rebuild"
 1. Read `TOUR_MANAGER_ROADMAP.md` (full read)
 2. Read `DATA_MODELS.md`
 3. Check `IMPLEMENTATION_CHECKLIST.md` for current tasks
-4. Reference `API_INTEGRATIONS.md` as needed
 
-### "I'm fixing a bug"
+### "I'm debugging a specific issue"
 1. Check `SESSION_LOG.md` for recent changes
-2. Review `ARCHITECTURE.md` for affected layer
-3. Check module-specific docs if applicable
-
-### "I'm adding a new feature"
-1. Review `ARCHITECTURE.md` for patterns
-2. Check if it's part of Tour Manager rebuild in `TOUR_MANAGER_ROADMAP.md`
-3. Follow existing patterns in codebase
-
-### "I'm onboarding to the project"
-1. `README.md` - Overview
-2. `SETUP.md` - Get environment running
-3. `ARCHITECTURE.md` - Understand structure
-4. `TOUR_MANAGER_ROADMAP.md` - Current focus
-5. `IMPLEMENTATION_CHECKLIST.md` - What's being worked on
+2. Check `MEMORY.md` for known issues
+3. Review relevant code files
 
 ---
 
-## 📊 Current Project Status
-
-### Overall Completion: ~85%
-- Core features: ✅ Complete
-- Tour Manager Rebuild: 🔄 **~65% Complete (Weeks 1-3 Done, Marketplace partially done)**
-- Admin features: ✅ Complete
-- Tourist features: ✅ Complete
-- Testing: ✅ 500+ tests
-
-### Tour Manager Rebuild Status: Week 4 In Progress
-- **Phase**: Week 4 (Marketplace & Tour Details)
-- **Completed**: Voice generation, Tour manager views, Publishing workflow, Marketplace (partial - build issues)
-- **Current Issue**: Marketplace module has Mapbox API compatibility errors on mobile
-- **Next Task**: Fix marketplace build, Tour Details, Analytics (Week 5)
-- **Target Completion**: 5 weeks from start
-
-### Key Decisions Made
-- ✅ Modular architecture with feature-based organization
-- ✅ Web-first for creator/admin tools
-- ✅ Mobile-first for tourist experience
-- ✅ Mapbox for route editing with auto-snap
-- ✅ ElevenLabs for voice generation (4 voices)
-- ✅ Big Bang migration strategy
-- ✅ Riverpod code generation for state management
-- ✅ Optimistic UI updates for responsiveness
-
----
-
-## 🔄 Documentation Maintenance
-
-### When to Update Documentation
-
-**Update `README.md` when:**
-- Major features are added
-- Tech stack changes
-- Project structure changes significantly
-
-**Update `ARCHITECTURE.md` when:**
-- New architectural patterns are introduced
-- Layer responsibilities change
-- New services or major components are added
-
-**Update `TOUR_MANAGER_ROADMAP.md` when:**
-- Implementation plan changes
-- New requirements are discovered
-- Migration strategy changes
-
-**Update `DATA_MODELS.md` when:**
-- New models are added
-- Existing models are significantly changed
-- Firestore schema changes
-
-**Update `IMPLEMENTATION_CHECKLIST.md` when:**
-- Tasks are completed (check them off!)
-- New tasks are discovered
-- Timeline changes
-
-**Update `SESSION_LOG.md` when:**
-- Significant work is completed
-- Important decisions are made
-- Bugs are fixed
-
----
-
-## 🎓 Best Practices
-
-### For AI Assistants
-1. **Always read `DOCUMENTATION_INDEX.md` first** to understand what's available
-2. **Follow the context loading order** for your task
-3. **Check `TOUR_MANAGER_ROADMAP.md`** before making Tour Manager changes
-4. **Reference `DATA_MODELS.md`** when working with data structures
-5. **Update `SESSION_LOG.md`** after significant work
-6. **Keep `IMPLEMENTATION_CHECKLIST.md`** current
-
-### For Developers
-1. **Read documentation before coding** - saves time
-2. **Update docs when you make changes** - helps everyone
-3. **Follow established patterns** - consistency matters
-4. **Ask questions in comments** - document uncertainties
-5. **Keep tests updated** - documentation through code
-
----
-
-## 📞 Getting Help
-
-### Documentation Issues
-- If documentation is unclear, update it!
-- If documentation is missing, create it!
-- If documentation is wrong, fix it!
-
-### Code Questions
-1. Check `ARCHITECTURE.md` for patterns
-2. Check module-specific docs
-3. Look at existing similar code
-4. Check `SESSION_LOG.md` for recent decisions
-
-### Tour Manager Rebuild Questions
-1. Check `TOUR_MANAGER_ROADMAP.md` for big picture
-2. Check `DATA_MODELS.md` for data structure
-3. Check `IMPLEMENTATION_CHECKLIST.md` for current tasks
-
----
-
-## 🔗 Quick Links
+## Quick Links
 
 ### Essential Files
-- [README](../README.md)
-- [Architecture](./ARCHITECTURE.md)
-- [Tour Manager Roadmap](./TOUR_MANAGER_ROADMAP.md) ⭐
-- [Data Models](./DATA_MODELS.md)
-- [Implementation Checklist](./IMPLEMENTATION_CHECKLIST.md)
+- [Project Status](./PROJECT_STATUS.md) - Current blocking issues
+- [Session Log](./SESSION_LOG.md) - Recent changes
+- [Architecture](./ARCHITECTURE.md) - System design
+- [Tour Manager Roadmap](./TOUR_MANAGER_ROADMAP.md) - Rebuild plan
 
 ### Setup & Development
 - [Setup Guide](./SETUP.md)
 - [Testing Guide](./TESTING.md)
-- [Session Log](./SESSION_LOG.md)
-
-### External Resources
-- [Flutter Documentation](https://flutter.dev/docs)
-- [Riverpod Documentation](https://riverpod.dev)
-- [Firebase Documentation](https://firebase.google.com/docs)
-- [Mapbox Documentation](https://docs.mapbox.com)
-- [ElevenLabs API](https://elevenlabs.io/docs)
 
 ---
 
-## 📝 Documentation Changelog
+## Priority Fixes for Next Session
 
-### January 30, 2026
-- ✅ Created `DOCUMENTATION_INDEX.md`
-- ✅ Created `TOUR_MANAGER_ROADMAP.md`
-- ✅ Created `DATA_MODELS.md`
-- ✅ Created `API_INTEGRATIONS.md`
-- ✅ Created `IMPLEMENTATION_CHECKLIST.md`
-- ✅ Completed Week 3: Voice Generation, Tour Manager, Publishing
-
-### Previous Updates
-- See `SESSION_LOG.md` for detailed history
+1. **Deploy and test map tile fixes** - `flutter run -d R5CY503JQTT --no-enable-impeller`
+2. **Debug cover images** - Check if URLs are null in Firestore
+3. **Test center-on-user button** - Check location permissions
+4. **Audit dead-end buttons** - Find all `onPressed: () {}`
+5. **Add real audio files** - Current test data has null audioUrls
 
 ---
 
-## 🎯 Summary
-
-**For AI Context Loading:**
-```
-1. DOCUMENTATION_INDEX.md (you are here)
-2. README.md (project overview)
-3. ARCHITECTURE.md (system design)
-4. TOUR_MANAGER_ROADMAP.md (current focus) ⭐
-5. DATA_MODELS.md (data structures)
-6. API_INTEGRATIONS.md (external APIs)
-7. IMPLEMENTATION_CHECKLIST.md (tasks)
-```
-
-**Current Focus:** Tour Manager Rebuild - Week 4 (Marketplace & Tour Details)
-**Current Issue:** Marketplace module has Mapbox API compatibility errors on mobile build
-**Target:** 5-week complete rebuild with Big Bang deployment
-
----
-
-**Remember**: This documentation is a living resource. Keep it updated, keep it accurate, keep it useful! 📚✨
+**Remember**: The mobile app is not usable until the map tiles work and dead-end buttons are cleaned up.

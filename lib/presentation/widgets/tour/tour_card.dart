@@ -8,6 +8,25 @@ import '../../../data/models/tour_version_model.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/tour_providers.dart';
 
+List<Color> _categoryGradientColors(TourCategory category) {
+  switch (category) {
+    case TourCategory.history:
+      return [Colors.amber.shade300, Colors.amber.shade700];
+    case TourCategory.nature:
+      return [Colors.green.shade300, Colors.green.shade700];
+    case TourCategory.ghost:
+      return [Colors.grey.shade600, Colors.grey.shade900];
+    case TourCategory.food:
+      return [Colors.orange.shade300, Colors.orange.shade700];
+    case TourCategory.art:
+      return [Colors.purple.shade300, Colors.purple.shade700];
+    case TourCategory.architecture:
+      return [Colors.blue.shade300, Colors.blue.shade700];
+    case TourCategory.other:
+      return [Colors.blueGrey.shade300, Colors.blueGrey.shade600];
+  }
+}
+
 /// A card widget for displaying tour information
 class TourCard extends ConsumerWidget {
   final TourModel tour;
@@ -222,6 +241,7 @@ class TourCard extends ConsumerWidget {
 
   Widget _buildCoverImage(BuildContext context, TourVersionModel? version, WidgetRef ref) {
     final imageUrl = version?.coverImageUrl;
+    debugPrint('[TourCard] Tour ${tour.id}: coverImageUrl=${imageUrl ?? 'null'}, version=${version?.id ?? 'null'}');
     final isFavorited = ref.watch(isTourFavoritedProvider(tour.id));
 
     Widget coverContent;
@@ -340,15 +360,22 @@ class TourCard extends ConsumerWidget {
   }
 
   Widget _buildCoverImagePlaceholder(BuildContext context) {
+    final colors = _categoryGradientColors(tour.category);
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Container(
-        color: context.colorScheme.surfaceContainerHighest,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: colors,
+          ),
+        ),
         child: Center(
           child: Icon(
             tour.category.icon,
             size: 48,
-            color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            color: Colors.white.withValues(alpha: 0.7),
           ),
         ),
       ),
@@ -492,13 +519,20 @@ class CompactTourCard extends ConsumerWidget {
   }
 
   Widget _buildImagePlaceholder(BuildContext context) {
+    final colors = _categoryGradientColors(tour.category);
     return Container(
       width: 100,
-      color: context.colorScheme.surfaceContainerHighest,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: colors,
+        ),
+      ),
       child: Icon(
         tour.category.icon,
         size: 32,
-        color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+        color: Colors.white.withValues(alpha: 0.7),
       ),
     );
   }

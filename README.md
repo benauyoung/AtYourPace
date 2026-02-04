@@ -240,40 +240,36 @@ Core models use Freezed for immutability and JSON serialization:
 
 ## Development Status
 
-**Current Status: ~92% Complete** (Updated January 26, 2026)
+**Current Status: Mobile App Has Critical Issues** (Updated February 4, 2026)
 
-### Completed
+### Blocking Issues (Must Fix)
+
+| Issue | Status |
+|-------|--------|
+| Map tiles not rendering | 3 fixes applied, untested |
+| Audio not playing | Data issue - Firestore has null audioUrls |
+| Tour cover images not loading | Not investigated |
+| Center-on-user button broken | Not investigated |
+| Dead-end buttons everywhere | Not fixed |
+
+### What Works
 - Core architecture and navigation
-- Authentication (email/password, Google, forgot password)
-- Tour discovery and playback with geofencing
-- Creator tour editor with full audio recording & image upload
-- Admin review queue UI
-- Offline storage infrastructure with sync queue
-- Demo mode with sample data
-- Comprehensive test suite (504 tests)
-- **Web Admin Panel** (Next.js) - Full admin functionality
-- **Audio Recording & Preview** - Waveform visualization, Firebase upload
-- **Image Upload & Cropping** - Multiple aspect ratios, gallery view
-- **Reviews & Social** - Star ratings, comments, My Reviews screen
-- **Settings & Legal** - Terms, Privacy, Help, notification preferences
-- **Background Audio** - Lock screen controls, foreground service
-- **Background Location** - Foreground service for GPS tracking during tours
-- **Battery Optimization** - Educational dialogs, exemption requests
-- **Geofence Reliability** - Cooldown periods, minimum radius, distance filtering
-- **Firebase Backend** - Security rules, Cloud Functions deployed
-- **Offline Map Tiles** - Mapbox TileStore integration, auto-download with tours
-- **ElevenLabs AI Voice** - Text-to-speech for tour narration
-- **Resend Email Notifications** - Tour approval/rejection emails
+- Authentication (email/password, Google)
+- Tour list displays (with placeholder images)
+- Tour playback screen structure (minus map tiles)
+- Web Admin Panel (Next.js)
+- Tour Manager rebuild modules (Route Editor, Content Editor, Voice Gen, Publishing)
 
-### In Progress
-- Comprehensive device testing
-- Accessibility improvements
+### Tour Manager Rebuild (~65%)
+- Route Editor: Complete
+- Content Editor: Complete
+- Voice Generation: Complete
+- Tour Manager: Complete
+- Publishing Workflow: Complete
+- Marketplace: Disabled (API compat issues)
+- Analytics Dashboard: Not started
 
-### Planned
-- App store deployment (iOS & Android)
-- Performance optimization
-
-See [docs/COMPLETION_PLAN.md](docs/COMPLETION_PLAN.md) for detailed roadmap.
+See [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for current issues and next steps.
 
 ## Contributing
 

@@ -161,6 +161,26 @@ service cloud.firestore {
     }
 
     // ============================================
+    // REVIEWS (Top-Level Collection)
+    // ============================================
+
+    match /reviews/{reviewId} {
+      // Authenticated users can read reviews
+      allow read: if isAuthenticated();
+
+      // Authenticated users can create reviews
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Users can update/delete their own reviews
+      allow update, delete: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid;
+
+      // Admins can delete any review
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
     // REVIEW QUEUE (Admin Only)
     // ============================================
 

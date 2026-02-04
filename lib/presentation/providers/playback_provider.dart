@@ -48,6 +48,7 @@ class PlaybackState {
   final String? error;
   final DateTime? startedAt;
   final bool isPaused;
+  final bool previewMode;
 
   const PlaybackState({
     this.tour,
@@ -62,6 +63,7 @@ class PlaybackState {
     this.error,
     this.startedAt,
     this.isPaused = false,
+    this.previewMode = false,
   });
 
   PlaybackState copyWith({
@@ -77,6 +79,7 @@ class PlaybackState {
     String? error,
     DateTime? startedAt,
     bool? isPaused,
+    bool? previewMode,
   }) {
     return PlaybackState(
       tour: tour ?? this.tour,
@@ -91,6 +94,7 @@ class PlaybackState {
       error: error,
       startedAt: startedAt ?? this.startedAt,
       isPaused: isPaused ?? this.isPaused,
+      previewMode: previewMode ?? this.previewMode,
     );
   }
 
@@ -168,9 +172,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   /// Start a tour
-  Future<void> startTour(String tourId, {TriggerMode? mode}) async {
+  Future<void> startTour(String tourId, {TriggerMode? mode, bool previewMode = false}) async {
     // Clear error state before starting
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: null, previewMode: previewMode);
     debugPrint('Starting tour $tourId');
 
     try {
@@ -227,31 +231,34 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         isLoading: false,
         currentStopIndex: -1,
         completedStopIndices: {},
-        triggerMode: mode ?? TriggerMode.automatic,
-        startedAt: DateTime.now(),
+        triggerMode: previewMode ? TriggerMode.manual : (mode ?? TriggerMode.automatic),
+        startedAt: previewMode ? null : DateTime.now(),
       );
 
-      // Record tour start for analytics
-      final progressService = _ref.read(progressServiceProvider);
-      if (progressService != null) {
-        try {
-          await progressService.recordTourStart(tourId);
-        } catch (e) {
-          debugPrint('Failed to record tour start: $e');
+      // Skip audio, geofence, progress tracking in preview mode
+      if (!previewMode) {
+        // Record tour start for analytics
+        final progressService = _ref.read(progressServiceProvider);
+        if (progressService != null) {
+          try {
+            await progressService.recordTourStart(tourId);
+          } catch (e) {
+            debugPrint('Failed to record tour start: $e');
+          }
         }
+
+        // Set up geofences for all stops
+        _setupGeofences(stops);
+
+        // Start location tracking
+        await _startTracking();
+
+        // Listen for geofence events
+        _listenToGeofenceEvents();
+
+        // Listen for audio completion
+        _listenToAudioState();
       }
-
-      // Set up geofences for all stops
-      _setupGeofences(stops);
-
-      // Start location tracking
-      await _startTracking();
-
-      // Listen for geofence events
-      _listenToGeofenceEvents();
-
-      // Listen for audio completion
-      _listenToAudioState();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -415,14 +422,25 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   Future<void> _triggerStop(int index) async {
+    if (state.previewMode) return; // No triggers in preview mode
+
     final stop = state.stops[index];
+    debugPrint('[Playback] Triggering stop $index: "${stop.name}", id=${stop.id}');
     state = state.copyWith(currentStopIndex: index);
 
     // Play audio if available
     final audioUrl = stop.media.audioUrl;
+    debugPrint('[Playback] Stop $index audioUrl: ${audioUrl ?? 'null'}');
     if (audioUrl != null && audioUrl.isNotEmpty) {
-      await _audioService.playUrl(audioUrl, audioId: stop.id);
+      debugPrint('[Playback] Playing audio for stop $index: $audioUrl');
+      try {
+        await _audioService.playUrl(audioUrl, audioId: stop.id, title: stop.name);
+        debugPrint('[Playback] Audio playback started for stop $index');
+      } catch (e) {
+        debugPrint('[Playback] ERROR playing audio for stop $index: $e');
+      }
     } else {
+      debugPrint('[Playback] No audio for stop $index - marking completed');
       // No audio - mark as completed immediately
       final newCompleted = Set<int>.from(state.completedStopIndices)..add(index);
       state = state.copyWith(completedStopIndices: newCompleted);
