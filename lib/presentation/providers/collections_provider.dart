@@ -18,7 +18,7 @@ final collectionsProvider = FutureProvider<List<CollectionModel>>((ref) async {
       (i) => 'tour_paris_${(index * 3) + i}',
     );
 
-    return CollectionModel.createFromPredefined(
+    return ParisCollections.createFromPredefined(
       data,
       id: 'collection_paris_$index',
       curatorId: 'system',

@@ -84,25 +84,20 @@ class _MarketplaceMapViewState extends ConsumerState<MarketplaceMapView> {
     final point = context.touchPosition;
 
     try {
-      /*
-      // TODO: Fix RenderedQueryGeometryType enum name
-      final features = await _mapboxMap!.queryRenderedFeatures(
-        RenderedQueryGeometry(
-          value: jsonEncode({
-            "min": [point.x - 10, point.y - 10],
-            "max": [point.x + 10, point.y + 10],
-          }),
-          // type: RenderedQueryGeometryType.SCREEN_BOX,
+      final geometry = RenderedQueryGeometry.fromScreenBox(
+        ScreenBox(
+          min: ScreenCoordinate(x: point.x - 10, y: point.y - 10),
+          max: ScreenCoordinate(x: point.x + 10, y: point.y + 10),
         ),
+      );
+      final features = await _mapboxMap!.queryRenderedFeatures(
+        geometry,
         RenderedQueryOptions(layerIds: [clusterLayerId, unclusteredLayerId]),
       );
-      
-      if (features.isEmpty) return;
-      */
-      final features = <QueriedRenderedFeature>[]; // Mock empty for now
       if (features.isEmpty) return;
 
       final feature = features.first;
+      if (feature == null) return;
 
       final properties = feature.queriedFeature.feature['properties'] as Map<String, dynamic>?;
 
@@ -113,8 +108,6 @@ class _MarketplaceMapViewState extends ConsumerState<MarketplaceMapView> {
         } else if (properties.containsKey('id')) {
           // Unclustered tour clicked - navigate to details
           final String tourId = properties['id'] as String;
-          // Manually pushing route since context might be tricky in async callback,
-          // but keeping it simple for now.
           if (mounted) {
             _navigateToTour(tourId);
           }
@@ -132,21 +125,21 @@ class _MarketplaceMapViewState extends ConsumerState<MarketplaceMapView> {
   Future<void> _handleClusterClick(QueriedRenderedFeature feature) async {
     try {
       final camera = await _mapboxMap!.getCameraState();
-      // final geometry = feature.queriedFeature.feature.geometry;
+      final geom = feature.queriedFeature.feature['geometry'] as Map<String, dynamic>?;
 
-      // if (geometry != null && geometry.type == 'Point') {
-        // Cast to Point if possible or just use current center with higher zoom
-        // Geometry handling in mapbox_maps_flutter can be generic
-        // For simplicity, we just zoom in at current camera center or tap location
-
-        await _mapboxMap!.flyTo(
-          CameraOptions(
-            zoom: (camera.zoom + 2).clamp(0, 20),
-            // If we could parse geometry safely we would set center here
-          ),
-          MapAnimationOptions(duration: 500),
-        );
+      Point? center;
+      if (geom != null && geom['type'] == 'Point') {
+        final coords = geom['coordinates'] as List;
+        center = Point(coordinates: Position(coords[0] as num, coords[1] as num));
       }
+
+      await _mapboxMap!.flyTo(
+        CameraOptions(
+          zoom: (camera.zoom + 2).clamp(0, 20),
+          center: center,
+        ),
+        MapAnimationOptions(duration: 500),
+      );
     } catch (e) {
       debugPrint("Cluster click error: $e");
     }
@@ -173,9 +166,9 @@ class _MarketplaceMapViewState extends ConsumerState<MarketplaceMapView> {
       CircleLayer(
         id: clusterLayerId,
         sourceId: sourceId,
-        circleColor: Colors.blue.value,
+        circleColor: 0xFF2196F3, // Blue
         circleRadius: 18.0,
-        circleStrokeColor: Colors.white.value,
+        circleStrokeColor: 0xFFFFFFFF, // White
         circleStrokeWidth: 2.0,
         filter: ["has", "point_count"],
       ),
@@ -188,7 +181,7 @@ class _MarketplaceMapViewState extends ConsumerState<MarketplaceMapView> {
         sourceId: sourceId,
         textField: "{point_count_abbreviated}",
         textSize: 12.0,
-        textColor: Colors.white.value,
+        textColor: 0xFFFFFFFF, // White
         filter: ["has", "point_count"],
       ),
     );
@@ -198,10 +191,10 @@ class _MarketplaceMapViewState extends ConsumerState<MarketplaceMapView> {
       CircleLayer(
         id: unclusteredLayerId,
         sourceId: sourceId,
-        circleColor: Colors.redAccent.value,
+        circleColor: 0xFFFF5252, // Red accent
         circleRadius: 8.0,
         circleStrokeWidth: 2.0,
-        circleStrokeColor: Colors.white.value,
+        circleStrokeColor: 0xFFFFFFFF, // White
         filter: [
           "!",
           ["has", "point_count"],
@@ -242,5 +235,3 @@ class _MarketplaceMapViewState extends ConsumerState<MarketplaceMapView> {
     }
   }
 }
-
-
