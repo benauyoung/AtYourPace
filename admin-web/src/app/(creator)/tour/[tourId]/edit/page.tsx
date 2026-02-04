@@ -14,6 +14,7 @@ import {
   useUploadCoverImage,
   useWithdrawTour,
 } from '@/hooks/use-creator-tours';
+import { useTourStops } from '@/hooks/use-stops';
 import { useToast } from '@/hooks/use-toast';
 import { GeoPoint, statusDisplayNames } from '@/types';
 import { ArrowLeft, Image as ImageIcon, Loader2, Map, Send, Sun } from 'lucide-react';
@@ -38,6 +39,7 @@ export default function EditTourPage({ params }: EditTourPageProps) {
   const uploadCoverImage = useUploadCoverImage();
   const submitForReview = useSubmitTourForReview();
   const withdrawTour = useWithdrawTour();
+  const { data: stops = [] } = useTourStops(tourId);
 
   const handleUpdateTour = async (data: Partial<any>) => {
     // Map flattened form data back to nested structure if needed, or just pass partials
@@ -201,7 +203,7 @@ export default function EditTourPage({ params }: EditTourPageProps) {
               <div className="h-full w-full relative">
                 {/* Map Editor fills the space */}
                 <MapEditor
-                  stops={tourData.stops}
+                  stops={stops}
                   selectedStopId={null} // Managing state here later
                   onStopSelect={() => { }}
                   onStopAdd={handleStopAdd}
