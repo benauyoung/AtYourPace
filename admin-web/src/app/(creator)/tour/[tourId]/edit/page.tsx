@@ -3,7 +3,6 @@
 import { CreatorNavItem } from '@/components/creator/CreatorLayout';
 import { CoverForm } from '@/components/creator/forms/CoverForm';
 import { TipsForm } from '@/components/creator/forms/TipsForm';
-import { MapEditor } from '@/components/creator/map-editor';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,9 +13,8 @@ import {
   useUploadCoverImage,
   useWithdrawTour,
 } from '@/hooks/use-creator-tours';
-import { useTourStops } from '@/hooks/use-stops';
 import { useToast } from '@/hooks/use-toast';
-import { GeoPoint, statusDisplayNames } from '@/types';
+import { statusDisplayNames } from '@/types';
 import { ArrowLeft, Image as ImageIcon, Loader2, Map, Send, Sun } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -39,7 +37,7 @@ export default function EditTourPage({ params }: EditTourPageProps) {
   const uploadCoverImage = useUploadCoverImage();
   const submitForReview = useSubmitTourForReview();
   const withdrawTour = useWithdrawTour();
-  const { data: stops = [] } = useTourStops(tourId);
+
 
   const handleUpdateTour = async (data: Partial<any>) => {
     // Map flattened form data back to nested structure if needed, or just pass partials
@@ -76,19 +74,7 @@ export default function EditTourPage({ params }: EditTourPageProps) {
     await handleUpdateTour(data);
   };
 
-  const handleStopAdd = (location: GeoPoint, name: string) => {
-    // TODO: Connect this to actual mutation
-    console.log('Stop added at', location, name);
-    toast({
-      title: 'Stop Added',
-      description: 'Stops management will be updated in next iteration',
-    });
-  };
 
-  const handleStopMove = (stopId: string, location: GeoPoint) => {
-    // TODO: Connect this to actual mutation
-    console.log('Stop moved', stopId, location);
-  };
 
   if (isLoading) {
     return (
@@ -146,8 +132,8 @@ export default function EditTourPage({ params }: EditTourPageProps) {
             <CreatorNavItem
               icon={Map}
               label="Route Map"
-              isActive={activeTab === 'route'}
-              onClick={() => setActiveTab('route')}
+              isActive={false}
+              onClick={() => router.push(`/tour/${tourId}/stops`)}
             />
             <CreatorNavItem
               icon={Sun}
@@ -179,22 +165,6 @@ export default function EditTourPage({ params }: EditTourPageProps) {
                   await handleCoverSave({ coverImageUrl: url });
                 }}
                 isSaving={updateTour.isPending}
-              />
-            </div>
-          )}
-
-          {activeTab === 'route' && (
-            <div className="h-full w-full relative">
-              {/* Map Editor fills the space */}
-              <MapEditor
-                stops={stops}
-                selectedStopId={null} // Managing state here later
-                onStopSelect={() => { }}
-                onStopAdd={handleStopAdd}
-                onStopMove={handleStopMove}
-                centerLocation={tour.startLocation}
-                isAddMode={false}
-                tourType={tour.tourType}
               />
             </div>
           )}

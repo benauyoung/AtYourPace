@@ -75,11 +75,10 @@ class MarketplaceViewModel extends StateNotifier<MarketplaceState> {
             // Search Query
             if (state.searchQuery.isNotEmpty) {
               final query = state.searchQuery.toLowerCase();
-              final matchesTitle = tour.title.toLowerCase().contains(query);
               final matchesCity = tour.city?.toLowerCase().contains(query) ?? false;
-              final matchesTag = tour.tags.any((t) => t.toLowerCase().contains(query));
+              final matchesCountry = tour.country?.toLowerCase().contains(query) ?? false;
 
-              if (!matchesTitle && !matchesCity && !matchesTag) return false;
+              if (!matchesCity && !matchesCountry) return false;
             }
 
             // Category

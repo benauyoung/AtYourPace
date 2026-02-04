@@ -19,5 +19,6 @@
   "files.watcherExclude": {
     "**/.dart_tool/**": true,
     "**/build/**": true
-  }
+  },
+  "java.configuration.updateBuildConfiguration": "interactive"
 }
