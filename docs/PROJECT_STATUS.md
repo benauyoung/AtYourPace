@@ -23,7 +23,7 @@
 - Core architecture and navigation
 - Authentication (email/password, Google)
 - Tour discovery and playback with geofencing
-- Creator tour editor (basic)
+- Creator tour editor (basic + Media Library)
 - Admin review queue UI
 - Offline storage infrastructure
 - Demo mode with sample data

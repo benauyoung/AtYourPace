@@ -1,5 +1,33 @@
 # Development Session Log
 
+## Session: February 4, 2026 (Morning) - Media Library Integration
+
+### Summary
+
+Integrated the Media Library into the Tour Creator, allowing admins to select existing images from Firebase Storage instead of re-uploading them. Also cleaned up git repository configuration by untracking `node_modules`.
+
+### What Was Accomplished
+
+#### 1. Media Library Integration
+- **MediaPickerDialog** - Created a reusable dialog wrapper around the Media Grid.
+- **Tour Creator Integration** - Updated `CoverForm` to include a "Select from Library" button.
+- **Form Logic** - Implemented selection handlers to update the tour's cover image reference.
+
+#### 2. Git Repository Fix
+- **Repo Cleanup** - Removed `node_modules` from git tracking which was causing massive performance issues.
+- **Ignore Rules** - Updated `.gitignore` to strictly exclude node modules.
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `admin-web/src/components/media/media-picker-dialog.tsx` | New component |
+| `admin-web/src/components/creator/forms/CoverForm.tsx` | Added Media Picker integration |
+| `admin-web/src/app/(creator)/tour/[tourId]/edit/page.tsx` | Added selection handler |
+| `.gitignore` | Added node_modules exclusion |
+
+---
+
 ## Session: February 3, 2026 (Refinement) - Tour Taking UI Polish
 
 ### Summary

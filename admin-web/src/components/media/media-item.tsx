@@ -21,9 +21,10 @@ import Image from 'next/image';
 
 interface MediaItemProps {
     file: StorageFile;
+    onSelect?: (file: StorageFile) => void;
 }
 
-export function MediaItem({ file }: MediaItemProps) {
+export function MediaItem({ file, onSelect }: MediaItemProps) {
     const { toast } = useToast();
     const deleteMutation = useDeleteMedia();
 
@@ -74,6 +75,11 @@ export function MediaItem({ file }: MediaItemProps) {
                     {file.name}
                 </div>
                 <div className="flex gap-1">
+                    {onSelect && (
+                        <Button variant="secondary" size="sm" className="h-6 text-xs" onClick={() => onSelect(file)}>
+                            Select
+                        </Button>
+                    )}
                     <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyUrl}>
                         <Copy className="h-3 w-3" />
                     </Button>

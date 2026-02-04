@@ -194,6 +194,9 @@ export default function EditTourPage({ params }: EditTourPageProps) {
                   version={version}
                   onSave={handleCoverSave}
                   onCoverImageUpload={(file) => uploadCoverImage.mutateAsync({ tourId, file })}
+                  onCoverImageSelect={async (url) => {
+                    await handleCoverSave({ coverImageUrl: url });
+                  }}
                   isSaving={updateTour.isPending}
                 />
               </div>

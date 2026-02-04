@@ -7,41 +7,40 @@ import '../../core/constants/route_names.dart';
 import '../../data/models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/demo_auth_provider.dart';
-import '../screens/auth/forgot_password_screen.dart';
-import '../screens/auth/login_screen.dart';
-import '../screens/auth/register_screen.dart';
-import '../screens/user/home_screen.dart';
-import '../screens/user/discover_screen.dart';
-import '../screens/user/tour_details_screen.dart';
-import '../screens/user/tour_playback_screen.dart' as playback;
-import '../screens/user/profile_screen.dart';
-import '../screens/user/edit_profile_screen.dart';
-import '../screens/user/favorites_screen.dart';
-import '../screens/user/tour_history_screen.dart';
-import '../screens/user/achievements_screen.dart';
-import '../screens/user/settings_screen.dart';
-import '../screens/user/downloads_screen.dart';
-import '../screens/user/legal_document_screen.dart';
-import '../screens/user/help_screen.dart';
-import '../screens/user/my_reviews_screen.dart';
-import '../screens/creator/creator_dashboard_screen.dart';
-import '../screens/creator/creator_analytics_screen.dart';
-import '../screens/creator/tour_editor_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/admin/admin_settings_screen.dart';
 import '../screens/admin/all_tours_screen.dart';
 import '../screens/admin/review_queue_screen.dart';
 import '../screens/admin/tour_review_screen.dart';
 import '../screens/admin/user_management_screen.dart';
+import '../screens/auth/forgot_password_screen.dart';
+import '../screens/auth/login_screen.dart';
+import '../screens/auth/register_screen.dart';
+import '../screens/creator/creator_analytics_screen.dart';
+import '../screens/creator/creator_dashboard_screen.dart';
+import '../screens/creator/tour_editor_screen.dart';
+import '../screens/modules/marketplace/collection_details_screen.dart';
+import '../screens/modules/marketplace/marketplace_screen.dart';
+import '../screens/user/achievements_screen.dart';
+import '../screens/user/downloads_screen.dart';
+import '../screens/user/edit_profile_screen.dart';
+import '../screens/user/favorites_screen.dart';
+import '../screens/user/help_screen.dart';
+import '../screens/user/home_screen.dart';
+import '../screens/user/legal_document_screen.dart';
+import '../screens/user/my_reviews_screen.dart';
+import '../screens/user/profile_screen.dart';
+import '../screens/user/settings_screen.dart';
+import '../screens/user/tour_details_screen.dart';
+import '../screens/user/tour_history_screen.dart';
+import '../screens/user/tour_playback_screen.dart' as playback;
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Use demo providers when in demo mode
-  final authState = AppConfig.demoMode
-      ? ref.watch(demoCurrentUserProvider)
-      : ref.watch(authStateProvider);
-  final currentUser = AppConfig.demoMode
-      ? ref.watch(demoCurrentUserProvider)
-      : ref.watch(currentUserProvider);
+  final authState =
+      AppConfig.demoMode ? ref.watch(demoCurrentUserProvider) : ref.watch(authStateProvider);
+  final currentUser =
+      AppConfig.demoMode ? ref.watch(demoCurrentUserProvider) : ref.watch(currentUserProvider);
 
   return GoRouter(
     initialLocation: AppConfig.demoMode ? RouteNames.home : RouteNames.splash,
@@ -51,7 +50,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       // In demo mode, skip authentication redirects
       if (AppConfig.demoMode) {
         final isSplash = state.matchedLocation == RouteNames.splash;
-        final isLoggingIn = state.matchedLocation == RouteNames.login ||
+        final isLoggingIn =
+            state.matchedLocation == RouteNames.login ||
             state.matchedLocation == RouteNames.register;
 
         // Redirect splash and login screens to home in demo mode
@@ -64,7 +64,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoading = authState.isLoading;
       final isLoggedIn = authState.valueOrNull != null;
       final hasResolved = !isLoading; // Auth state has resolved (data or error)
-      final isLoggingIn = state.matchedLocation == RouteNames.login ||
+      final isLoggingIn =
+          state.matchedLocation == RouteNames.login ||
           state.matchedLocation == RouteNames.register ||
           state.matchedLocation == RouteNames.forgotPassword;
       final isSplash = state.matchedLocation == RouteNames.splash;
@@ -108,20 +109,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       // Splash / Initial route
-      GoRoute(
-        path: RouteNames.splash,
-        builder: (context, state) => const SplashScreen(),
-      ),
+      GoRoute(path: RouteNames.splash, builder: (context, state) => const SplashScreen()),
 
       // Auth routes
-      GoRoute(
-        path: RouteNames.login,
-        builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: RouteNames.register,
-        builder: (context, state) => const RegisterScreen(),
-      ),
+      GoRoute(path: RouteNames.login, builder: (context, state) => const LoginScreen()),
+      GoRoute(path: RouteNames.register, builder: (context, state) => const RegisterScreen()),
       GoRoute(
         path: RouteNames.forgotPassword,
         builder: (context, state) => const ForgotPasswordScreen(),
@@ -133,42 +125,36 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: RouteNames.home,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: HomeScreen(),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: HomeScreen()),
           ),
           GoRoute(
             path: RouteNames.discover,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: DiscoverScreen(),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: MarketplaceScreen()),
+            routes: [
+              GoRoute(
+                path: 'collection/:collectionId',
+                builder:
+                    (context, state) => CollectionDetailsScreen(
+                      collectionId: state.pathParameters['collectionId']!,
+                    ),
+              ),
+            ],
           ),
           GoRoute(
             path: RouteNames.profile,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ProfileScreen(),
-            ),
+            pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen()),
           ),
         ],
       ),
 
       // Edit profile (outside shell for full-screen experience)
-      GoRoute(
-        path: RouteNames.editProfile,
-        builder: (context, state) => const EditProfileScreen(),
-      ),
+      GoRoute(path: RouteNames.editProfile, builder: (context, state) => const EditProfileScreen()),
 
       // Favorites
-      GoRoute(
-        path: RouteNames.favorites,
-        builder: (context, state) => const FavoritesScreen(),
-      ),
+      GoRoute(path: RouteNames.favorites, builder: (context, state) => const FavoritesScreen()),
 
       // Tour History
-      GoRoute(
-        path: RouteNames.tourHistory,
-        builder: (context, state) => const TourHistoryScreen(),
-      ),
+      GoRoute(path: RouteNames.tourHistory, builder: (context, state) => const TourHistoryScreen()),
 
       // Achievements
       GoRoute(
@@ -177,55 +163,41 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Settings
-      GoRoute(
-        path: RouteNames.settings,
-        builder: (context, state) => const SettingsScreen(),
-      ),
+      GoRoute(path: RouteNames.settings, builder: (context, state) => const SettingsScreen()),
 
       // Downloads
-      GoRoute(
-        path: RouteNames.downloads,
-        builder: (context, state) => const DownloadsScreen(),
-      ),
+      GoRoute(path: RouteNames.downloads, builder: (context, state) => const DownloadsScreen()),
 
       // Legal documents
       GoRoute(
         path: RouteNames.termsOfService,
-        builder: (context, state) => const LegalDocumentScreen(
-          documentType: LegalDocumentType.termsOfService,
-        ),
+        builder:
+            (context, state) =>
+                const LegalDocumentScreen(documentType: LegalDocumentType.termsOfService),
       ),
       GoRoute(
         path: RouteNames.privacyPolicy,
-        builder: (context, state) => const LegalDocumentScreen(
-          documentType: LegalDocumentType.privacyPolicy,
-        ),
+        builder:
+            (context, state) =>
+                const LegalDocumentScreen(documentType: LegalDocumentType.privacyPolicy),
       ),
 
       // Help
-      GoRoute(
-        path: RouteNames.help,
-        builder: (context, state) => const HelpScreen(),
-      ),
+      GoRoute(path: RouteNames.help, builder: (context, state) => const HelpScreen()),
 
       // My Reviews
-      GoRoute(
-        path: RouteNames.myReviews,
-        builder: (context, state) => const MyReviewsScreen(),
-      ),
+      GoRoute(path: RouteNames.myReviews, builder: (context, state) => const MyReviewsScreen()),
 
       // Tour routes
       GoRoute(
         path: '/tour/:tourId',
-        builder: (context, state) => TourDetailsScreen(
-          tourId: state.pathParameters['tourId']!,
-        ),
+        builder: (context, state) => TourDetailsScreen(tourId: state.pathParameters['tourId']!),
         routes: [
           GoRoute(
             path: 'play',
-            builder: (context, state) => playback.TourPlaybackScreen(
-              tourId: state.pathParameters['tourId']!,
-            ),
+            builder:
+                (context, state) =>
+                    playback.TourPlaybackScreen(tourId: state.pathParameters['tourId']!),
           ),
         ],
       ),
@@ -235,19 +207,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RouteNames.creatorDashboard,
         builder: (context, state) => const CreatorDashboardScreen(),
         routes: [
-          GoRoute(
-            path: 'analytics',
-            builder: (context, state) => const CreatorAnalyticsScreen(),
-          ),
-          GoRoute(
-            path: 'create',
-            builder: (context, state) => const TourEditorScreen(),
-          ),
+          GoRoute(path: 'analytics', builder: (context, state) => const CreatorAnalyticsScreen()),
+          GoRoute(path: 'create', builder: (context, state) => const TourEditorScreen()),
           GoRoute(
             path: 'tour/:tourId/edit',
-            builder: (context, state) => TourEditorScreen(
-              tourId: state.pathParameters['tourId'],
-            ),
+            builder: (context, state) => TourEditorScreen(tourId: state.pathParameters['tourId']),
           ),
         ],
       ),
@@ -257,28 +221,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RouteNames.adminDashboard,
         builder: (context, state) => const AdminDashboardScreen(),
         routes: [
-          GoRoute(
-            path: 'reviews',
-            builder: (context, state) => const ReviewQueueScreen(),
-          ),
+          GoRoute(path: 'reviews', builder: (context, state) => const ReviewQueueScreen()),
           GoRoute(
             path: 'reviews/:tourId',
-            builder: (context, state) => TourReviewScreen(
-              tourId: state.pathParameters['tourId']!,
-            ),
+            builder: (context, state) => TourReviewScreen(tourId: state.pathParameters['tourId']!),
           ),
-          GoRoute(
-            path: 'users',
-            builder: (context, state) => const UserManagementScreen(),
-          ),
-          GoRoute(
-            path: 'tours',
-            builder: (context, state) => const AllToursScreen(),
-          ),
-          GoRoute(
-            path: 'settings',
-            builder: (context, state) => const AdminSettingsScreen(),
-          ),
+          GoRoute(path: 'users', builder: (context, state) => const UserManagementScreen()),
+          GoRoute(path: 'tours', builder: (context, state) => const AllToursScreen()),
+          GoRoute(path: 'settings', builder: (context, state) => const AdminSettingsScreen()),
         ],
       ),
     ],
@@ -307,9 +257,10 @@ class MainShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = AppConfig.demoMode
-        ? ref.watch(demoCurrentUserProvider).value
-        : ref.watch(currentUserProvider).value;
+    final currentUser =
+        AppConfig.demoMode
+            ? ref.watch(demoCurrentUserProvider).value
+            : ref.watch(currentUserProvider).value;
 
     return Scaffold(
       body: child,
@@ -394,35 +345,29 @@ class SplashScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.tour,
-              size: 80,
-              color: Colors.blue,
-            ),
+            const Icon(Icons.tour, size: 80, color: Colors.blue),
             const SizedBox(height: 24),
             const Text(
               'AYP Tour Guide',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
             authState.when(
               data: (_) => const CircularProgressIndicator(),
               loading: () => const CircularProgressIndicator(),
-              error: (e, _) => Column(
-                children: [
-                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                  const SizedBox(height: 8),
-                  Text('Error: $e', textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.go(RouteNames.login),
-                    child: const Text('Go to Login'),
+              error:
+                  (e, _) => Column(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const SizedBox(height: 8),
+                      Text('Error: $e', textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => context.go(RouteNames.login),
+                        child: const Text('Go to Login'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
             ),
           ],
         ),
@@ -444,11 +389,7 @@ class ErrorScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red,
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             const Text(
               'Page not found',

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
@@ -15,7 +16,7 @@ class TourStopCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Listen to audio state to update UI
     final audioState = ref.watch(audioStateProvider).valueOrNull ?? AudioState.idle;
-    final currentAudioId = ref.watch(currentAudioIdProvider);
+    final currentAudioId = ref.watch(audioServiceProvider).currentAudioId;
 
     final isPlayingThisStop = audioState == AudioState.playing && currentAudioId == stop.id;
     final isPausedThisStop = audioState == AudioState.paused && currentAudioId == stop.id;

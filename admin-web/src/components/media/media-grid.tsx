@@ -1,13 +1,15 @@
 'use client';
 
 import { useMediaFiles } from '@/hooks/use-media';
+import { StorageFile } from '@/lib/firebase/storage';
 import { MediaItem } from './media-item';
 
 interface MediaGridProps {
     path: string;
+    onSelect?: (file: StorageFile) => void;
 }
 
-export function MediaGrid({ path }: MediaGridProps) {
+export function MediaGrid({ path, onSelect }: MediaGridProps) {
     const { data: files, isLoading } = useMediaFiles(path);
 
     if (isLoading) {
@@ -31,7 +33,7 @@ export function MediaGrid({ path }: MediaGridProps) {
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {files.map((file) => (
-                <MediaItem key={file.fullPath} file={file} />
+                <MediaItem key={file.fullPath} file={file} onSelect={onSelect} />
             ))}
         </div>
     );

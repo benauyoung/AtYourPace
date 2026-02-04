@@ -1,5 +1,6 @@
 'use client';
 
+import { MediaPickerDialog } from '@/components/media/media-picker-dialog';
 import { Button } from '@/components/ui/button';
 import {
     Form,
@@ -22,6 +23,8 @@ import {
 import { TourVersionModel } from '@/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
+
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -38,6 +41,7 @@ interface CoverFormProps {
     version: TourVersionModel;
     onSave: (data: Partial<TourVersionModel>) => Promise<void>;
     onCoverImageUpload: (file: File) => Promise<void>;
+    onCoverImageSelect: (url: string) => Promise<void>;
     isSaving?: boolean;
 }
 
@@ -45,8 +49,11 @@ export function CoverForm({
     version,
     onSave,
     onCoverImageUpload,
+    onCoverImageSelect,
     isSaving,
 }: CoverFormProps) {
+    const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
+
     const form = useForm<CoverFormValues>({
         resolver: zodResolver(coverFormSchema),
         defaultValues: {
@@ -148,10 +155,27 @@ export function CoverForm({
                                     onUpload={onCoverImageUpload}
                                     isUploading={false} // Todo: Pass upload state if needed
                                 />
+                                <div className="flex justify-center mt-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setIsMediaPickerOpen(true)}
+                                    >
+                                        Select from Library
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <MediaPickerDialog
+                    open={isMediaPickerOpen}
+                    onOpenChange={setIsMediaPickerOpen}
+                    onSelect={(file: StorageFile) => onCoverImageSelect(file.url)}
+                    path="tours" // Default to tours folder or root? Let's use root or specific media folder if we have one. PROD FIX: Use 'media' or root.
+                />
 
                 <div className="flex justify-end">
                     <Button type="submit" disabled={isSaving || !form.formState.isDirty}>
