@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { MapPin, Save, Loader2, Volume2, Mic, Upload, Play, Pause, X, Sparkles, ImageIcon } from 'lucide-react';
-import { StopModel, StopImage } from '@/types';
+import { StopModel, StopImage, AudioSource } from '@/types';
+import { uploadStopAudioBlob } from '@/lib/firebase/creator-stops';
 import { StopImagesPanel } from './stop-images-panel';
 import {
   DEFAULT_TRIGGER_RADIUS,
@@ -61,7 +62,7 @@ interface StopDetailModalProps {
   stop: StopModel | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (stopId: string, data: Partial<StopFormValues> & { audioUrl?: string }) => Promise<void>;
+  onSave: (stopId: string, data: Partial<StopFormValues> & { audioUrl?: string | null; audioSource?: AudioSource; audioText?: string | null }) => Promise<void>;
   isSaving?: boolean;
   onImageUpload?: (file: File, order: number) => Promise<string>;
   onImageDelete?: (imageUrl: string) => Promise<void>;
@@ -102,6 +103,10 @@ export function StopDetailModal({
   const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
   const [uploadedAudioUrl, setUploadedAudioUrl] = useState<string | null>(null);
   const [activeAudioTab, setActiveAudioTab] = useState<'script' | 'upload' | 'record'>('script');
+  const [generatedAudioBlob, setGeneratedAudioBlob] = useState<Blob | null>(null);
+  const [recordedAudioBlob, setRecordedAudioBlob] = useState<Blob | null>(null);
+  const [uploadedAudioFile, setUploadedAudioFile] = useState<File | null>(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -128,6 +133,9 @@ export function StopDetailModal({
       setGeneratedAudioUrl(null);
       setRecordedAudioUrl(null);
       setUploadedAudioUrl(null);
+      setGeneratedAudioBlob(null);
+      setRecordedAudioBlob(null);
+      setUploadedAudioFile(null);
     }
   }, [stop, form]);
 
@@ -214,6 +222,7 @@ export function StopDetailModal({
         URL.revokeObjectURL(generatedAudioUrl);
       }
 
+      setGeneratedAudioBlob(blob);
       setGeneratedAudioUrl(url);
     } catch (error) {
       console.error('Error generating audio:', error);
@@ -278,6 +287,7 @@ export function StopDetailModal({
           URL.revokeObjectURL(recordedAudioUrl);
         }
 
+        setRecordedAudioBlob(blob);
         setRecordedAudioUrl(url);
         stream.getTracks().forEach((track) => track.stop());
       };
@@ -320,6 +330,7 @@ export function StopDetailModal({
       URL.revokeObjectURL(uploadedAudioUrl);
     }
 
+    setUploadedAudioFile(file);
     setUploadedAudioUrl(url);
     setAudioError(null);
   };
@@ -331,12 +342,14 @@ export function StopDetailModal({
           URL.revokeObjectURL(generatedAudioUrl);
         }
         setGeneratedAudioUrl(null);
+        setGeneratedAudioBlob(null);
         break;
       case 'upload':
         if (uploadedAudioUrl?.startsWith('blob:')) {
           URL.revokeObjectURL(uploadedAudioUrl);
         }
         setUploadedAudioUrl(null);
+        setUploadedAudioFile(null);
         if (fileInputRef.current) {
           fileInputRef.current.value = '';
         }
@@ -346,6 +359,7 @@ export function StopDetailModal({
           URL.revokeObjectURL(recordedAudioUrl);
         }
         setRecordedAudioUrl(null);
+        setRecordedAudioBlob(null);
         break;
     }
     if (audioRef.current) {
@@ -357,21 +371,49 @@ export function StopDetailModal({
   const handleSubmit = async (data: StopFormValues) => {
     if (!stop) return;
 
-    // Determine which audio URL to save
-    let audioUrl: string | undefined;
-    const currentAudioUrl = getCurrentAudioUrl();
+    setIsUploadingAudio(true);
+    try {
+      let audioUrl: string | null | undefined;
+      let audioSource: AudioSource | undefined;
 
-    // TODO: In a real implementation, you would upload the blob to Firebase Storage
-    // and get back a permanent URL. For now, we'll just pass the script.
-    if (currentAudioUrl && !currentAudioUrl.startsWith('blob:')) {
-      audioUrl = currentAudioUrl;
+      // Determine which blob to upload based on active tab
+      const currentBlob: Blob | null =
+        activeAudioTab === 'script' ? generatedAudioBlob
+        : activeAudioTab === 'record' ? recordedAudioBlob
+        : uploadedAudioFile;
+      const currentBlobUrl = getCurrentAudioUrl();
+
+      if (currentBlob) {
+        // Upload blob to Firebase Storage
+        audioUrl = await uploadStopAudioBlob(
+          stop.tourId,
+          stop.id,
+          currentBlob,
+          activeAudioTab === 'script' ? 'elevenlabs'
+            : activeAudioTab === 'record' ? 'recorded'
+            : 'uploaded'
+        );
+        audioSource = activeAudioTab === 'script' ? 'elevenlabs'
+          : activeAudioTab === 'record' ? 'recorded'
+          : 'uploaded';
+      } else if (currentBlobUrl && !currentBlobUrl.startsWith('blob:')) {
+        // Existing permanent URL — keep it
+        audioUrl = currentBlobUrl;
+      }
+
+      await onSave(stop.id, {
+        ...data,
+        audioUrl,
+        audioSource,
+        audioText: activeAudioTab === 'script' ? (data.audioScript || null) : undefined,
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error saving stop:', error);
+      setAudioError(error instanceof Error ? error.message : 'Failed to upload audio');
+    } finally {
+      setIsUploadingAudio(false);
     }
-
-    await onSave(stop.id, {
-      ...data,
-      audioUrl,
-    });
-    onClose();
   };
 
   const triggerRadius = form.watch('triggerRadius');
@@ -685,8 +727,13 @@ export function StopDetailModal({
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSaving}>
-                {isSaving ? (
+              <Button type="submit" disabled={isSaving || isUploadingAudio}>
+                {isUploadingAudio ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading Audio...
+                  </>
+                ) : isSaving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Saving...

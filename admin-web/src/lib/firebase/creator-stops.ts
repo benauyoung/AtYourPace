@@ -69,6 +69,9 @@ export interface UpdateStopInput {
   location?: GeoPoint;
   triggerRadius?: number;
   order?: number;
+  audioUrl?: string | null;
+  audioSource?: AudioSource;
+  audioText?: string | null;
 }
 
 // ==================== Stop Operations ====================
@@ -168,6 +171,10 @@ export async function updateStop(
     updateData.location = input.location;
     updateData.geohash = ngeohash.encode(input.location.latitude, input.location.longitude, 9);
   }
+
+  if (input.audioUrl !== undefined) updateData['media.audioUrl'] = input.audioUrl;
+  if (input.audioSource !== undefined) updateData['media.audioSource'] = input.audioSource;
+  if (input.audioText !== undefined) updateData['media.audioText'] = input.audioText;
 
   await updateDoc(stopRef, updateData);
 
@@ -298,6 +305,20 @@ export async function uploadStopAudio(
   );
 
   return downloadUrl;
+}
+
+export async function uploadStopAudioBlob(
+  tourId: string,
+  stopId: string,
+  blob: Blob,
+  source: AudioSource = 'uploaded'
+): Promise<string> {
+  await verifyTourOwnership(tourId);
+  const ext = blob.type.includes('webm') ? 'webm' : 'mp3';
+  const fileName = `tours/${tourId}/stops/${stopId}/audio_${Date.now()}.${ext}`;
+  const storageRef = ref(storage, fileName);
+  await uploadBytes(storageRef, blob, { contentType: blob.type });
+  return await getDownloadURL(storageRef);
 }
 
 export async function uploadStopImage(
