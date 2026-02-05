@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/route_names.dart';
 import '../../../../data/models/tour_model.dart';
 import 'providers/tour_manager_provider.dart';
 import 'widgets/tour_card_compact.dart';
@@ -288,33 +290,15 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
   }
 
   void _createNewTour(BuildContext context) {
-    // TODO: Navigate to tour editor
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Navigate to create tour'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    context.push(RouteNames.createTour);
   }
 
   void _openTour(BuildContext context, TourModel tour) {
-    // TODO: Navigate to tour details/editor
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Open tour: ${tour.displayName}'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    context.push(RouteNames.editTourPath(tour.id));
   }
 
   void _editTour(BuildContext context, TourModel tour) {
-    // TODO: Navigate to tour editor
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Edit tour: ${tour.displayName}'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    context.push(RouteNames.editTourPath(tour.id));
   }
 
   void _confirmDelete(
@@ -417,7 +401,7 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
               ? SnackBarAction(
                   label: 'Edit',
                   onPressed: () {
-                    // TODO: Navigate to edit duplicated tour
+                    context.push(RouteNames.editTourPath(newId));
                   },
                 )
               : null,
@@ -427,12 +411,6 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
   }
 
   void _viewAnalytics(BuildContext context, TourModel tour) {
-    // TODO: Navigate to analytics
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('View analytics for: ${tour.displayName}'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    context.push(RouteNames.creatorAnalytics);
   }
 }

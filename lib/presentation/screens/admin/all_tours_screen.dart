@@ -417,7 +417,7 @@ class _TourAdminCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            tour.city ?? 'Tour #${tour.id.substring(0, 8)}',
+                            tour.displayName,
                             style: context.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -631,7 +631,7 @@ class _TourDetailsDialog extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              tour.city ?? 'Tour Details',
+              tour.displayName,
               overflow: TextOverflow.ellipsis,
             ),
           ),

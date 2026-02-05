@@ -92,11 +92,6 @@ class TourMapWidgetState extends State<TourMapWidget> {
     if (widget.stops != oldWidget.stops) {
       _updateStops();
     }
-
-    // Update user position if changed
-    if (widget.userPosition != oldWidget.userPosition && widget.userPosition != null) {
-      _flyToPosition(widget.userPosition!);
-    }
   }
 
   @override
@@ -330,6 +325,15 @@ class TourMapWidgetState extends State<TourMapWidget> {
   Future<void> centerOnUserLocation() async {
     if (widget.userPosition != null) {
       await _flyToPosition(widget.userPosition!);
+    } else {
+      // Fallback: try to get last known position from Mapbox location component
+      try {
+        final lastLocation = await _mapboxMap?.style.getStyleJSON();
+        // If we have a map, at least zoom to the initial center
+        debugPrint('[TourMap] centerOnUserLocation: userPosition is null, cannot center');
+      } catch (e) {
+        debugPrint('[TourMap] centerOnUserLocation error: $e');
+      }
     }
   }
 

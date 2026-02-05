@@ -210,51 +210,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Trigger Mode Section
-            Text(
-              'Tour Trigger Mode',
-              style: context.textTheme.titleSmall?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Card(
-              child: Column(
-                children: [
-                  RadioListTile<TriggerMode>(
-                    title: const Text('Automatic (GPS)'),
-                    subtitle: const Text(
-                      'Automatically trigger stops when you arrive',
-                    ),
-                    value: TriggerMode.geofence,
-                    groupValue: _triggerMode,
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _triggerMode = value);
-                      }
-                    },
-                    secondary: const Icon(Icons.gps_fixed),
-                  ),
-                  const Divider(height: 1),
-                  RadioListTile<TriggerMode>(
-                    title: const Text('Manual'),
-                    subtitle: const Text(
-                      'Manually tap to trigger stops',
-                    ),
-                    value: TriggerMode.manual,
-                    groupValue: _triggerMode,
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() => _triggerMode = value);
-                      }
-                    },
-                    secondary: const Icon(Icons.touch_app),
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 32),
 
             // Account Actions

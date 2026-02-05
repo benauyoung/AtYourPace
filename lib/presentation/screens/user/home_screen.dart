@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -240,7 +241,26 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _FeaturedTourCard extends StatelessWidget {
+List<Color> _categoryGradientColors(TourCategory category) {
+  switch (category) {
+    case TourCategory.history:
+      return [Colors.amber.shade300, Colors.amber.shade700];
+    case TourCategory.nature:
+      return [Colors.green.shade300, Colors.green.shade700];
+    case TourCategory.ghost:
+      return [Colors.grey.shade600, Colors.grey.shade900];
+    case TourCategory.food:
+      return [Colors.orange.shade300, Colors.orange.shade700];
+    case TourCategory.art:
+      return [Colors.purple.shade300, Colors.purple.shade700];
+    case TourCategory.architecture:
+      return [Colors.blue.shade300, Colors.blue.shade700];
+    case TourCategory.other:
+      return [Colors.blueGrey.shade300, Colors.blueGrey.shade600];
+  }
+}
+
+class _FeaturedTourCard extends ConsumerWidget {
   final TourModel tour;
   final VoidCallback onTap;
 
@@ -251,7 +271,13 @@ class _FeaturedTourCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final versionId = tour.liveVersionId ?? tour.draftVersionId;
+    final versionAsync = ref.watch(
+      tourVersionProvider((tourId: tour.id, versionId: versionId)),
+    );
+    final coverImageUrl = versionAsync.valueOrNull?.coverImageUrl;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -263,19 +289,18 @@ class _FeaturedTourCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Image placeholder
-              Container(
+              // Cover image or gradient placeholder
+              SizedBox(
                 height: 120,
-                color: context.colorScheme.primaryContainer,
-                child: Center(
-                  child: Icon(
-                    tour.tourType == TourType.walking
-                        ? Icons.directions_walk
-                        : Icons.directions_car,
-                    size: 48,
-                    color: context.colorScheme.onPrimaryContainer,
-                  ),
-                ),
+                width: double.infinity,
+                child: coverImageUrl != null && coverImageUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: coverImageUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => _buildGradientPlaceholder(),
+                        errorWidget: (_, __, ___) => _buildGradientPlaceholder(),
+                      )
+                    : _buildGradientPlaceholder(),
               ),
               Expanded(
                 child: Padding(
@@ -319,7 +344,7 @@ class _FeaturedTourCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Flexible(
                         child: Text(
-                          '${tour.city ?? 'Unknown'}, ${tour.country ?? ''}',
+                          tour.displayName,
                           style: context.textTheme.titleMedium,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -339,6 +364,26 @@ class _FeaturedTourCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGradientPlaceholder() {
+    final colors = _categoryGradientColors(tour.category);
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: colors,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          tour.category.icon,
+          size: 48,
+          color: Colors.white.withValues(alpha: 0.7),
         ),
       ),
     );
@@ -461,7 +506,7 @@ class _RecommendedSection extends ConsumerWidget {
   }
 }
 
-class _RecommendedTourCard extends StatelessWidget {
+class _RecommendedTourCard extends ConsumerWidget {
   final TourRecommendation recommendation;
   final VoidCallback onTap;
 
@@ -472,8 +517,13 @@ class _RecommendedTourCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tour = recommendation.tour;
+    final versionId = tour.liveVersionId ?? tour.draftVersionId;
+    final versionAsync = ref.watch(
+      tourVersionProvider((tourId: tour.id, versionId: versionId)),
+    );
+    final coverImageUrl = versionAsync.valueOrNull?.coverImageUrl;
 
     return GestureDetector(
       onTap: onTap,
@@ -485,18 +535,21 @@ class _RecommendedTourCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image placeholder
-              Container(
+              // Cover image or gradient placeholder
+              SizedBox(
                 height: 80,
-                color: context.colorScheme.tertiaryContainer,
+                width: double.infinity,
                 child: Stack(
                   children: [
-                    Center(
-                      child: Icon(
-                        tour.category.icon,
-                        size: 36,
-                        color: context.colorScheme.onTertiaryContainer,
-                      ),
+                    Positioned.fill(
+                      child: coverImageUrl != null && coverImageUrl.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: coverImageUrl,
+                              fit: BoxFit.cover,
+                              placeholder: (_, __) => _buildGradientPlaceholder(tour),
+                              errorWidget: (_, __, ___) => _buildGradientPlaceholder(tour),
+                            )
+                          : _buildGradientPlaceholder(tour),
                     ),
                     Positioned(
                       top: 8,
@@ -534,7 +587,7 @@ class _RecommendedTourCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        tour.city ?? 'Unknown',
+                        tour.displayName,
                         style: context.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -584,6 +637,26 @@ class _RecommendedTourCard extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGradientPlaceholder(TourModel tour) {
+    final colors = _categoryGradientColors(tour.category);
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: colors,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          tour.category.icon,
+          size: 36,
+          color: Colors.white.withValues(alpha: 0.7),
         ),
       ),
     );

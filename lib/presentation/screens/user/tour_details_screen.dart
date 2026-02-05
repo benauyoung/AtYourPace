@@ -8,6 +8,7 @@ import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/tour_model.dart';
 import '../../../data/models/tour_version_model.dart';
 import '../../../services/download_manager.dart';
+import '../../providers/favorites_provider.dart';
 import '../../providers/tour_providers.dart';
 import '../../widgets/map/tour_map_widget.dart';
 import '../../widgets/tour/tour_reviews_section.dart';
@@ -41,6 +42,7 @@ https://ayp.tours/${tour.slug ?? tour.id}
   Widget build(BuildContext context, WidgetRef ref) {
     final tourAsync = ref.watch(tourByIdProvider(tourId));
     final isDownloaded = ref.watch(isTourDownloadedProvider(tourId));
+    final isFavorited = ref.watch(isTourFavoritedProvider(tourId));
 
     return Scaffold(
       body: tourAsync.when(
@@ -64,14 +66,16 @@ https://ayp.tours/${tour.slug ?? tour.id}
                   ),
                   IconButton(
                     icon:
-                        isDownloaded
+                        isFavorited
                             ? const Icon(Icons.bookmark)
                             : const Icon(Icons.bookmark_border),
-                    onPressed: () {}, // Todo: Implement bookmark
+                    onPressed: () {
+                      ref.read(favoriteTourIdsProvider.notifier).toggleFavorite(tourId);
+                    },
                   ),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
-                  title: Text(tour.city ?? 'Tour'),
+                  title: Text(tour.displayName),
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -103,8 +107,7 @@ https://ayp.tours/${tour.slug ?? tour.id}
                     children: [
                       // Title
                       Text(
-                        // Need a robust title logic, falling back to city or category if missing
-                        tour.city ?? 'Amazing Tour',
+                        tour.displayName,
                         style: context.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),

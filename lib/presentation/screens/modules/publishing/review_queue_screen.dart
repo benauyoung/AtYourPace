@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/route_names.dart';
 import '../../../../data/models/publishing_submission_model.dart';
 import 'providers/publishing_provider.dart';
 
@@ -39,7 +41,7 @@ class ReviewQueueScreen extends ConsumerWidget {
               backgroundColor: Theme.of(context).colorScheme.errorContainer,
               actions: [
                 TextButton(
-                  onPressed: () {},
+                  onPressed: notifier.clearError,
                   child: const Text('Dismiss'),
                 ),
               ],
@@ -295,13 +297,7 @@ class ReviewQueueScreen extends ConsumerWidget {
   }
 
   void _openReview(BuildContext context, PublishingSubmissionModel submission) {
-    // TODO: Navigate to tour review screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Open review for tour ${submission.tourId}'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    context.push(RouteNames.reviewTourPath(submission.tourId));
   }
 }
 

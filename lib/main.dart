@@ -106,12 +106,10 @@ Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase only if not in demo mode
-  if (!AppConfig.demoMode) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  }
+  // Initialize Firebase (needed for analytics, crashlytics, etc. even in demo mode)
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Initialize Hive for local storage
   await Hive.initFlutter();

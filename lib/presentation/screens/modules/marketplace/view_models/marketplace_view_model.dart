@@ -1,9 +1,8 @@
+import 'package:ayp_tour_guide/data/models/collection_model.dart';
+import 'package:ayp_tour_guide/data/models/tour_model.dart';
+import 'package:ayp_tour_guide/presentation/providers/tour_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-
-import '../../../../data/models/collection_model.dart';
-import '../../../../data/models/tour_model.dart';
-import '../../../providers/tour_providers.dart';
 
 part 'marketplace_view_model.freezed.dart';
 

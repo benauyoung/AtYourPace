@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../config/app_config.dart';
 import '../../core/constants/route_names.dart';
-import '../../data/models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/demo_auth_provider.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
@@ -197,7 +196,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: 'play',
             builder:
                 (context, state) =>
-                    playback.TourPlaybackScreen(tourId: state.pathParameters['tourId']!),
+                    playback.TourPlaybackScreen(
+                      tourId: state.pathParameters['tourId']!,
+                      previewMode: state.uri.queryParameters['preview'] == 'true',
+                    ),
           ),
         ],
       ),
@@ -257,34 +259,23 @@ class MainShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser =
-        AppConfig.demoMode
-            ? ref.watch(demoCurrentUserProvider).value
-            : ref.watch(currentUserProvider).value;
-
     return Scaffold(
       body: child,
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _calculateSelectedIndex(context, currentUser?.isCreator ?? false),
-        onDestinationSelected: (index) => _onItemTapped(index, context, currentUser),
-        destinations: [
-          const NavigationDestination(
+        selectedIndex: _calculateSelectedIndex(context),
+        onDestinationSelected: (index) => _onItemTapped(index, context),
+        destinations: const [
+          NavigationDestination(
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
             label: 'Home',
           ),
-          const NavigationDestination(
+          NavigationDestination(
             icon: Icon(Icons.explore_outlined),
             selectedIcon: Icon(Icons.explore),
             label: 'Discover',
           ),
-          if (currentUser?.isCreator ?? false)
-            const NavigationDestination(
-              icon: Icon(Icons.add_box_outlined),
-              selectedIcon: Icon(Icons.add_box),
-              label: 'Create',
-            ),
-          const NavigationDestination(
+          NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: 'Profile',
@@ -294,19 +285,15 @@ class MainShell extends ConsumerWidget {
     );
   }
 
-  int _calculateSelectedIndex(BuildContext context, bool isCreator) {
+  int _calculateSelectedIndex(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     if (location.startsWith(RouteNames.home)) return 0;
     if (location.startsWith(RouteNames.discover)) return 1;
-    if (location.startsWith(RouteNames.creatorDashboard)) return 2;
-    if (location.startsWith(RouteNames.profile)) {
-      // Profile is index 3 for creators (4 tabs), index 2 for non-creators (3 tabs)
-      return isCreator ? 3 : 2;
-    }
+    if (location.startsWith(RouteNames.profile)) return 2;
     return 0;
   }
 
-  void _onItemTapped(int index, BuildContext context, UserModel? user) {
+  void _onItemTapped(int index, BuildContext context) {
     switch (index) {
       case 0:
         context.go(RouteNames.home);
@@ -315,13 +302,6 @@ class MainShell extends ConsumerWidget {
         context.go(RouteNames.discover);
         break;
       case 2:
-        if (user?.isCreator ?? false) {
-          context.go(RouteNames.creatorDashboard);
-        } else {
-          context.go(RouteNames.profile);
-        }
-        break;
-      case 3:
         context.go(RouteNames.profile);
         break;
     }

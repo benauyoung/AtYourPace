@@ -496,6 +496,11 @@ class ReviewQueueNotifier extends StateNotifier<ReviewQueueState> {
     loadSubmissions();
   }
 
+  /// Clear error
+  void clearError() {
+    state = state.copyWith(clearError: true);
+  }
+
   /// Refresh
   Future<void> refresh() async {
     state = state.copyWith(

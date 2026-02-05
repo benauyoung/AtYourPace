@@ -77,6 +77,13 @@ export const seedTestTour = functions.https.onRequest(async (req, res) => {
       updatedAt: now
     });
 
+    // Sample audio URLs (public domain speech samples from LibriVox / Internet Archive)
+    const sampleAudioUrls = [
+      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+    ];
+
     // Create stop documents
     const stops = [
       {
@@ -87,9 +94,9 @@ export const seedTestTour = functions.https.onRequest(async (req, res) => {
         geohash: '9q8yyk',
         triggerRadius: 50,
         media: {
-          audioUrl: null,
+          audioUrl: sampleAudioUrls[0],
           audioSource: 'recorded',
-          audioDuration: null,
+          audioDuration: 60,
           audioText: 'Welcome to Union Square, the vibrant heart of downtown San Francisco.',
           images: []
         }
@@ -102,9 +109,9 @@ export const seedTestTour = functions.https.onRequest(async (req, res) => {
         geohash: '9q8yym',
         triggerRadius: 40,
         media: {
-          audioUrl: null,
+          audioUrl: sampleAudioUrls[1],
           audioSource: 'recorded',
-          audioDuration: null,
+          audioDuration: 45,
           audioText: 'You are now approaching the iconic Dragon Gate.',
           images: []
         }
@@ -117,9 +124,9 @@ export const seedTestTour = functions.https.onRequest(async (req, res) => {
         geohash: '9q8yyr',
         triggerRadius: 60,
         media: {
-          audioUrl: null,
+          audioUrl: sampleAudioUrls[2],
           audioSource: 'recorded',
-          audioDuration: null,
+          audioDuration: 50,
           audioText: 'Look up! The Transamerica Pyramid soars 853 feet into the sky.',
           images: []
         }
@@ -226,6 +233,15 @@ export const seedClamartTour = functions.https.onRequest(async (req, res) => {
       updatedAt: now
     });
 
+    // Sample audio URLs for testing
+    const clamartAudioUrls = [
+      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
+      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
+      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
+      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
+      'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
+    ];
+
     // Create stop documents
     const stops = [
       {
@@ -236,7 +252,7 @@ export const seedClamartTour = functions.https.onRequest(async (req, res) => {
         geohash: 'u09tun',
         triggerRadius: 30,
         media: {
-          audioUrl: null,
+          audioUrl: clamartAudioUrls[0],
           audioSource: 'elevenlabs',
           audioDuration: 90,
           audioText: "Bienvenue a Clamart! Welcome to our historic walking tour. You are standing on Avenue Jean Jaures, named after the beloved French socialist leader. Clamart has a rich history dating back to prehistoric times. Fun fact: any dish served 'a la Clamart' features peas, as Clamart's peas were the first of the season to reach Paris markets.",
@@ -251,7 +267,7 @@ export const seedClamartTour = functions.https.onRequest(async (req, res) => {
         geohash: 'u09tup',
         triggerRadius: 35,
         media: {
-          audioUrl: null,
+          audioUrl: clamartAudioUrls[1],
           audioSource: 'elevenlabs',
           audioDuration: 120,
           audioText: "Before you stands the Hotel de Ville, Clamart's town hall. This is the former Chateau de Barral, built in the 17th century in the neoclassical style. The building became a monument historique in 1929.",
@@ -266,7 +282,7 @@ export const seedClamartTour = functions.https.onRequest(async (req, res) => {
         geohash: 'u09tup',
         triggerRadius: 25,
         media: {
-          audioUrl: null,
+          audioUrl: clamartAudioUrls[2],
           audioSource: 'elevenlabs',
           audioDuration: 100,
           audioText: "The enchanting Fontaine Thurotte was installed in 1943. The sculptor drew inspiration from Paul Landowski, famous for creating the Christ the Redeemer statue in Rio de Janeiro. This was Clamart's first public art acquisition.",
@@ -281,7 +297,7 @@ export const seedClamartTour = functions.https.onRequest(async (req, res) => {
         geohash: 'u09tun',
         triggerRadius: 35,
         media: {
-          audioUrl: null,
+          audioUrl: clamartAudioUrls[3],
           audioSource: 'elevenlabs',
           audioDuration: 130,
           audioText: "The Eglise Saint-Pierre Saint-Paul has a bell tower base dating to the 11th century. The church was consecrated in 1523 after the Hundred Years' War. Inside you'll find the Saint Vincent chapel - patron saint of winegrowers, a reminder of Clamart's viticultural past.",
@@ -296,7 +312,7 @@ export const seedClamartTour = functions.https.onRequest(async (req, res) => {
         geohash: 'u09tuq',
         triggerRadius: 40,
         media: {
-          audioUrl: null,
+          audioUrl: clamartAudioUrls[4],
           audioSource: 'elevenlabs',
           audioDuration: 110,
           audioText: "We conclude at the Parc de la Maison Blanche, designed in the 1830s. The elegant mansion now serves as a cultural center. Clamart has been home to many artists - Henri Matisse lived here before World War I, and Jean Arp resided here in the 1930s. Merci et au revoir!",

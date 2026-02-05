@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../config/app_config.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../providers/auth_provider.dart';
@@ -201,6 +202,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ],
                     ),
+
+                    // Dev login button
+                    if (AppConfig.devMode) ...[
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      FilledButton.tonal(
+                        onPressed: authState.isLoading ? null : _devSignIn,
+                        child: const Text('Dev Login (Auto)'),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -219,5 +231,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             password: _passwordController.text,
           );
     }
+  }
+
+  void _devSignIn() {
+    context.unfocus();
+    ref.read(authStateNotifierProvider.notifier).devSignIn(
+          email: AppConfig.devEmail,
+          password: AppConfig.devPassword,
+          displayName: AppConfig.devDisplayName,
+        );
   }
 }

@@ -213,10 +213,10 @@ class _$MarketplaceStateImpl implements _MarketplaceState {
             other is _$MarketplaceStateImpl &&
             (identical(other.searchQuery, searchQuery) ||
                 other.searchQuery == searchQuery) &&
-            const DeepCollectionEquality()
-                .equals(other.selectedCategory, selectedCategory) &&
-            const DeepCollectionEquality()
-                .equals(other.selectedTourType, selectedTourType) &&
+            (identical(other.selectedCategory, selectedCategory) ||
+                other.selectedCategory == selectedCategory) &&
+            (identical(other.selectedTourType, selectedTourType) ||
+                other.selectedTourType == selectedTourType) &&
             (identical(other.isMapView, isMapView) ||
                 other.isMapView == isMapView) &&
             (identical(other.filteredTours, filteredTours) ||
@@ -229,8 +229,8 @@ class _$MarketplaceStateImpl implements _MarketplaceState {
   int get hashCode => Object.hash(
       runtimeType,
       searchQuery,
-      const DeepCollectionEquality().hash(selectedCategory),
-      const DeepCollectionEquality().hash(selectedTourType),
+      selectedCategory,
+      selectedTourType,
       isMapView,
       filteredTours,
       const DeepCollectionEquality().hash(_visibleCollections));

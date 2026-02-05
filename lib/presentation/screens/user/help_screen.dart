@@ -41,7 +41,7 @@ class HelpScreen extends StatelessWidget {
 - Your device volume is turned up
 - Bluetooth headphones are connected if you're using them
 
-Try switching to Manual Mode (tap the toggle at the top) to manually trigger audio.''',
+You can change between automatic and manual trigger mode in Settings > Edit Profile.''',
                 ),
                 const Divider(height: 1),
                 _buildHelpTile(

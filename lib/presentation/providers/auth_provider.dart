@@ -335,6 +335,33 @@ class AuthService {
     return UserModel.fromFirestore(doc);
   }
 
+  /// Dev login: tries sign-in first, creates account if it doesn't exist.
+  Future<UserModel> devSignIn({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
+    try {
+      return await signInWithEmailAndPassword(email: email, password: password);
+    } catch (_) {
+      // Account likely doesn't exist — create it
+      try {
+        return await signUpWithEmailAndPassword(
+          email: email,
+          password: password,
+          displayName: displayName,
+        );
+      } on AuthException catch (e) {
+        if (e.code == 'email-already-in-use') {
+          // Account exists but sign-in failed — password mismatch in Firebase
+          // Delete and recreate by signing in fresh
+          rethrow;
+        }
+        rethrow;
+      }
+    }
+  }
+
   AuthException _mapFirebaseAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
@@ -420,6 +447,26 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   Future<void> signOut() async {
     await _authService.signOut();
     state = const AuthState.unauthenticated();
+  }
+
+  Future<void> devSignIn({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
+    state = const AuthState.loading();
+    try {
+      final user = await _authService.devSignIn(
+        email: email,
+        password: password,
+        displayName: displayName,
+      );
+      state = AuthState.authenticated(user);
+    } on AuthException catch (e) {
+      state = AuthState.error(e.message);
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
   }
 
   void clearError() {
