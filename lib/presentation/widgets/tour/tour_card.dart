@@ -73,7 +73,7 @@ class TourCard extends ConsumerWidget {
                   // Title
                   versionAsync.when(
                     data: (version) => Text(
-                      version?.title ?? tour.city ?? 'Untitled Tour',
+                      version?.title ?? tour.displayName,
                       style: context.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -89,7 +89,7 @@ class TourCard extends ConsumerWidget {
                       ),
                     ),
                     error: (_, __) => Text(
-                      tour.city ?? 'Untitled Tour',
+                      tour.displayName,
                       style: context.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -454,7 +454,7 @@ class CompactTourCard extends ConsumerWidget {
                     children: [
                       versionAsync.when(
                         data: (version) => Text(
-                          version?.title ?? tour.city ?? 'Untitled',
+                          version?.title ?? tour.displayName,
                           style: context.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -470,7 +470,7 @@ class CompactTourCard extends ConsumerWidget {
                           ),
                         ),
                         error: (_, __) => Text(
-                          tour.city ?? 'Untitled',
+                          tour.displayName,
                           style: context.textTheme.titleSmall,
                         ),
                       ),

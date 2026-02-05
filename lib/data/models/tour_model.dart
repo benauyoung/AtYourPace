@@ -64,6 +64,7 @@ class TourModel with _$TourModel {
     String? city,
     String? region,
     String? country,
+    String? draftTitle,
 
     // Version references
     String? liveVersionId,
@@ -97,6 +98,8 @@ class TourModel with _$TourModel {
     json.remove('id');
     return json;
   }
+
+  String get displayName => draftTitle ?? city ?? 'Untitled Tour';
 
   bool get isPublished => liveVersionId != null;
   bool get isPendingReview => status == TourStatus.pendingReview;

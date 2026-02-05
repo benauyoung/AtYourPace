@@ -148,7 +148,7 @@ class TourCardGrid extends StatelessWidget {
                 children: [
                   // Title
                   Text(
-                    tour.city ?? 'Untitled Tour',
+                    tour.displayName,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),

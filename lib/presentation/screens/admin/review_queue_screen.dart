@@ -103,7 +103,7 @@ class _ReviewQueueItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tour.city ?? 'Untitled Tour',
+                          tour.displayName,
                           style: context.textTheme.titleMedium,
                         ),
                         const SizedBox(height: 4),

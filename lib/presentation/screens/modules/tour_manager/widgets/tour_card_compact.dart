@@ -57,7 +57,7 @@ class TourCardCompact extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            tour.city ?? 'Untitled Tour',
+                            tour.displayName,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),

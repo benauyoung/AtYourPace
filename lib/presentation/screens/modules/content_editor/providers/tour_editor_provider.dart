@@ -436,6 +436,7 @@ class TourEditorNotifier extends StateNotifier<TourEditorState> {
           geohash: '',
           draftVersionId: versionId,
           draftVersion: 1,
+          draftTitle: state.version!.title,
           createdAt: now,
           updatedAt: now,
         );
@@ -536,10 +537,13 @@ class TourEditorNotifier extends StateNotifier<TourEditorState> {
           );
         }
 
-        // Update tour timestamp
+        // Update tour timestamp and draftTitle
         batch.update(
           _firestore.collection('tours').doc(state.tourId),
-          {'updatedAt': FieldValue.serverTimestamp()},
+          {
+            'updatedAt': FieldValue.serverTimestamp(),
+            'draftTitle': state.version!.title,
+          },
         );
 
         await batch.commit();

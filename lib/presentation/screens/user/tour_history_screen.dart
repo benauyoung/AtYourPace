@@ -284,7 +284,7 @@ class _TourHistoryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      tour.city ?? 'Untitled Tour',
+                      tour.displayName,
                       style: context.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),

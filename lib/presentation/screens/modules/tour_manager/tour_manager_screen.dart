@@ -196,7 +196,7 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
       final query = state.filters.searchQuery!.toLowerCase();
       tours = tours
           .where((t) =>
-              (t.city?.toLowerCase().contains(query) ?? false) ||
+              t.displayName.toLowerCase().contains(query) ||
               t.category.displayName.toLowerCase().contains(query))
           .toList();
     }
@@ -301,7 +301,7 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
     // TODO: Navigate to tour details/editor
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Open tour: ${tour.city ?? 'Untitled Tour'}'),
+        content: Text('Open tour: ${tour.displayName}'),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -311,7 +311,7 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
     // TODO: Navigate to tour editor
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Edit tour: ${tour.city ?? 'Untitled Tour'}'),
+        content: Text('Edit tour: ${tour.displayName}'),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -327,7 +327,7 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
       builder: (context) => AlertDialog(
         title: const Text('Delete Tour?'),
         content: Text(
-          'Are you sure you want to delete "${tour.city ?? 'Untitled Tour'}"? This action cannot be undone.',
+          'Are you sure you want to delete "${tour.displayName}"? This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -369,7 +369,7 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
       builder: (context) => AlertDialog(
         title: const Text('Withdraw from Review?'),
         content: Text(
-          'This will withdraw "${tour.city ?? 'Untitled Tour'}" from the review process and set it back to draft so you can make changes.',
+          'This will withdraw "${tour.displayName}" from the review process and set it back to draft so you can make changes.',
         ),
         actions: [
           TextButton(
@@ -430,7 +430,7 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
     // TODO: Navigate to analytics
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('View analytics for: ${tour.city ?? 'Untitled Tour'}'),
+        content: Text('View analytics for: ${tour.displayName}'),
         behavior: SnackBarBehavior.floating,
       ),
     );

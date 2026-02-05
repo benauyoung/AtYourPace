@@ -339,6 +339,7 @@ class _TourEditorScreenState extends ConsumerState<TourEditorScreen>
         city: tour.city,
         region: tour.region,
         country: tour.country,
+        draftTitle: tour.draftTitle,
         status: TourStatus.draft,
         draftVersionId: newVersionId,
         draftVersion: 1,

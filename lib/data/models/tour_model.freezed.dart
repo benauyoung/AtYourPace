@@ -33,7 +33,8 @@ mixin _$TourModel {
   String get geohash => throw _privateConstructorUsedError;
   String? get city => throw _privateConstructorUsedError;
   String? get region => throw _privateConstructorUsedError;
-  String? get country =>
+  String? get country => throw _privateConstructorUsedError;
+  String? get draftTitle =>
       throw _privateConstructorUsedError; // Version references
   String? get liveVersionId => throw _privateConstructorUsedError;
   int? get liveVersion => throw _privateConstructorUsedError;
@@ -78,6 +79,7 @@ abstract class $TourModelCopyWith<$Res> {
       String? city,
       String? region,
       String? country,
+      String? draftTitle,
       String? liveVersionId,
       int? liveVersion,
       String draftVersionId,
@@ -119,6 +121,7 @@ class _$TourModelCopyWithImpl<$Res, $Val extends TourModel>
     Object? city = freezed,
     Object? region = freezed,
     Object? country = freezed,
+    Object? draftTitle = freezed,
     Object? liveVersionId = freezed,
     Object? liveVersion = freezed,
     Object? draftVersionId = null,
@@ -181,6 +184,10 @@ class _$TourModelCopyWithImpl<$Res, $Val extends TourModel>
       country: freezed == country
           ? _value.country
           : country // ignore: cast_nullable_to_non_nullable
+              as String?,
+      draftTitle: freezed == draftTitle
+          ? _value.draftTitle
+          : draftTitle // ignore: cast_nullable_to_non_nullable
               as String?,
       liveVersionId: freezed == liveVersionId
           ? _value.liveVersionId
@@ -254,6 +261,7 @@ abstract class _$$TourModelImplCopyWith<$Res>
       String? city,
       String? region,
       String? country,
+      String? draftTitle,
       String? liveVersionId,
       int? liveVersion,
       String draftVersionId,
@@ -294,6 +302,7 @@ class __$$TourModelImplCopyWithImpl<$Res>
     Object? city = freezed,
     Object? region = freezed,
     Object? country = freezed,
+    Object? draftTitle = freezed,
     Object? liveVersionId = freezed,
     Object? liveVersion = freezed,
     Object? draftVersionId = null,
@@ -357,6 +366,10 @@ class __$$TourModelImplCopyWithImpl<$Res>
           ? _value.country
           : country // ignore: cast_nullable_to_non_nullable
               as String?,
+      draftTitle: freezed == draftTitle
+          ? _value.draftTitle
+          : draftTitle // ignore: cast_nullable_to_non_nullable
+              as String?,
       liveVersionId: freezed == liveVersionId
           ? _value.liveVersionId
           : liveVersionId // ignore: cast_nullable_to_non_nullable
@@ -414,6 +427,7 @@ class _$TourModelImpl extends _TourModel {
       this.city,
       this.region,
       this.country,
+      this.draftTitle,
       this.liveVersionId,
       this.liveVersion,
       required this.draftVersionId,
@@ -458,6 +472,8 @@ class _$TourModelImpl extends _TourModel {
   final String? region;
   @override
   final String? country;
+  @override
+  final String? draftTitle;
 // Version references
   @override
   final String? liveVersionId;
@@ -487,7 +503,7 @@ class _$TourModelImpl extends _TourModel {
 
   @override
   String toString() {
-    return 'TourModel(id: $id, creatorId: $creatorId, creatorName: $creatorName, slug: $slug, category: $category, tourType: $tourType, status: $status, featured: $featured, startLocation: $startLocation, geohash: $geohash, city: $city, region: $region, country: $country, liveVersionId: $liveVersionId, liveVersion: $liveVersion, draftVersionId: $draftVersionId, draftVersion: $draftVersion, stats: $stats, createdAt: $createdAt, updatedAt: $updatedAt, publishedAt: $publishedAt, lastReviewedAt: $lastReviewedAt)';
+    return 'TourModel(id: $id, creatorId: $creatorId, creatorName: $creatorName, slug: $slug, category: $category, tourType: $tourType, status: $status, featured: $featured, startLocation: $startLocation, geohash: $geohash, city: $city, region: $region, country: $country, draftTitle: $draftTitle, liveVersionId: $liveVersionId, liveVersion: $liveVersion, draftVersionId: $draftVersionId, draftVersion: $draftVersion, stats: $stats, createdAt: $createdAt, updatedAt: $updatedAt, publishedAt: $publishedAt, lastReviewedAt: $lastReviewedAt)';
   }
 
   @override
@@ -514,6 +530,8 @@ class _$TourModelImpl extends _TourModel {
             (identical(other.city, city) || other.city == city) &&
             (identical(other.region, region) || other.region == region) &&
             (identical(other.country, country) || other.country == country) &&
+            (identical(other.draftTitle, draftTitle) ||
+                other.draftTitle == draftTitle) &&
             (identical(other.liveVersionId, liveVersionId) ||
                 other.liveVersionId == liveVersionId) &&
             (identical(other.liveVersion, liveVersion) ||
@@ -550,6 +568,7 @@ class _$TourModelImpl extends _TourModel {
         city,
         region,
         country,
+        draftTitle,
         liveVersionId,
         liveVersion,
         draftVersionId,
@@ -592,6 +611,7 @@ abstract class _TourModel extends TourModel {
           final String? city,
           final String? region,
           final String? country,
+          final String? draftTitle,
           final String? liveVersionId,
           final int? liveVersion,
           required final String draftVersionId,
@@ -633,7 +653,9 @@ abstract class _TourModel extends TourModel {
   @override
   String? get region;
   @override
-  String? get country; // Version references
+  String? get country;
+  @override
+  String? get draftTitle; // Version references
   @override
   String? get liveVersionId;
   @override

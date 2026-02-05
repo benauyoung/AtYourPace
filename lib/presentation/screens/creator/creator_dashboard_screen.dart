@@ -182,7 +182,7 @@ class _TourListItem extends StatelessWidget {
             color: context.colorScheme.onPrimaryContainer,
           ),
         ),
-        title: Text(tour.city ?? 'Untitled Tour'),
+        title: Text(tour.displayName),
         subtitle: Row(
           children: [
             _StatusChip(status: tour.status),

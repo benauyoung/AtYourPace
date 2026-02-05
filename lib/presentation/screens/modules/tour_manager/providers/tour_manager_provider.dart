@@ -326,6 +326,7 @@ class TourManagerNotifier extends StateNotifier<TourManagerState> {
         city: original.city,
         region: original.region,
         country: original.country,
+        draftTitle: original.draftTitle,
         status: TourStatus.draft,
         draftVersionId: newVersionId,
         draftVersion: 1,
