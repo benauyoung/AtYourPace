@@ -19,6 +19,69 @@ class TourDetailsScreen extends ConsumerWidget {
 
   const TourDetailsScreen({super.key, required this.tourId});
 
+  void _showBeginTourSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text(
+                  'How would you like to start?',
+                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Browse Tour Map option
+                ListTile(
+                  leading: const Icon(Icons.map_outlined, size: 32),
+                  title: const Text('Browse Tour Map', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Explore stops on the map without audio or tracking'),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  tileColor: Theme.of(sheetContext).colorScheme.surfaceContainerHighest,
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    context.push('${RouteNames.tourPlaybackPath(tourId)}?preview=true');
+                  },
+                ),
+                const SizedBox(height: 12),
+                // Start Tour Now option
+                ListTile(
+                  leading: const Icon(Icons.play_circle_filled, size: 32, color: Color(0xFF1E2F36)),
+                  title: const Text('Start Tour Now', style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Begin guided tour with audio and location tracking'),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  tileColor: const Color(0xFF90F6D7).withValues(alpha: 0.3),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    context.push(RouteNames.tourPlaybackPath(tourId));
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _shareTour(BuildContext context, TourModel tour) {
     final location =
         tour.city != null && tour.country != null
@@ -169,9 +232,7 @@ https://ayp.tours/${tour.slug ?? tour.id}
                           ],
                         ),
                         child: FilledButton(
-                          onPressed: () {
-                            context.push(RouteNames.tourPlaybackPath(tourId));
-                          },
+                          onPressed: () => _showBeginTourSheet(context),
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFF90F6D7),
                             foregroundColor: const Color(0xFF1E2F36),

@@ -284,15 +284,14 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   Future<void> _startTracking() async {
-    await _locationService.startTracking();
     await _geofenceService.startMonitoring();
 
     _positionSubscription?.cancel();
     _positionSubscription = _locationService.positionStream.listen((position) {
       state = state.copyWith(userPosition: position);
 
-      // Check if we need to trigger any stops immediately (e.g. if we started inside a zone)
-      if (state.hasStarted && state.currentStopIndex == -1) {
+      // Continuously check proximity so subsequent stops auto-trigger
+      if (state.hasStarted) {
         _checkProximityToStops(position);
       }
     });
@@ -422,6 +421,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   Future<void> _triggerStop(int index) async {
     if (state.previewMode) return; // No triggers in preview mode
+    if (state.currentStopIndex == index) return; // Already on this stop
 
     final stop = state.stops[index];
     debugPrint('[Playback] Triggering stop $index: "${stop.name}", id=${stop.id}');
@@ -528,10 +528,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   void _checkProximityToStops(Position position) {
-    // Only check if we haven't triggered anything yet to avoid spamming
-    // This is a simplified check for the "Start" condition
     for (int i = 0; i < state.stops.length; i++) {
       if (state.isStopCompleted(i)) continue;
+      if (state.currentStopIndex == i) continue; // Skip active stop
 
       final stop = state.stops[i];
       final distance = Geolocator.distanceBetween(

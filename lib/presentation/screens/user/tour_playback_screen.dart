@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 import '../../../core/extensions/context_extensions.dart';
+import '../../../data/models/stop_model.dart';
 import '../../../services/audio_service.dart';
 import '../../providers/playback_provider.dart';
 import '../../widgets/map/tour_map_widget.dart';
@@ -147,12 +148,16 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
             userPosition: userPosition != null
                 ? mapbox.Position(userPosition.longitude, userPosition.latitude)
                 : null,
-            onStopTapped: widget.previewMode
-                ? null
-                : (marker) {
-                    ref.read(playbackStateProvider.notifier).triggerStop(marker.order);
-                    if (marker.order < stops.length && !stops[marker.order].hasAudio) {
-                      context.showInfoSnackBar('No audio available for this stop');
+            onStopTapped: (marker) {
+                    if (widget.previewMode) {
+                      if (marker.order < stops.length) {
+                        _showStopInfoSheet(context, stops[marker.order]);
+                      }
+                    } else {
+                      ref.read(playbackStateProvider.notifier).triggerStop(marker.order);
+                      if (marker.order < stops.length && !stops[marker.order].hasAudio) {
+                        context.showInfoSnackBar('No audio available for this stop');
+                      }
                     }
                   },
           ),
@@ -250,6 +255,125 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
             _TourCompletedOverlay(tour: tour, onDone: () => GoRouter.of(context).pop()),
         ],
       ),
+    );
+  }
+
+  void _showStopInfoSheet(BuildContext context, StopModel stop) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.45,
+          minChildSize: 0.25,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (_, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Drag handle
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[400],
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      // Stop name
+                      Text(
+                        stop.name,
+                        style: context.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Images carousel
+                      if (stop.media.images.isNotEmpty) ...[
+                        SizedBox(
+                          height: 180,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: stop.media.images.length,
+                            separatorBuilder: (_, __) => const SizedBox(width: 8),
+                            itemBuilder: (context, index) {
+                              final image = stop.media.images[index];
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  image.url,
+                                  width: 240,
+                                  height: 180,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      width: 240,
+                                      height: 180,
+                                      color: context.colorScheme.surfaceContainerHighest,
+                                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: 240,
+                                      height: 180,
+                                      color: context.colorScheme.surfaceContainerHighest,
+                                      child: const Icon(Icons.broken_image_outlined),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      // Description
+                      if (stop.description.isNotEmpty) ...[
+                        Text(
+                          stop.description,
+                          style: context.textTheme.bodyMedium?.copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      // Audio indicator
+                      if (stop.hasAudio)
+                        Row(
+                          children: [
+                            Icon(Icons.volume_up_outlined, size: 18, color: context.colorScheme.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Audio available — start the tour to listen',
+                              style: context.textTheme.bodySmall?.copyWith(
+                                color: context.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

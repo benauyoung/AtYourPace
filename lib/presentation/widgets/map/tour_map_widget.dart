@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import '../../../config/mapbox_config.dart';
@@ -326,7 +327,13 @@ class TourMapWidgetState extends State<TourMapWidget> {
     if (widget.userPosition != null) {
       await _flyToPosition(widget.userPosition!);
     } else {
-      debugPrint('[TourMap] centerOnUserLocation: userPosition is null, cannot center');
+      // Fallback: request a one-shot position from Geolocator
+      try {
+        final pos = await geo.Geolocator.getCurrentPosition();
+        await _flyToPosition(Position(pos.longitude, pos.latitude));
+      } catch (e) {
+        debugPrint('[TourMap] centerOnUserLocation: failed to get position: $e');
+      }
     }
   }
 
