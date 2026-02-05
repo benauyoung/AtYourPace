@@ -7,7 +7,6 @@ import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/tour_model.dart';
 import '../../../data/models/tour_version_model.dart';
-import '../../../services/download_manager.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/tour_providers.dart';
 import '../../widgets/map/tour_map_widget.dart';
@@ -41,7 +40,6 @@ https://ayp.tours/${tour.slug ?? tour.id}
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tourAsync = ref.watch(tourByIdProvider(tourId));
-    final isDownloaded = ref.watch(isTourDownloadedProvider(tourId));
     final isFavorited = ref.watch(isTourFavoritedProvider(tourId));
 
     return Scaffold(
