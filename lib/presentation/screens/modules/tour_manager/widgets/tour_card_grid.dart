@@ -9,6 +9,8 @@ class TourCardGrid extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onDuplicate;
+  final VoidCallback? onWithdraw;
 
   const TourCardGrid({
     super.key,
@@ -17,6 +19,8 @@ class TourCardGrid extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.onDuplicate,
+    this.onWithdraw,
   });
 
   @override
@@ -71,34 +75,64 @@ class TourCardGrid extends StatelessWidget {
                           case 'edit':
                             onEdit?.call();
                             break;
+                          case 'duplicate':
+                            onDuplicate?.call();
+                            break;
+                          case 'withdraw':
+                            onWithdraw?.call();
+                            break;
                           case 'delete':
                             onDelete?.call();
                             break;
                         }
                       },
                       itemBuilder: (context) => [
+                        if (tour.isEditable)
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit),
+                                SizedBox(width: 8),
+                                Text('Edit'),
+                              ],
+                            ),
+                          ),
+                        if (tour.isPendingReview)
+                          const PopupMenuItem(
+                            value: 'withdraw',
+                            child: Row(
+                              children: [
+                                Icon(Icons.undo),
+                                SizedBox(width: 8),
+                                Text('Withdraw & Edit'),
+                              ],
+                            ),
+                          ),
                         const PopupMenuItem(
-                          value: 'edit',
+                          value: 'duplicate',
                           child: Row(
                             children: [
-                              Icon(Icons.edit),
+                              Icon(Icons.copy),
                               SizedBox(width: 8),
-                              Text('Edit'),
+                              Text('Duplicate'),
                             ],
                           ),
                         ),
-                        const PopupMenuDivider(),
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete, color: theme.colorScheme.error),
-                              const SizedBox(width: 8),
-                              Text('Delete',
-                                  style: TextStyle(color: theme.colorScheme.error)),
-                            ],
+                        if (tour.isEditable) ...[
+                          const PopupMenuDivider(),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, color: theme.colorScheme.error),
+                                const SizedBox(width: 8),
+                                Text('Delete',
+                                    style: TextStyle(color: theme.colorScheme.error)),
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ),

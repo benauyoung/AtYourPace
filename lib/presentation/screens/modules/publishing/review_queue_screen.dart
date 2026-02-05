@@ -348,10 +348,12 @@ class _SubmissionCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            'Tour ${submission.tourId.substring(0, 8)}...',
+                            submission.tourTitle ?? 'Untitled Tour',
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         _buildStatusBadge(context, submission.status),

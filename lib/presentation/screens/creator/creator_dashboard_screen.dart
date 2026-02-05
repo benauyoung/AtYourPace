@@ -202,14 +202,15 @@ class _TourListItem extends StatelessWidget {
             }
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'edit',
-              child: ListTile(
-                leading: Icon(Icons.edit),
-                title: Text('Edit'),
-                contentPadding: EdgeInsets.zero,
+            if (tour.isEditable)
+              const PopupMenuItem(
+                value: 'edit',
+                child: ListTile(
+                  leading: Icon(Icons.edit),
+                  title: Text('Edit'),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
-            ),
             const PopupMenuItem(
               value: 'preview',
               child: ListTile(
@@ -220,7 +221,9 @@ class _TourListItem extends StatelessWidget {
             ),
           ],
         ),
-        onTap: () => context.go(RouteNames.editTourPath(tour.id)),
+        onTap: tour.isEditable
+            ? () => context.go(RouteNames.editTourPath(tour.id))
+            : () => context.go(RouteNames.tourPreviewPath(tour.id)),
       ),
     );
   }

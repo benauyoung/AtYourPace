@@ -196,6 +196,21 @@ class PublishingNotifier extends StateNotifier<PublishingState> {
       final now = DateTime.now();
       final submissionRef = _firestore.collection('publishing_submissions').doc();
 
+      // Load version title and description to store on submission
+      String? tourTitle;
+      String? tourDescription;
+      final versionDoc = await _firestore
+          .collection('tours')
+          .doc(tourId)
+          .collection('versions')
+          .doc(versionId)
+          .get();
+      if (versionDoc.exists) {
+        final data = versionDoc.data()!;
+        tourTitle = data['title'] as String?;
+        tourDescription = data['description'] as String?;
+      }
+
       final submission = PublishingSubmissionModel(
         id: submissionRef.id,
         tourId: tourId,
@@ -204,6 +219,8 @@ class PublishingNotifier extends StateNotifier<PublishingState> {
         creatorName: '', // Will be set by server
         status: SubmissionStatus.submitted,
         resubmissionJustification: notes,
+        tourTitle: tourTitle,
+        tourDescription: tourDescription,
         submittedAt: now,
         createdAt: now,
         updatedAt: now,
@@ -279,6 +296,21 @@ class PublishingNotifier extends StateNotifier<PublishingState> {
       final now = DateTime.now();
       final submissionRef = _firestore.collection('publishing_submissions').doc();
 
+      // Load version title and description to store on submission
+      String? tourTitle;
+      String? tourDescription;
+      final versionDoc = await _firestore
+          .collection('tours')
+          .doc(tourId)
+          .collection('versions')
+          .doc(versionId)
+          .get();
+      if (versionDoc.exists) {
+        final data = versionDoc.data()!;
+        tourTitle = data['title'] as String?;
+        tourDescription = data['description'] as String?;
+      }
+
       final submission = PublishingSubmissionModel(
         id: submissionRef.id,
         tourId: tourId,
@@ -288,6 +320,8 @@ class PublishingNotifier extends StateNotifier<PublishingState> {
         status: SubmissionStatus.submitted,
         resubmissionJustification: justification,
         resubmissionCount: (state.submission?.resubmissionCount ?? 0) + 1,
+        tourTitle: tourTitle,
+        tourDescription: tourDescription,
         submittedAt: now,
         createdAt: now,
         updatedAt: now,

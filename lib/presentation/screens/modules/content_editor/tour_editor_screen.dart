@@ -1,6 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/route_names.dart';
+import '../../../../data/models/tour_model.dart';
 import 'modules/basic_info_module.dart';
 import 'modules/media_module.dart';
 import 'modules/pricing_module.dart';
@@ -67,6 +71,11 @@ class _TourEditorScreenState extends ConsumerState<TourEditorScreen>
     final params = (tourId: widget.tourId, versionId: widget.versionId);
     final state = ref.watch(tourEditorProvider(params));
     final notifier = ref.read(tourEditorProvider(params).notifier);
+
+    // Show locked state for tours that are pending review or approved
+    if (!state.isLoading && !state.isNewTour && state.tour != null && !state.tour!.isEditable) {
+      return _buildLockedScreen(context, state);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -161,6 +170,205 @@ class _TourEditorScreenState extends ConsumerState<TourEditorScreen>
                 ),
       bottomNavigationBar: _buildBottomBar(context, state, notifier),
     );
+  }
+
+  Widget _buildLockedScreen(BuildContext context, TourEditorState state) {
+    final tour = state.tour!;
+    final isPending = tour.isPendingReview;
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(state.title),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isPending ? Icons.hourglass_top : Icons.lock_outline,
+                size: 72,
+                color: isPending ? Colors.orange : Colors.green,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                isPending
+                    ? 'Tour is Under Review'
+                    : 'Tour is Published',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                isPending
+                    ? 'This tour is currently being reviewed and cannot be edited. You can withdraw it from review to make changes, or duplicate it to create a new version.'
+                    : 'This tour has been approved and is live. To make changes, you can duplicate it as a new tour draft.',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              if (isPending)
+                FilledButton.icon(
+                  onPressed: () => _showWithdrawDialog(context, tour),
+                  icon: const Icon(Icons.undo),
+                  label: const Text('Withdraw & Edit'),
+                ),
+              if (isPending) const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: () => _duplicateAndEdit(context, tour),
+                icon: const Icon(Icons.copy),
+                label: const Text('Duplicate as New Tour'),
+              ),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: () => context.go(RouteNames.tourPreviewPath(tour.id)),
+                icon: const Icon(Icons.preview),
+                label: const Text('Preview Tour'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showWithdrawDialog(BuildContext context, TourModel tour) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Withdraw from Review?'),
+        content: const Text(
+          'This will remove your tour from the review queue and set it back to draft. You can then make changes and resubmit.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await _withdrawTour(context, tour);
+            },
+            child: const Text('Withdraw'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _withdrawTour(BuildContext context, TourModel tour) async {
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      // Find latest submission
+      final submissionQuery = await firestore
+          .collection('publishing_submissions')
+          .where('tourId', isEqualTo: tour.id)
+          .orderBy('submittedAt', descending: true)
+          .limit(1)
+          .get();
+
+      final batch = firestore.batch();
+
+      if (submissionQuery.docs.isNotEmpty) {
+        batch.update(
+          submissionQuery.docs.first.reference,
+          {
+            'status': 'withdrawn',
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+        );
+      }
+
+      batch.update(
+        firestore.collection('tours').doc(tour.id),
+        {
+          'status': 'draft',
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      );
+
+      await batch.commit();
+
+      if (mounted) {
+        // Re-initialize the editor to reload the tour as draft
+        final params = (tourId: widget.tourId, versionId: widget.versionId);
+        ref.read(tourEditorProvider(params).notifier).initialize();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tour withdrawn — you can now edit it'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to withdraw: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _duplicateAndEdit(BuildContext context, TourModel tour) async {
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      final newTourRef = firestore.collection('tours').doc();
+      final newVersionId = '${newTourRef.id}_v1';
+
+      final duplicate = TourModel(
+        id: newTourRef.id,
+        creatorId: tour.creatorId,
+        creatorName: tour.creatorName,
+        category: tour.category,
+        tourType: tour.tourType,
+        startLocation: tour.startLocation,
+        geohash: tour.geohash,
+        city: tour.city,
+        region: tour.region,
+        country: tour.country,
+        status: TourStatus.draft,
+        draftVersionId: newVersionId,
+        draftVersion: 1,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      await newTourRef.set(duplicate.toFirestore());
+
+      if (mounted) {
+        context.go(RouteNames.editTourPath(newTourRef.id));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tour duplicated — editing the new draft'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to duplicate: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildErrorState(

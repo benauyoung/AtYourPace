@@ -10,6 +10,7 @@ class TourCardCompact extends StatelessWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onDuplicate;
   final VoidCallback? onViewAnalytics;
+  final VoidCallback? onWithdraw;
 
   const TourCardCompact({
     super.key,
@@ -19,6 +20,7 @@ class TourCardCompact extends StatelessWidget {
     this.onDelete,
     this.onDuplicate,
     this.onViewAnalytics,
+    this.onWithdraw,
   });
 
   @override
@@ -159,22 +161,37 @@ class TourCardCompact extends StatelessWidget {
                     case 'analytics':
                       onViewAnalytics?.call();
                       break;
+                    case 'withdraw':
+                      onWithdraw?.call();
+                      break;
                     case 'delete':
                       onDelete?.call();
                       break;
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit),
-                        SizedBox(width: 8),
-                        Text('Edit'),
-                      ],
+                  if (tour.isEditable)
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit),
+                          SizedBox(width: 8),
+                          Text('Edit'),
+                        ],
+                      ),
                     ),
-                  ),
+                  if (tour.isPendingReview)
+                    const PopupMenuItem(
+                      value: 'withdraw',
+                      child: Row(
+                        children: [
+                          Icon(Icons.undo),
+                          SizedBox(width: 8),
+                          Text('Withdraw & Edit'),
+                        ],
+                      ),
+                    ),
                   const PopupMenuItem(
                     value: 'duplicate',
                     child: Row(
@@ -196,18 +213,20 @@ class TourCardCompact extends StatelessWidget {
                         ],
                       ),
                     ),
-                  const PopupMenuDivider(),
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete, color: theme.colorScheme.error),
-                        const SizedBox(width: 8),
-                        Text('Delete',
-                            style: TextStyle(color: theme.colorScheme.error)),
-                      ],
+                  if (tour.isEditable) ...[
+                    const PopupMenuDivider(),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: theme.colorScheme.error),
+                          const SizedBox(width: 8),
+                          Text('Delete',
+                              style: TextStyle(color: theme.colorScheme.error)),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ],

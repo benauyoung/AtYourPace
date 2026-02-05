@@ -241,6 +241,7 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
             onDelete: () => _confirmDelete(context, tour, notifier),
             onDuplicate: () => _duplicateTour(context, tour, notifier),
             onViewAnalytics: () => _viewAnalytics(context, tour),
+            onWithdraw: () => _confirmWithdraw(context, tour, notifier),
           );
         },
       ),
@@ -278,6 +279,8 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
             onTap: () => _openTour(context, tour),
             onEdit: () => _editTour(context, tour),
             onDelete: () => _confirmDelete(context, tour, notifier),
+            onDuplicate: () => _duplicateTour(context, tour, notifier),
+            onWithdraw: () => _confirmWithdraw(context, tour, notifier),
           );
         },
       ),
@@ -350,6 +353,47 @@ class _TourManagerScreenState extends ConsumerState<TourManagerScreen>
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
             child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmWithdraw(
+    BuildContext context,
+    TourModel tour,
+    TourManagerNotifier notifier,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Withdraw from Review?'),
+        content: Text(
+          'This will withdraw "${tour.city ?? 'Untitled Tour'}" from the review process and set it back to draft so you can make changes.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final success = await notifier.withdrawTour(tour.id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? 'Tour withdrawn — you can now edit it'
+                          : 'Failed to withdraw tour',
+                    ),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            child: const Text('Withdraw'),
           ),
         ],
       ),

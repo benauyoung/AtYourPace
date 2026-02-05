@@ -407,6 +407,14 @@ class TourEditorNotifier extends StateNotifier<TourEditorState> {
       return false;
     }
 
+    // Prevent saving tours that are pending review or approved
+    if (!state.isNewTour && state.tour != null && !state.tour!.isEditable) {
+      state = state.copyWith(
+        error: 'This tour cannot be edited in its current status',
+      );
+      return false;
+    }
+
     state = state.copyWith(isSaving: true, clearError: true);
 
     try {

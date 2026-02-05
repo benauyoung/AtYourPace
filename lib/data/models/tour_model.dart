@@ -101,6 +101,7 @@ class TourModel with _$TourModel {
   bool get isPublished => liveVersionId != null;
   bool get isPendingReview => status == TourStatus.pendingReview;
   bool get isApproved => status == TourStatus.approved;
+  bool get isEditable => status == TourStatus.draft || status == TourStatus.rejected;
   bool get hasPendingChanges =>
       isPublished && draftVersionId != liveVersionId;
 }

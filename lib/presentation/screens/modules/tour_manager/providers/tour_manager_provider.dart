@@ -348,6 +348,57 @@ class TourManagerNotifier extends StateNotifier<TourManagerState> {
     }
   }
 
+  /// Withdraw a tour from review (sets status back to draft)
+  Future<bool> withdrawTour(String tourId) async {
+    try {
+      // Find and update the latest submission for this tour
+      final submissionQuery = await _firestore
+          .collection('publishing_submissions')
+          .where('tourId', isEqualTo: tourId)
+          .orderBy('submittedAt', descending: true)
+          .limit(1)
+          .get();
+
+      final batch = _firestore.batch();
+
+      if (submissionQuery.docs.isNotEmpty) {
+        batch.update(
+          submissionQuery.docs.first.reference,
+          {
+            'status': 'withdrawn',
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+        );
+      }
+
+      // Set tour status back to draft
+      batch.update(
+        _firestore.collection('tours').doc(tourId),
+        {
+          'status': 'draft',
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+      );
+
+      await batch.commit();
+
+      // Update local state
+      state = state.copyWith(
+        tours: state.tours.map((t) {
+          if (t.id == tourId) {
+            return t.copyWith(status: TourStatus.draft);
+          }
+          return t;
+        }).toList(),
+      );
+
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: 'Failed to withdraw tour: $e');
+      return false;
+    }
+  }
+
   /// Clear error
   void clearError() {
     state = state.copyWith(clearError: true);
