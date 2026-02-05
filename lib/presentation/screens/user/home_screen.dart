@@ -276,7 +276,6 @@ class _FeaturedTourCard extends ConsumerWidget {
     final versionAsync = ref.watch(
       tourVersionProvider((tourId: tour.id, versionId: versionId)),
     );
-    final coverImageUrl = versionAsync.valueOrNull?.coverImageUrl;
 
     return GestureDetector(
       onTap: onTap,
@@ -293,14 +292,22 @@ class _FeaturedTourCard extends ConsumerWidget {
               SizedBox(
                 height: 120,
                 width: double.infinity,
-                child: coverImageUrl != null && coverImageUrl.isNotEmpty
-                    ? CachedNetworkImage(
+                child: versionAsync.when(
+                  data: (version) {
+                    final coverImageUrl = version?.coverImageUrl;
+                    if (coverImageUrl != null && coverImageUrl.isNotEmpty) {
+                      return CachedNetworkImage(
                         imageUrl: coverImageUrl,
                         fit: BoxFit.cover,
                         placeholder: (_, __) => _buildGradientPlaceholder(),
                         errorWidget: (_, __, ___) => _buildGradientPlaceholder(),
-                      )
-                    : _buildGradientPlaceholder(),
+                      );
+                    }
+                    return _buildGradientPlaceholder();
+                  },
+                  loading: () => _buildGradientPlaceholder(),
+                  error: (_, __) => _buildGradientPlaceholder(),
+                ),
               ),
               Expanded(
                 child: Padding(
@@ -523,7 +530,6 @@ class _RecommendedTourCard extends ConsumerWidget {
     final versionAsync = ref.watch(
       tourVersionProvider((tourId: tour.id, versionId: versionId)),
     );
-    final coverImageUrl = versionAsync.valueOrNull?.coverImageUrl;
 
     return GestureDetector(
       onTap: onTap,
@@ -542,14 +548,22 @@ class _RecommendedTourCard extends ConsumerWidget {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: coverImageUrl != null && coverImageUrl.isNotEmpty
-                          ? CachedNetworkImage(
+                      child: versionAsync.when(
+                        data: (version) {
+                          final coverImageUrl = version?.coverImageUrl;
+                          if (coverImageUrl != null && coverImageUrl.isNotEmpty) {
+                            return CachedNetworkImage(
                               imageUrl: coverImageUrl,
                               fit: BoxFit.cover,
                               placeholder: (_, __) => _buildGradientPlaceholder(tour),
                               errorWidget: (_, __, ___) => _buildGradientPlaceholder(tour),
-                            )
-                          : _buildGradientPlaceholder(tour),
+                            );
+                          }
+                          return _buildGradientPlaceholder(tour);
+                        },
+                        loading: () => _buildGradientPlaceholder(tour),
+                        error: (_, __) => _buildGradientPlaceholder(tour),
+                      ),
                     ),
                     Positioned(
                       top: 8,

@@ -34,6 +34,7 @@ export const seedTestTour = functions.https.onRequest(async (req, res) => {
       city: 'San Francisco',
       region: 'California',
       country: 'United States',
+      draftTitle: 'Downtown San Francisco Walking Tour',
       liveVersionId: versionId,
       liveVersion: 1,
       draftVersionId: versionId,
@@ -188,6 +189,7 @@ export const seedClamartTour = functions.https.onRequest(async (req, res) => {
       city: 'Clamart',
       region: 'Ile-de-France',
       country: 'France',
+      draftTitle: 'Historic Clamart Walking Tour',
       liveVersionId: versionId,
       liveVersion: 1,
       draftVersionId: versionId,
@@ -347,5 +349,205 @@ export const seedClamartTour = functions.https.onRequest(async (req, res) => {
   } catch (error) {
     console.error('Error creating Clamart tour:', error);
     res.status(500).json({ error: 'Failed to create Clamart tour', details: String(error) });
+  }
+});
+
+/**
+ * Delete seed tours and curated collections from Firestore.
+ * Call via: curl https://us-central1-atyourpace-6a6e5.cloudfunctions.net/deleteSeedData
+ */
+export const deleteSeedData = functions.https.onRequest(async (req, res) => {
+  try {
+    const deleted: string[] = [];
+
+    // Delete seed tours and their subcollections
+    const seedTourIds = ['test-tour-001', 'clamart-historic-tour'];
+
+    for (const tourId of seedTourIds) {
+      const tourRef = db.collection('tours').doc(tourId);
+      const tourDoc = await tourRef.get();
+
+      if (tourDoc.exists) {
+        // Delete all versions and their stops
+        const versionsSnapshot = await tourRef.collection('versions').get();
+        for (const versionDoc of versionsSnapshot.docs) {
+          // Delete stops subcollection
+          const stopsSnapshot = await versionDoc.ref.collection('stops').get();
+          for (const stopDoc of stopsSnapshot.docs) {
+            await stopDoc.ref.delete();
+          }
+          await versionDoc.ref.delete();
+        }
+
+        // Delete the tour document itself
+        await tourRef.delete();
+        deleted.push(`tour: ${tourId}`);
+      }
+    }
+
+    // Delete all curated collections
+    const collectionsSnapshot = await db.collection('collections').get();
+    for (const collectionDoc of collectionsSnapshot.docs) {
+      await collectionDoc.ref.delete();
+      deleted.push(`collection: ${collectionDoc.id}`);
+    }
+
+    res.status(200).json({
+      message: `Deleted ${deleted.length} items`,
+      deleted,
+    });
+
+  } catch (error) {
+    console.error('Error deleting seed data:', error);
+    res.status(500).json({ error: 'Failed to delete seed data', details: String(error) });
+  }
+});
+
+/**
+ * Patch existing tour version documents with coverImageUrl and audio data.
+ * This fixes tours that were seeded before these fields were added.
+ * Also patches any tour whose version doc is missing coverImageUrl.
+ * Call via: curl https://us-central1-atyourpace-6a6e5.cloudfunctions.net/patchTourVersionData
+ */
+export const patchTourVersionData = functions.https.onRequest(async (req, res) => {
+  try {
+    const results: Array<{ tourId: string; versionId: string; patched: string[] }> = [];
+
+    // Known seed tour cover images
+    const seedCoverImages: Record<string, string> = {
+      'test-tour-001': 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800',
+      'clamart-historic-tour': 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',
+    };
+
+    // Known seed tour audio data
+    const seedAudioData: Record<string, Array<{ audioUrl: string; audioSource: string; audioDuration: number }>> = {
+      'test-tour-001': [
+        { audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', audioSource: 'recorded', audioDuration: 60 },
+        { audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', audioSource: 'recorded', audioDuration: 45 },
+        { audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', audioSource: 'recorded', audioDuration: 50 },
+      ],
+      'clamart-historic-tour': [
+        { audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', audioSource: 'elevenlabs', audioDuration: 90 },
+        { audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3', audioSource: 'elevenlabs', audioDuration: 120 },
+        { audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3', audioSource: 'elevenlabs', audioDuration: 100 },
+        { audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3', audioSource: 'elevenlabs', audioDuration: 130 },
+        { audioUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3', audioSource: 'elevenlabs', audioDuration: 110 },
+      ],
+    };
+
+    // Query ALL tours (not just seed tours)
+    const toursSnapshot = await db.collection('tours').get();
+
+    for (const tourDoc of toursSnapshot.docs) {
+      const tourId = tourDoc.id;
+      const tourData = tourDoc.data();
+      const patchedFields: string[] = [];
+
+      // Patch draftTitle if missing (powers tour.displayName in mobile app)
+      if (!tourData.draftTitle) {
+        const draftVersionId = tourData.draftVersionId || tourData.liveVersionId;
+        if (draftVersionId) {
+          const versionDoc = await db.collection('tours').doc(tourId)
+            .collection('versions').doc(draftVersionId).get();
+          if (versionDoc.exists) {
+            const versionTitle = versionDoc.data()?.title;
+            if (versionTitle) {
+              await db.collection('tours').doc(tourId).update({ draftTitle: versionTitle });
+              patchedFields.push(`draftTitle=${versionTitle}`);
+            }
+          }
+        }
+      }
+
+      // Ensure tours are marked as featured and approved for home screen visibility
+      const tourUpdates: Record<string, any> = {};
+      if (tourData.status !== 'approved') {
+        tourUpdates.status = 'approved';
+        patchedFields.push('status=approved');
+      }
+      if (!tourData.featured) {
+        tourUpdates.featured = true;
+        patchedFields.push('featured=true');
+      }
+      // Promote draftVersionId to liveVersionId if not set
+      if (!tourData.liveVersionId && tourData.draftVersionId) {
+        tourUpdates.liveVersionId = tourData.draftVersionId;
+        tourUpdates.liveVersion = tourData.draftVersion || 1;
+        patchedFields.push(`liveVersionId=${tourData.draftVersionId}`);
+      }
+      if (Object.keys(tourUpdates).length > 0) {
+        await db.collection('tours').doc(tourId).update(tourUpdates);
+      }
+
+      // Get all version documents for this tour
+      const versionsSnapshot = await db.collection('tours').doc(tourId)
+        .collection('versions').get();
+
+      for (const versionDoc of versionsSnapshot.docs) {
+        const versionId = versionDoc.id;
+        const versionData = versionDoc.data();
+        const versionPatchedFields: string[] = [];
+
+        // Patch coverImageUrl if missing
+        if (!versionData.coverImageUrl) {
+          const coverUrl = seedCoverImages[tourId] || null;
+          if (coverUrl) {
+            await db.collection('tours').doc(tourId)
+              .collection('versions').doc(versionId)
+              .update({ coverImageUrl: coverUrl });
+            versionPatchedFields.push('coverImageUrl');
+          }
+        }
+
+        // Patch stop audio data if this is a known seed tour
+        if (seedAudioData[tourId]) {
+          const stopsSnapshot = await db.collection('tours').doc(tourId)
+            .collection('versions').doc(versionId)
+            .collection('stops').orderBy('order').get();
+
+          let patchedStops = 0;
+          for (let i = 0; i < stopsSnapshot.docs.length; i++) {
+            const stopDoc = stopsSnapshot.docs[i];
+            const stopData = stopDoc.data();
+            const audioData = seedAudioData[tourId][i];
+
+            if (audioData && (!stopData.media?.audioUrl)) {
+              await stopDoc.ref.update({
+                'media.audioUrl': audioData.audioUrl,
+                'media.audioSource': audioData.audioSource,
+                'media.audioDuration': audioData.audioDuration,
+              });
+              patchedStops++;
+            }
+          }
+          if (patchedStops > 0) {
+            versionPatchedFields.push(`${patchedStops} stops audio`);
+          }
+        }
+
+        if (versionPatchedFields.length > 0 || patchedFields.length > 0) {
+          results.push({
+            tourId,
+            versionId,
+            patched: [...patchedFields, ...versionPatchedFields],
+          });
+        }
+      }
+
+      // If tour had patched fields but no versions, still report
+      if (patchedFields.length > 0 && versionsSnapshot.empty) {
+        results.push({ tourId, versionId: '(none)', patched: patchedFields });
+      }
+    }
+
+    res.status(200).json({
+      message: `Patched ${results.length} tour versions`,
+      totalToursScanned: toursSnapshot.size,
+      patches: results,
+    });
+
+  } catch (error) {
+    console.error('Error patching tour data:', error);
+    res.status(500).json({ error: 'Failed to patch tour data', details: String(error) });
   }
 });
