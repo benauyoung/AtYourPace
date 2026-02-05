@@ -1,35 +1,42 @@
 # Project Status Summary
 
-**Last Updated**: February 4, 2026
+**Last Updated**: February 5, 2026
 **Project**: AYP Tour Guide - Mobile App
-**Status**: Mobile App Has Critical Issues Blocking Usability
+**Status**: ~85% Complete — Core UX functional, polish remaining
 
 ---
 
-## Current State - HONEST ASSESSMENT
+## Current State
 
-The mobile app has several critical issues that make it unusable for real testing:
+The mobile app core experience is working: maps render, audio plays, tours load from Firestore, and the playback flow is functional end-to-end.
 
-### Blocking Issues (Must Fix)
+### Recently Fixed (Session 6 — Feb 5, 2026)
 
-| Issue | Status | Notes |
-|-------|--------|-------|
-| **Map tiles not rendering** | 3 fixes applied, untested | Grey/blank maps on both tour details header and playback screen |
-| **Audio not playing** | Data issue | All Firestore stops have `audioUrl: null` - need real audio files |
-| **Tour cover images not loading** | Not investigated | Featured tours and "Recommended for you" show no images |
-| **Center-on-user button broken** | Not investigated | Button exists but doesn't work |
-| **Dead-end buttons everywhere** | Not fixed | Many buttons lead nowhere or show placeholder content |
-| **Manual/auto trigger toggle** | Confusing UX | Toggle at top of playback screen - unclear purpose |
+| Issue | Fix |
+|-------|-----|
+| **Audio auto-play not triggering** | Added same-stop guard, continuous proximity checks, removed duplicate location tracking |
+| **Center-on-user button silent fail** | Falls back to `Geolocator.getCurrentPosition()` when streamed position is null |
+| **Begin Tour had no options** | Now shows bottom sheet with "Browse Tour Map" and "Start Tour Now" choices |
+| **Browse mode markers not tappable** | Tapping a stop in preview mode now shows info sheet (name, images, description) |
 
-### Map Tile Fixes Applied (Untested)
+### Previously Fixed (Sessions 1–5)
 
-Three fixes were applied on Feb 4, 2026 but not deployed:
+| Issue | Session |
+|-------|---------|
+| Map tiles not rendering (Mapbox token, Impeller, hosting mode) | 3 |
+| Audio not playing (null audioUrls patched) | 3–4 |
+| Cover images not loading on Home tab (AsyncValue pattern) | 4–5 |
+| Dead-end buttons removed/implemented | 4 |
+| Seed tours cleaned up, admin tours patched | 5 |
 
-1. **Disabled Impeller** - Added `EnableImpeller=false` meta-data in AndroidManifest.xml
-2. **Changed androidHostingMode** - Set to `TLHC_HC` instead of default `VD` in TourMapWidget
-3. **Added Android string resource** - Created `mapbox_config.xml` with access token
+### Remaining Issues
 
-To test: `flutter run -d R5CY503JQTT --no-enable-impeller`
+| Issue | Severity | Notes |
+|-------|----------|-------|
+| **RenderFlex overflow** | Low | 8px/22px overflow on home screen (skeleton_loader.dart:59 area) |
+| **Reviews PERMISSION_DENIED** | Low | Firestore rules rejecting reviews query |
+| **GoogleApiManager DEVELOPER_ERROR** | Low | SHA-1 fingerprint not registered in Firebase console |
+| **Content editor placeholders** | N/A | Stop editor (map picker, record audio, file upload) — legitimately "coming soon" |
 
 ---
 
@@ -37,37 +44,19 @@ To test: `flutter run -d R5CY503JQTT --no-enable-impeller`
 
 - Core navigation and architecture
 - Authentication (login/logout)
-- Tour list displays (with placeholder images)
-- Tour playback screen structure (minus map tiles)
-- Bottom sheet with stops list
-- Trigger radius circles on map (when tiles load)
-
----
-
-## Recent UI Changes (Feb 4, 2026)
-
-### Session 2 (Afternoon)
-- Removed search & settings buttons from playback map overlay
-- Converted playback bottom sheet from tabbed StatefulWidget to clean StatelessWidget
-- Added play button per stop in bottom sheet
-- Added status labels (Completed/Now Playing/Audio/No audio)
-- Changed status bar text from version title to tour city
-- Switched tour details "Begin Tour" from bottomSheet to bottomNavigationBar
-- Added category-specific gradient placeholders for tour cards
-- Restored trigger radius circles (user preference)
-
-### Session 1 (Morning)
-- Removed "Download Complete" checkmark and text
-- Removed "Read before you go" section
-- Removed "Meet the Creators" section
-- Removed in-app Write Review buttons
-- Added preview mode to TourPlaybackScreen
+- Tour list with cover images on Home and Discover tabs
+- Map rendering with stop markers and trigger radius circles
+- Audio playback with auto-trigger on geofence entry
+- Playback bottom sheet with stop list, play/pause, expanded content
+- Center-on-user button with fallback
+- Begin Tour choice dialog (Browse Map / Start Tour)
+- Browse mode with tappable stop markers showing info sheets
+- Preview mode (explore map without audio/tracking)
+- Tour completion overlay
 
 ---
 
 ## Tour Manager Rebuild Status
-
-The Tour Manager rebuild (creator/admin tools) is separate from mobile user experience:
 
 | Module | Status |
 |--------|--------|
@@ -81,35 +70,19 @@ The Tour Manager rebuild (creator/admin tools) is separate from mobile user expe
 
 ---
 
-## Next Session Priority
+## Key Files
 
-1. **Deploy and test map tile fixes** - Run with `--no-enable-impeller`
-2. **Debug cover images** - Are URLs null in Firestore or is it a code issue?
-3. **Test center-on-user button** - Check location permissions and userPosition state
-4. **Audit dead-end buttons** - Find all `onPressed: () {}` and remove or implement
-5. **Consider removing manual/auto toggle** - Confusing UX element
-6. **Add real audio files to Firestore** - Current test data has null audioUrls
-
----
-
-## Files to Check
-
-| File | Issue |
-|------|-------|
-| `tour_map_widget.dart` | Map tile rendering |
-| `tour_card.dart` | Cover image loading |
-| `tour_playback_screen.dart` | Center button, trigger mode toggle |
-| `playback_bottom_sheet.dart` | Stop list and audio controls |
-| `playback_provider.dart` | Audio playback logic |
+| File | Purpose |
+|------|---------|
+| `playback_provider.dart` | Audio playback, geofence triggers, proximity checks |
+| `tour_map_widget.dart` | Map rendering, stop markers, center button |
+| `tour_playback_screen.dart` | Playback UI, stop info sheet (browse), end tour |
+| `tour_details_screen.dart` | Tour info, begin tour dialog |
+| `playback_bottom_sheet.dart` | Stop list, play/pause controls, expanded content |
 
 ---
 
 ## Documentation
 
-- [Memory File](../../../.claude/projects/C--Users-Benjamin-Desktop-Projects-AYP/memory/MEMORY.md) - Session notes and priority issues
-- [Implementation Checklist](./IMPLEMENTATION_CHECKLIST.md) - Tour Manager rebuild tasks
+- [Tour Manager](./TOUR_MANAGER.md) - Tour Manager rebuild tasks
 - [Architecture](./ARCHITECTURE.md) - System design
-
----
-
-**Bottom Line**: The mobile app needs the map tiles working and dead-end buttons cleaned up before it's usable for real testing.
