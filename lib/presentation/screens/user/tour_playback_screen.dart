@@ -42,7 +42,6 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
     final isLoading = ref.watch(playbackStateProvider.select((s) => s.isLoading));
     final error = ref.watch(playbackStateProvider.select((s) => s.error));
     final tour = ref.watch(playbackStateProvider.select((s) => s.tour));
-    final triggerMode = ref.watch(playbackStateProvider.select((s) => s.triggerMode));
     final completedStopIndices = ref.watch(
       playbackStateProvider.select((s) => s.completedStopIndices),
     );
@@ -67,7 +66,6 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
       stops: stops,
       currentStopIndex: currentStopIndex,
       completedStopIndices: completedStopIndices,
-      triggerMode: triggerMode,
       userPosition: userPosition,
       isLoading: isLoading,
       error: error,
@@ -146,6 +144,9 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
             routeCoordinates: routeCoordinates,
             stops: markers,
             showUserLocation: true,
+            userPosition: userPosition != null
+                ? mapbox.Position(userPosition.longitude, userPosition.latitude)
+                : null,
             onStopTapped: widget.previewMode
                 ? null
                 : (marker) {
@@ -192,7 +193,7 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              tour.city ?? 'Tour',
+                              tour.displayName,
                               style: context.textTheme.titleMedium,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -208,31 +209,6 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                           ],
                         ),
                       ),
-                      // Trigger mode toggle (only in full playback mode)
-                      if (!widget.previewMode)
-                        IconButton(
-                          icon: Icon(
-                            playbackState.triggerMode == TriggerMode.automatic
-                                ? Icons.gps_fixed
-                                : Icons.touch_app,
-                          ),
-                          onPressed: () {
-                            final newMode =
-                                playbackState.triggerMode == TriggerMode.automatic
-                                    ? TriggerMode.manual
-                                    : TriggerMode.automatic;
-                            ref.read(playbackStateProvider.notifier).setTriggerMode(newMode);
-                            context.showSuccessSnackBar(
-                              newMode == TriggerMode.automatic
-                                  ? 'Auto-trigger enabled'
-                                  : 'Manual mode enabled',
-                            );
-                          },
-                          tooltip:
-                              playbackState.triggerMode == TriggerMode.automatic
-                                  ? 'Switch to manual mode'
-                                  : 'Switch to auto mode',
-                        ),
                     ],
                   ),
                 ),
@@ -264,10 +240,8 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                   context.showInfoSnackBar('No audio available for this stop');
                 }
               },
-              onModeToggle: (isAutomatic) {
-                ref
-                    .read(playbackStateProvider.notifier)
-                    .setTriggerMode(isAutomatic ? TriggerMode.automatic : TriggerMode.manual);
+              onTogglePlayPause: () {
+                ref.read(playbackStateProvider.notifier).togglePlayPause();
               },
             ),
 

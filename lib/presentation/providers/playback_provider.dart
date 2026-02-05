@@ -161,7 +161,6 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   /// Handle geofence events from background service
   void _onBackgroundGeofenceEvent(String geofenceId, String eventType) {
-    if (state.triggerMode != TriggerMode.automatic) return;
     if (eventType != 'enter') return;
 
     // Find the stop index for this geofence
@@ -203,7 +202,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       }
 
       // Load version data
+      debugPrint('[Playback] Tour ${tour.id}: status=${tour.status}, liveVersionId=${tour.liveVersionId}, draftVersionId=${tour.draftVersionId}');
       final versionId = tour.liveVersionId ?? tour.draftVersionId;
+      debugPrint('[Playback] Using versionId=$versionId');
 
       try {
         version = await _ref.read(
@@ -283,6 +284,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   Future<void> _startTracking() async {
+    await _locationService.startTracking();
     await _geofenceService.startMonitoring();
 
     _positionSubscription?.cancel();
@@ -290,15 +292,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       state = state.copyWith(userPosition: position);
 
       // Check if we need to trigger any stops immediately (e.g. if we started inside a zone)
-      if (state.triggerMode == TriggerMode.automatic &&
-          state.hasStarted &&
-          state.currentStopIndex == -1) {
+      if (state.hasStarted && state.currentStopIndex == -1) {
         _checkProximityToStops(position);
       }
     });
 
-    // Start background location tracking for automatic mode
-    if (state.triggerMode == TriggerMode.automatic && state.tour != null) {
+    // Start background location tracking
+    if (state.tour != null) {
       await _startBackgroundTracking();
     }
   }
@@ -334,7 +334,6 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   void _listenToGeofenceEvents() {
     _geofenceSubscription?.cancel();
     _geofenceSubscription = _geofenceService.eventStream.listen((event) {
-      if (state.triggerMode != TriggerMode.automatic) return;
       if (event.type != GeofenceEventType.enter) return;
 
       final index = event.geofence.data?['index'] as int?;
@@ -497,18 +496,6 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     await _audioService.skipBackward(const Duration(seconds: 10));
   }
 
-  /// Set trigger mode
-  Future<void> setTriggerMode(TriggerMode mode) async {
-    state = state.copyWith(triggerMode: mode);
-
-    // Start/stop background tracking based on mode
-    if (mode == TriggerMode.automatic && state.tour != null) {
-      await _startBackgroundTracking();
-    } else {
-      await _stopBackgroundTracking();
-    }
-  }
-
   /// Pause the tour (stop tracking)
   Future<void> pauseTour() async {
     _geofenceService.stopMonitoring();
@@ -520,9 +507,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   /// Resume the tour
   Future<void> resumeTour() async {
     await _geofenceService.startMonitoring();
-    if (state.triggerMode == TriggerMode.automatic) {
-      await _startBackgroundTracking();
-    }
+    await _startBackgroundTracking();
     state = state.copyWith(isPaused: false);
   }
 

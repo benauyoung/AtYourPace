@@ -4,6 +4,14 @@ class AppConfig {
   /// Set this to false when Firebase is configured
   static const bool demoMode = false;
 
+  /// Dev mode: shows a quick-login button on the login screen
+  static const bool devMode = true;
+
+  /// Dev account credentials (auto-created on first use)
+  static const String devEmail = 'dev@ayp.test';
+  static const String devPassword = 'devpass123';
+  static const String devDisplayName = 'Dev Tester';
+
   /// Demo user configuration
   static const String demoUserId = 'demo-user-001';
   static const String demoUserEmail = 'demo@example.com';

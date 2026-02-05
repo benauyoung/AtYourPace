@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -211,6 +212,8 @@ final stopsProvider = FutureProvider.family<List<StopModel>, ({String tourId, St
 
   final firestore = ref.watch(firestoreProvider);
 
+  debugPrint('[Stops] Loading stops for tour=${params.tourId} version=${params.versionId}');
+
   final snapshot = await firestore
       .collection(FirestoreCollections.tours)
       .doc(params.tourId)
@@ -219,6 +222,11 @@ final stopsProvider = FutureProvider.family<List<StopModel>, ({String tourId, St
       .collection(FirestoreCollections.stops)
       .orderBy('order')
       .get();
+
+  for (final doc in snapshot.docs) {
+    final data = doc.data();
+    debugPrint('[Stops] Raw stop ${doc.id}: media=${data['media']}');
+  }
 
   return snapshot.docs.map((doc) => StopModel.fromFirestore(
     doc,

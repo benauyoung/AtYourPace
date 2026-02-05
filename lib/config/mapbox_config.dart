@@ -5,7 +5,7 @@ class MapboxConfig {
 
   // Mapbox access token
   // Get your token from: https://account.mapbox.com/access-tokens/
-  static const String accessToken = 'pk.eyJ1IjoiYmVueTg5IiwiYSI6ImNtOHhjZTdsMDAxcTUya3F4Zjk4em1xeXEifQ.Jpq3Q_E3DblgtbMFDFeKbQ';
+  static const String accessToken = 'pk.eyJ1IjoiYmVueTg5IiwiYSI6ImNtbDliNnYxZzAxNmUzZXF6eHFxMTZnam0ifQ.SBdAwteBql-1SmP6F9GlbQ';
 
   // Map styles
   // You can create custom styles at: https://studio.mapbox.com/
