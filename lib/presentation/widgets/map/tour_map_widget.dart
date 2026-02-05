@@ -326,14 +326,7 @@ class TourMapWidgetState extends State<TourMapWidget> {
     if (widget.userPosition != null) {
       await _flyToPosition(widget.userPosition!);
     } else {
-      // Fallback: try to get last known position from Mapbox location component
-      try {
-        final lastLocation = await _mapboxMap?.style.getStyleJSON();
-        // If we have a map, at least zoom to the initial center
-        debugPrint('[TourMap] centerOnUserLocation: userPosition is null, cannot center');
-      } catch (e) {
-        debugPrint('[TourMap] centerOnUserLocation error: $e');
-      }
+      debugPrint('[TourMap] centerOnUserLocation: userPosition is null, cannot center');
     }
   }
 
