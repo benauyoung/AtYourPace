@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme/colors.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/review_model.dart';
 import '../../../data/models/tour_model.dart';
@@ -11,11 +12,7 @@ class TourReviewsSection extends ConsumerWidget {
   final String tourId;
   final TourStats stats;
 
-  const TourReviewsSection({
-    super.key,
-    required this.tourId,
-    required this.stats,
-  });
+  const TourReviewsSection({super.key, required this.tourId, required this.stats});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,12 +22,7 @@ class TourReviewsSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header with rating summary
-        Text(
-          'Reviews',
-          style: context.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        Text('Reviews', style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
 
         // Rating summary card
@@ -46,10 +38,14 @@ class TourReviewsSection extends ConsumerWidget {
 
             return Column(
               children: [
-                ...reviews.take(3).map((review) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ReviewCard(review: review),
-                )),
+                ...reviews
+                    .take(3)
+                    .map(
+                      (review) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _ReviewCard(review: review),
+                      ),
+                    ),
                 if (reviews.length > 3)
                   OutlinedButton(
                     onPressed: () => _showAllReviews(context, reviews),
@@ -58,18 +54,17 @@ class TourReviewsSection extends ConsumerWidget {
               ],
             );
           },
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: CircularProgressIndicator(),
-            ),
-          ),
-          error: (error, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Text('Error loading reviews: $error'),
-            ),
-          ),
+          loading:
+              () => const Center(
+                child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()),
+              ),
+          error:
+              (error, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Text('Error loading reviews: $error'),
+                ),
+              ),
         ),
       ],
     );
@@ -80,44 +75,47 @@ class TourReviewsSection extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.9,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Text(
-                    'All Reviews (${reviews.length})',
-                    style: context.textTheme.titleLarge,
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: ListView.builder(
-                controller: scrollController,
-                padding: const EdgeInsets.all(16),
-                itemCount: reviews.length,
-                itemBuilder: (context, index) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ReviewCard(review: reviews[index]),
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.9,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            expand: false,
+            builder:
+                (context, scrollController) => Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Text(
+                            'All Reviews (${reviews.length})',
+                            style: context.textTheme.titleLarge,
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: reviews.length,
+                        itemBuilder:
+                            (context, index) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _ReviewCard(review: reviews[index]),
+                            ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }
@@ -139,20 +137,18 @@ class _RatingSummaryCard extends StatelessWidget {
               children: [
                 Text(
                   stats.averageRating.toStringAsFixed(1),
-                  style: context.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: context.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(5, (index) {
                     final rating = stats.averageRating;
                     if (index < rating.floor()) {
-                      return const Icon(Icons.star, color: Colors.amber, size: 16);
+                      return const Icon(Icons.star, color: AppColors.accent, size: 16);
                     } else if (index < rating) {
-                      return const Icon(Icons.star_half, color: Colors.amber, size: 16);
+                      return const Icon(Icons.star_half, color: AppColors.accent, size: 16);
                     }
-                    return const Icon(Icons.star_border, color: Colors.amber, size: 16);
+                    return const Icon(Icons.star_border, color: AppColors.accent, size: 16);
                   }),
                 ),
                 const SizedBox(height: 4),
@@ -169,34 +165,39 @@ class _RatingSummaryCard extends StatelessWidget {
             // Rating bars
             Expanded(
               child: Column(
-                children: [5, 4, 3, 2, 1].map((star) {
-                  // Demo distribution
-                  final percentage = star == 5 ? 0.6 : star == 4 ? 0.25 : star == 3 ? 0.1 : 0.05;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        Text(
-                          '$star',
-                          style: context.textTheme.bodySmall,
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.star, color: Colors.amber, size: 12),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: percentage,
-                              backgroundColor: context.colorScheme.surfaceContainerHighest,
-                              minHeight: 8,
+                children:
+                    [5, 4, 3, 2, 1].map((star) {
+                      // Demo distribution
+                      final percentage =
+                          star == 5
+                              ? 0.6
+                              : star == 4
+                              ? 0.25
+                              : star == 3
+                              ? 0.1
+                              : 0.05;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          children: [
+                            Text('$star', style: context.textTheme.bodySmall),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.star, color: AppColors.accent, size: 12),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: percentage,
+                                  backgroundColor: context.colorScheme.surfaceContainerHighest,
+                                  minHeight: 8,
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
               ),
             ),
           ],
@@ -222,11 +223,7 @@ class _ReviewCard extends StatelessWidget {
             // Header
             Row(
               children: [
-                _ReviewAvatar(
-                  photoUrl: review.userPhotoUrl,
-                  userName: review.userName,
-                  radius: 20,
-                ),
+                _ReviewAvatar(photoUrl: review.userPhotoUrl, userName: review.userName, radius: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -234,17 +231,18 @@ class _ReviewCard extends StatelessWidget {
                     children: [
                       Text(
                         review.userName,
-                        style: context.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       Row(
                         children: [
-                          ...List.generate(5, (index) => Icon(
-                            index < review.rating ? Icons.star : Icons.star_border,
-                            color: Colors.amber,
-                            size: 14,
-                          )),
+                          ...List.generate(
+                            5,
+                            (index) => Icon(
+                              index < review.rating ? Icons.star : Icons.star_border,
+                              color: AppColors.accent,
+                              size: 14,
+                            ),
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             review.formattedDate,
@@ -261,10 +259,7 @@ class _ReviewCard extends StatelessWidget {
             ),
             if (review.comment != null && review.comment!.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text(
-                review.comment!,
-                style: context.textTheme.bodyMedium,
-              ),
+              Text(review.comment!, style: context.textTheme.bodyMedium),
             ],
           ],
         ),
@@ -289,10 +284,7 @@ class _EmptyReviews extends StatelessWidget {
               color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
-            Text(
-              'No reviews yet',
-              style: context.textTheme.titleMedium,
-            ),
+            Text('No reviews yet', style: context.textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(
               'Be the first to share your experience!',
@@ -311,11 +303,7 @@ class WriteReviewSheet extends StatefulWidget {
   final String tourId;
   final Future<void> Function(int rating, String comment) onSubmit;
 
-  const WriteReviewSheet({
-    super.key,
-    required this.tourId,
-    required this.onSubmit,
-  });
+  const WriteReviewSheet({super.key, required this.tourId, required this.onSubmit});
 
   @override
   State<WriteReviewSheet> createState() => _WriteReviewSheetState();
@@ -335,9 +323,7 @@ class _WriteReviewSheetState extends State<WriteReviewSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -348,24 +334,16 @@ class _WriteReviewSheetState extends State<WriteReviewSheet> {
               children: [
                 Text(
                   'Write a Review',
-                  style: context.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
               ],
             ),
             const SizedBox(height: 24),
 
             // Rating
-            Text(
-              'How would you rate this tour?',
-              style: context.textTheme.titleMedium,
-            ),
+            Text('How would you rate this tour?', style: context.textTheme.titleMedium),
             const SizedBox(height: 12),
             Center(
               child: Row(
@@ -378,7 +356,7 @@ class _WriteReviewSheetState extends State<WriteReviewSheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Icon(
                         starNumber <= _rating ? Icons.star : Icons.star_border,
-                        color: Colors.amber,
+                        color: AppColors.accent,
                         size: 40,
                       ),
                     ),
@@ -398,10 +376,7 @@ class _WriteReviewSheetState extends State<WriteReviewSheet> {
             const SizedBox(height: 24),
 
             // Comment
-            Text(
-              'Share your experience',
-              style: context.textTheme.titleMedium,
-            ),
+            Text('Share your experience', style: context.textTheme.titleMedium),
             const SizedBox(height: 12),
             TextField(
               controller: _commentController,
@@ -419,13 +394,14 @@ class _WriteReviewSheetState extends State<WriteReviewSheet> {
               width: double.infinity,
               child: FilledButton(
                 onPressed: _rating == 0 || _isSubmitting ? null : _submitReview,
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Submit Review'),
+                child:
+                    _isSubmitting
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : const Text('Submit Review'),
               ),
             ),
           ],
@@ -462,17 +438,14 @@ class _WriteReviewSheetState extends State<WriteReviewSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Review submitted successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.primary,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to submit review: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Failed to submit review: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -489,43 +462,35 @@ class _ReviewAvatar extends StatelessWidget {
   final String userName;
   final double radius;
 
-  const _ReviewAvatar({
-    required this.photoUrl,
-    required this.userName,
-    this.radius = 20,
-  });
+  const _ReviewAvatar({required this.photoUrl, required this.userName, this.radius = 20});
 
   @override
   Widget build(BuildContext context) {
     if (photoUrl == null || photoUrl!.isEmpty) {
       return CircleAvatar(
         radius: radius,
-        child: Text(
-          userName.isNotEmpty ? userName[0].toUpperCase() : '?',
-        ),
+        child: Text(userName.isNotEmpty ? userName[0].toUpperCase() : '?'),
       );
     }
 
     return CachedNetworkImage(
       imageUrl: photoUrl!,
-      imageBuilder: (context, imageProvider) => CircleAvatar(
-        radius: radius,
-        backgroundImage: imageProvider,
-      ),
-      placeholder: (context, url) => CircleAvatar(
-        radius: radius,
-        child: const SizedBox(
-          width: 16,
-          height: 16,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-      errorWidget: (context, url, error) => CircleAvatar(
-        radius: radius,
-        child: Text(
-          userName.isNotEmpty ? userName[0].toUpperCase() : '?',
-        ),
-      ),
+      imageBuilder:
+          (context, imageProvider) => CircleAvatar(radius: radius, backgroundImage: imageProvider),
+      placeholder:
+          (context, url) => CircleAvatar(
+            radius: radius,
+            child: const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+      errorWidget:
+          (context, url, error) => CircleAvatar(
+            radius: radius,
+            child: Text(userName.isNotEmpty ? userName[0].toUpperCase() : '?'),
+          ),
     );
   }
 }

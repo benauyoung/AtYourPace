@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../config/theme/colors.dart';
 import '../../../core/extensions/context_extensions.dart';
 
 /// A full-screen loading overlay
@@ -24,7 +25,7 @@ class LoadingOverlay extends StatelessWidget {
         child,
         if (isLoading)
           Container(
-            color: barrierColor ?? Colors.black.withValues(alpha: 0.3),
+            color: barrierColor ?? AppColors.textPrimary.withOpacity(0.3),
             child: Center(
               child: Card(
                 child: Padding(
@@ -35,10 +36,7 @@ class LoadingOverlay extends StatelessWidget {
                       const CircularProgressIndicator(),
                       if (message != null) ...[
                         const SizedBox(height: 16),
-                        Text(
-                          message!,
-                          style: context.textTheme.bodyMedium,
-                        ),
+                        Text(message!, style: context.textTheme.bodyMedium),
                       ],
                     ],
                   ),
@@ -70,17 +68,18 @@ class LoadingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final button = filled
-        ? FilledButton(
-            onPressed: isLoading ? null : onPressed,
-            style: style,
-            child: _buildChild(),
-          )
-        : OutlinedButton(
-            onPressed: isLoading ? null : onPressed,
-            style: style,
-            child: _buildChild(),
-          );
+    final button =
+        filled
+            ? FilledButton(
+              onPressed: isLoading ? null : onPressed,
+              style: style,
+              child: _buildChild(),
+            )
+            : OutlinedButton(
+              onPressed: isLoading ? null : onPressed,
+              style: style,
+              child: _buildChild(),
+            );
 
     return button;
   }
@@ -103,23 +102,14 @@ class LoadingIndicator extends StatelessWidget {
   final bool centered;
   final double size;
 
-  const LoadingIndicator({
-    super.key,
-    this.message,
-    this.centered = true,
-    this.size = 36,
-  });
+  const LoadingIndicator({super.key, this.message, this.centered = true, this.size = 36});
 
   @override
   Widget build(BuildContext context) {
     final indicator = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          width: size,
-          height: size,
-          child: const CircularProgressIndicator(),
-        ),
+        SizedBox(width: size, height: size, child: const CircularProgressIndicator()),
         if (message != null) ...[
           const SizedBox(height: 16),
           Text(
@@ -133,12 +123,7 @@ class LoadingIndicator extends StatelessWidget {
     );
 
     if (centered) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: indicator,
-        ),
-      );
+      return Center(child: Padding(padding: const EdgeInsets.all(32), child: indicator));
     }
 
     return indicator;
@@ -151,19 +136,11 @@ class RefreshableList extends StatelessWidget {
   final Widget child;
   final ScrollController? controller;
 
-  const RefreshableList({
-    super.key,
-    required this.onRefresh,
-    required this.child,
-    this.controller,
-  });
+  const RefreshableList({super.key, required this.onRefresh, required this.child, this.controller});
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: child,
-    );
+    return RefreshIndicator(onRefresh: onRefresh, child: child);
   }
 }
 
@@ -196,16 +173,9 @@ class AsyncValueWidget<T> extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 48,
-                  color: context.colorScheme.error,
-                ),
+                Icon(Icons.error_outline, size: 48, color: context.colorScheme.error),
                 const SizedBox(height: 16),
-                Text(
-                  'Something went wrong',
-                  style: context.textTheme.titleMedium,
-                ),
+                Text('Something went wrong', style: context.textTheme.titleMedium),
                 const SizedBox(height: 8),
                 Text(
                   snapshot.error.toString(),

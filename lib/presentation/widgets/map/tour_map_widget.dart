@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart' as geo;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import '../../../config/mapbox_config.dart';
+import '../../../config/theme/colors.dart';
 
 /// A reusable map widget for displaying tour routes and stops
 class TourMapWidget extends StatefulWidget {
@@ -79,6 +80,8 @@ class TourMapWidgetState extends State<TourMapWidget> {
   PolylineAnnotationManager? _polylineAnnotationManager;
   CircleAnnotationManager? _circleAnnotationManager;
   final Map<String, StopMarker> _markerMap = {};
+  double _currentZoom = 15.0;
+  var _isRedrawingCircles = false;
 
   @override
   void didUpdateWidget(TourMapWidget oldWidget) {
@@ -114,7 +117,9 @@ class TourMapWidgetState extends State<TourMapWidget> {
         debugPrint('[TourMap] Map fully loaded');
       },
       onMapLoadErrorListener: (error) {
-        debugPrint('[TourMap] MAP LOAD ERROR: type=${error.type}, message=${error.message}, sourceId=${error.sourceId}');
+        debugPrint(
+          '[TourMap] MAP LOAD ERROR: type=${error.type}, message=${error.message}, sourceId=${error.sourceId}',
+        );
       },
       onResourceRequestListener: (event) {
         if (event.response?.error != null) {
@@ -123,6 +128,7 @@ class TourMapWidgetState extends State<TourMapWidget> {
       },
       onTapListener: widget.onMapTapped != null ? _onMapTapped : null,
       onLongTapListener: widget.onMapLongPressed != null ? _onMapLongPressed : null,
+      onCameraChangeListener: _onCameraChanged,
     );
 
     // If offline indicator is not needed, return map directly
@@ -138,6 +144,14 @@ class TourMapWidgetState extends State<TourMapWidget> {
     debugPrint('[TourMap] Map created, style: ${widget.mapStyle ?? MapboxConfig.defaultStyle}');
     _mapboxMap = mapboxMap;
 
+    // Push map ornaments below the system status bar / top bar area
+    final topInset = MediaQuery.of(context).padding.top;
+    final ornamentMargin = topInset + 80; // status bar + top bar height
+    await mapboxMap.scaleBar.updateSettings(ScaleBarSettings(enabled: false));
+    await mapboxMap.compass.updateSettings(CompassSettings(marginTop: ornamentMargin));
+    await mapboxMap.logo.updateSettings(LogoSettings(marginBottom: 160));
+    await mapboxMap.attribution.updateSettings(AttributionSettings(marginBottom: 160));
+
     // Create annotation managers
     // Create circle manager first so circles are below markers
     _circleAnnotationManager = await mapboxMap.annotations.createCircleAnnotationManager();
@@ -148,6 +162,8 @@ class TourMapWidgetState extends State<TourMapWidget> {
     _pointAnnotationManager?.addOnPointAnnotationClickListener(
       _PointAnnotationClickListener(markerMap: _markerMap, onStopTapped: widget.onStopTapped),
     );
+
+    _currentZoom = widget.initialZoom;
 
     // Enable user location if requested
     if (widget.showUserLocation) {
@@ -194,7 +210,7 @@ class TourMapWidgetState extends State<TourMapWidget> {
     await _polylineAnnotationManager?.create(
       PolylineAnnotationOptions(
         geometry: LineString(coordinates: coordinates),
-        lineColor: Colors.blue.value,
+        lineColor: AppColors.primary.value,
         lineWidth: 4.0,
         lineOpacity: 0.8,
       ),
@@ -245,20 +261,20 @@ class TourMapWidgetState extends State<TourMapWidget> {
       double circleOpacity;
 
       if (stop.isCurrent) {
-        circleColor = Colors.blue;
+        circleColor = AppColors.primary;
         circleOpacity = 0.3;
       } else if (stop.isCompleted) {
-        circleColor = Colors.green;
+        circleColor = AppColors.primaryLight;
         circleOpacity = 0.2;
       } else {
-        circleColor = Colors.blueGrey;
+        circleColor = AppColors.textTertiary;
         circleOpacity = 0.15;
       }
 
       await _circleAnnotationManager?.create(
         CircleAnnotationOptions(
           geometry: Point(coordinates: Position(stop.longitude, stop.latitude)),
-          circleRadius: _metersToPixelsAtZoom(radius, stop.latitude, widget.initialZoom),
+          circleRadius: _metersToPixelsAtZoom(radius, stop.latitude, _currentZoom),
           circleColor: circleColor.value,
           circleOpacity: circleOpacity,
           circleStrokeColor: circleColor.value,
@@ -269,17 +285,41 @@ class TourMapWidgetState extends State<TourMapWidget> {
     }
   }
 
-  /// Convert meters to approximate pixels at a given zoom level and latitude
+  /// Called when the camera changes (pan, zoom, etc).
+  void _onCameraChanged(CameraChangedEventData event) async {
+    if (_mapboxMap == null) return;
+    final cameraState = await _mapboxMap!.getCameraState();
+    final newZoom = cameraState.zoom;
+    if ((newZoom - _currentZoom).abs() > 0.1) {
+      _currentZoom = newZoom;
+      _redrawCircles();
+    }
+  }
+
+  /// Redraw trigger radius circles at the current zoom level.
+  Future<void> _redrawCircles() async {
+    if (_isRedrawingCircles) return;
+    _isRedrawingCircles = true;
+    try {
+      await _circleAnnotationManager?.deleteAll();
+      await _drawTriggerRadiusCircles();
+    } finally {
+      _isRedrawingCircles = false;
+    }
+  }
+
+  /// Convert meters to pixels at a given zoom level and latitude.
+  /// Circles are redrawn on every zoom change via _onCameraChanged.
   double _metersToPixelsAtZoom(double meters, double latitude, double zoom) {
     const double earthCircumference = 40075016.686;
     const double tileSize = 512.0;
 
     final double latitudeRadians = latitude * 3.14159265359 / 180.0;
     final double metersPerPixel =
-        earthCircumference * math.cos(latitudeRadians.abs()) / (tileSize * (1 << zoom.toInt()));
+        earthCircumference * math.cos(latitudeRadians.abs()) / (tileSize * math.pow(2, zoom));
 
     final double pixels = meters / metersPerPixel;
-    return pixels.clamp(10.0, 500.0);
+    return pixels.clamp(1.0, 5000.0);
   }
 
   Future<void> _flyToPosition(Position position) async {
@@ -320,6 +360,11 @@ class TourMapWidgetState extends State<TourMapWidget> {
         null,
       ),
     );
+  }
+
+  /// Public method to fly to an arbitrary position
+  Future<void> flyTo(Position position) async {
+    await _flyToPosition(position);
   }
 
   /// Public method to center on user location
@@ -417,11 +462,11 @@ class _OfflineIndicator extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.9),
+        color: AppColors.accent.withOpacity(0.9),
         borderRadius: BorderRadius.circular(4),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: AppColors.shadowLight.withOpacity(0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -430,11 +475,15 @@ class _OfflineIndicator extends StatelessWidget {
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.offline_bolt, size: 14, color: Colors.white),
+          Icon(Icons.offline_bolt, size: 14, color: AppColors.textOnPrimary),
           SizedBox(width: 4),
           Text(
             'Offline Map',
-            style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: AppColors.textOnPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),

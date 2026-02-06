@@ -134,6 +134,25 @@ class TourManagerFiltersPanel extends StatelessWidget {
     final isSelected = value != null;
 
     return PopupMenuButton<T?>(
+      onSelected: onChanged,
+      itemBuilder: (context) => [
+        PopupMenuItem<T?>(
+          value: null,
+          child: Text('All $label'),
+        ),
+        const PopupMenuDivider(),
+        ...items.map((item) => PopupMenuItem<T?>(
+              value: item,
+              child: Row(
+                children: [
+                  if (item == value)
+                    Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
+                  if (item == value) const SizedBox(width: 8),
+                  Text(itemLabel(item)),
+                ],
+              ),
+            )),
+      ],
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
@@ -170,25 +189,6 @@ class TourManagerFiltersPanel extends StatelessWidget {
           ],
         ),
       ),
-      onSelected: onChanged,
-      itemBuilder: (context) => [
-        PopupMenuItem<T?>(
-          value: null,
-          child: Text('All $label'),
-        ),
-        const PopupMenuDivider(),
-        ...items.map((item) => PopupMenuItem<T?>(
-              value: item,
-              child: Row(
-                children: [
-                  if (item == value)
-                    Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
-                  if (item == value) const SizedBox(width: 8),
-                  Text(itemLabel(item)),
-                ],
-              ),
-            )),
-      ],
     );
   }
 }

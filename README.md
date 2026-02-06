@@ -234,23 +234,13 @@ Core models use Freezed for immutability and JSON serialization:
 - [Setup Guide](docs/SETUP.md) - Detailed configuration instructions
 - [Architecture](docs/ARCHITECTURE.md) - Technical architecture overview
 - [Testing Guide](docs/TESTING.md) - Testing strategy and patterns
-- [Completion Plan](docs/COMPLETION_PLAN.md) - Remaining work and roadmap
-- [Session Log](docs/SESSION_LOG.md) - Development session notes
 - [Admin Web Panel](admin-web/README.md) - Web admin panel documentation
 
 ## Development Status
 
-**Current Status: Mobile App Has Critical Issues** (Updated February 4, 2026)
+**Current Status: ~85% Complete** (Updated February 5, 2026)
 
-### Blocking Issues (Must Fix)
-
-| Issue | Status |
-|-------|--------|
-| Map tiles not rendering | 3 fixes applied, untested |
-| Audio not playing | Data issue - Firestore has null audioUrls |
-| Tour cover images not loading | Not investigated |
-| Center-on-user button broken | Not investigated |
-| Dead-end buttons everywhere | Not fixed |
+See [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md) for current blocking issues and priorities.
 
 ### What Works
 - Core architecture and navigation
@@ -291,3 +281,5 @@ Proprietary - All rights reserved.
 - [Mapbox](https://www.mapbox.com) - Maps and navigation
 - [Riverpod](https://riverpod.dev) - State management
 - [ElevenLabs](https://elevenlabs.io) - AI voice generation
+
+

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../config/theme/colors.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/tour_model.dart';
@@ -24,33 +25,24 @@ class TourHistoryScreen extends ConsumerWidget {
                   _showClearConfirmation(context, ref);
                 }
               },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'clear',
-                  child: ListTile(
-                    leading: Icon(Icons.delete_sweep),
-                    title: Text('Clear History'),
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-              ],
+              itemBuilder:
+                  (context) => [
+                    const PopupMenuItem(
+                      value: 'clear',
+                      child: ListTile(
+                        leading: Icon(Icons.delete_sweep),
+                        title: Text('Clear History'),
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
             ),
           ],
           bottom: const TabBar(
-            tabs: [
-              Tab(text: 'In Progress'),
-              Tab(text: 'Completed'),
-              Tab(text: 'History'),
-            ],
+            tabs: [Tab(text: 'In Progress'), Tab(text: 'Completed'), Tab(text: 'History')],
           ),
         ),
-        body: TabBarView(
-          children: [
-            _InProgressTab(),
-            _CompletedTab(),
-            _HistoryTab(),
-          ],
-        ),
+        body: TabBarView(children: [_InProgressTab(), _CompletedTab(), _HistoryTab()]),
       ),
     );
   }
@@ -58,28 +50,26 @@ class TourHistoryScreen extends ConsumerWidget {
   void _showClearConfirmation(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear History?'),
-        content: const Text(
-          'This will remove all your tour history. Your completed tours and achievements will be preserved.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Clear History?'),
+            content: const Text(
+              'This will remove all your tour history. Your completed tours and achievements will be preserved.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: () {
+                  ref.read(tourHistoryProvider.notifier).clearHistory();
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('History cleared')));
+                },
+                child: const Text('Clear'),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () {
-              ref.read(tourHistoryProvider.notifier).clearHistory();
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('History cleared')),
-              );
-            },
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -188,8 +178,8 @@ class _HistoryTab extends ConsumerWidget {
               background: Container(
                 alignment: Alignment.centerRight,
                 padding: const EdgeInsets.only(right: 16),
-                color: Colors.red,
-                child: const Icon(Icons.delete, color: Colors.white),
+                color: AppColors.error,
+                child: const Icon(Icons.delete, color: AppColors.textOnPrimary),
               ),
               onDismissed: (_) {
                 ref.read(tourHistoryProvider.notifier).removeFromHistory(tour.id);
@@ -263,14 +253,10 @@ class _TourHistoryCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.all(2),
                           decoration: const BoxDecoration(
-                            color: Colors.green,
+                            color: AppColors.primary,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.check,
-                            size: 14,
-                            color: Colors.white,
-                          ),
+                          child: const Icon(Icons.check, size: 14, color: AppColors.textOnPrimary),
                         ),
                       ),
                   ],
@@ -285,9 +271,7 @@ class _TourHistoryCard extends StatelessWidget {
                   children: [
                     Text(
                       tour.displayName,
-                      style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -317,10 +301,7 @@ class _TourHistoryCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            '${record.progressPercent}%',
-                            style: context.textTheme.labelSmall,
-                          ),
+                          Text('${record.progressPercent}%', style: context.textTheme.labelSmall),
                         ],
                       )
                     else if (showTimestamp)
@@ -333,13 +314,11 @@ class _TourHistoryCard extends StatelessWidget {
                     else if (record.completed)
                       Row(
                         children: [
-                          const Icon(Icons.check_circle, size: 14, color: Colors.green),
+                          Icon(Icons.check_circle, size: 14, color: AppColors.primary),
                           const SizedBox(width: 4),
                           Text(
                             'Completed ${_formatTimestamp(record.viewedAt)}',
-                            style: context.textTheme.bodySmall?.copyWith(
-                              color: Colors.green,
-                            ),
+                            style: context.textTheme.bodySmall?.copyWith(color: AppColors.primary),
                           ),
                         ],
                       ),
@@ -404,17 +383,9 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 80,
-              color: context.colorScheme.primary.withValues(alpha: 0.5),
-            ),
+            Icon(icon, size: 80, color: context.colorScheme.primary.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
-            Text(
-              title,
-              style: context.textTheme.headlineSmall,
-              textAlign: TextAlign.center,
-            ),
+            Text(title, style: context.textTheme.headlineSmall, textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(
               subtitle,

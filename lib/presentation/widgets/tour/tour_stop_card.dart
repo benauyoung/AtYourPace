@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../config/theme/colors.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../data/models/stop_model.dart';
 import '../../../../services/audio_service.dart';
@@ -62,13 +63,13 @@ class TourStopCard extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
+                      color: AppColors.textPrimary.withOpacity(0.6),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '${index + 1}',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textOnPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -98,7 +99,7 @@ class TourStopCard extends ConsumerWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
+                              color: AppColors.shadowLight.withOpacity(0.12),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),

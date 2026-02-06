@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../config/theme/colors.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/user_model.dart';
@@ -88,21 +89,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       body: userAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Error loading profile: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(currentUserProvider),
-                child: const Text('Retry'),
+        error:
+            (error, _) => Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                  const SizedBox(height: 16),
+                  Text('Error loading profile: $error'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(currentUserProvider),
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
         data: (user) {
           // If Firebase user exists but Firestore document doesn't, create it
           if (user == null && authState.valueOrNull != null) {
@@ -112,7 +114,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const Icon(Icons.error_outline, size: 48, color: AppColors.error),
                     const SizedBox(height: 16),
                     const Text('Failed to create profile'),
                     const SizedBox(height: 8),
@@ -162,16 +164,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Column(
         children: [
           // Profile header
-          _ProfileAvatar(
-            photoUrl: user.photoUrl,
-            displayName: user.displayName,
-            radius: 50,
-          ),
+          _ProfileAvatar(photoUrl: user.photoUrl, displayName: user.displayName, radius: 50),
           const SizedBox(height: 16),
-          Text(
-            user.displayName,
-            style: context.textTheme.headlineSmall,
-          ),
+          Text(user.displayName, style: context.textTheme.headlineSmall),
           const SizedBox(height: 4),
           Text(
             user.email,
@@ -224,13 +219,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () => context.push(RouteNames.achievements),
                 ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.star_outline),
-                  title: const Text('My Reviews'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () => context.push(RouteNames.myReviews),
-                ),
+                // Reviews hidden for now
+                // const Divider(height: 1),
+                // ListTile(
+                //   leading: const Icon(Icons.star_outline),
+                //   title: const Text('My Reviews'),
+                //   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                //   onTap: () => context.push(RouteNames.myReviews),
+                // ),
               ],
             ),
           ),
@@ -269,27 +265,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Sign Out'),
-                    content: const Text(
-                      'Are you sure you want to sign out?',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
+                  builder:
+                      (context) => AlertDialog(
+                        title: const Text('Sign Out'),
+                        content: const Text('Are you sure you want to sign out?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              ref.read(authStateNotifierProvider.notifier).signOut();
+                            },
+                            child: const Text('Sign Out'),
+                          ),
+                        ],
                       ),
-                      FilledButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          ref
-                              .read(authStateNotifierProvider.notifier)
-                              .signOut();
-                        },
-                        child: const Text('Sign Out'),
-                      ),
-                    ],
-                  ),
                 );
               },
               icon: const Icon(Icons.logout),
@@ -312,11 +305,7 @@ class _ProfileAvatar extends StatelessWidget {
   final String displayName;
   final double radius;
 
-  const _ProfileAvatar({
-    required this.photoUrl,
-    required this.displayName,
-    this.radius = 50,
-  });
+  const _ProfileAvatar({required this.photoUrl, required this.displayName, this.radius = 50});
 
   @override
   Widget build(BuildContext context) {
@@ -325,30 +314,21 @@ class _ProfileAvatar extends StatelessWidget {
     if (photoUrl == null || photoUrl!.isEmpty) {
       return CircleAvatar(
         radius: radius,
-        child: Text(
-          initial,
-          style: Theme.of(context).textTheme.headlineLarge,
-        ),
+        child: Text(initial, style: Theme.of(context).textTheme.headlineLarge),
       );
     }
 
     return CachedNetworkImage(
       imageUrl: photoUrl!,
-      imageBuilder: (context, imageProvider) => CircleAvatar(
-        radius: radius,
-        backgroundImage: imageProvider,
-      ),
-      placeholder: (context, url) => CircleAvatar(
-        radius: radius,
-        child: const CircularProgressIndicator(),
-      ),
-      errorWidget: (context, url, error) => CircleAvatar(
-        radius: radius,
-        child: Text(
-          initial,
-          style: Theme.of(context).textTheme.headlineLarge,
-        ),
-      ),
+      imageBuilder:
+          (context, imageProvider) => CircleAvatar(radius: radius, backgroundImage: imageProvider),
+      placeholder:
+          (context, url) => CircleAvatar(radius: radius, child: const CircularProgressIndicator()),
+      errorWidget:
+          (context, url, error) => CircleAvatar(
+            radius: radius,
+            child: Text(initial, style: Theme.of(context).textTheme.headlineLarge),
+          ),
     );
   }
 }

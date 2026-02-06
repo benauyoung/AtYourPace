@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../config/theme/colors.dart';
 import '../../../core/extensions/context_extensions.dart';
 
 class HelpScreen extends StatelessWidget {
@@ -9,9 +10,7 @@ class HelpScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Help & Support'),
-      ),
+      appBar: AppBar(title: const Text('Help & Support')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -80,31 +79,36 @@ As a Creator, you can add stops with audio, images, and trigger zones.''',
                 _buildFaqTile(
                   context,
                   question: 'Is the app free to use?',
-                  answer: 'Yes! AYP Tour Guide is free to download and use. Some premium tours may have a cost in the future.',
+                  answer:
+                      'Yes! AYP Tour Guide is free to download and use. Some premium tours may have a cost in the future.',
                 ),
                 const Divider(height: 1),
                 _buildFaqTile(
                   context,
                   question: 'Does the app work without internet?',
-                  answer: 'Yes, if you download tours beforehand. The map requires internet for initial loading, but audio and tour data work offline.',
+                  answer:
+                      'Yes, if you download tours beforehand. The map requires internet for initial loading, but audio and tour data work offline.',
                 ),
                 const Divider(height: 1),
                 _buildFaqTile(
                   context,
                   question: 'How accurate is the GPS triggering?',
-                  answer: 'GPS accuracy varies by device and environment. Tours use trigger radii (usually 30-50m) to account for GPS drift. Buildings and trees can affect accuracy.',
+                  answer:
+                      'GPS accuracy varies by device and environment. Tours use trigger radii (usually 30-50m) to account for GPS drift. Buildings and trees can affect accuracy.',
                 ),
                 const Divider(height: 1),
                 _buildFaqTile(
                   context,
                   question: 'Can I pause a tour and resume later?',
-                  answer: 'Yes! Your progress is saved automatically. When you return to a tour, you\'ll continue from where you left off.',
+                  answer:
+                      'Yes! Your progress is saved automatically. When you return to a tour, you\'ll continue from where you left off.',
                 ),
                 const Divider(height: 1),
                 _buildFaqTile(
                   context,
                   question: 'How do I report an issue with a tour?',
-                  answer: 'On the tour details page, tap the menu icon and select "Report Issue". You can describe the problem and we\'ll review it.',
+                  answer:
+                      'On the tour details page, tap the menu icon and select "Report Issue". You can describe the problem and we\'ll review it.',
                 ),
               ],
             ),
@@ -154,11 +158,7 @@ As a Creator, you can add stops with audio, images, and trigger zones.''',
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        Icons.tour,
-                        size: 48,
-                        color: context.colorScheme.primary,
-                      ),
+                      Icon(Icons.tour, size: 48, color: context.colorScheme.primary),
                       const SizedBox(width: 16),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,9 +183,7 @@ As a Creator, you can add stops with audio, images, and trigger zones.''',
                   Text(
                     'Discover the world at your own pace with GPS-triggered audio tours. '
                     'Explore cities, parks, and historical sites with narrated guides that play automatically as you walk.',
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      height: 1.5,
-                    ),
+                    style: context.textTheme.bodyMedium?.copyWith(height: 1.5),
                   ),
                 ],
               ),
@@ -224,29 +222,18 @@ As a Creator, you can add stops with audio, images, and trigger zones.''',
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Text(
-              content,
-              style: context.textTheme.bodyMedium?.copyWith(
-                height: 1.6,
-              ),
-            ),
+            child: Text(content, style: context.textTheme.bodyMedium?.copyWith(height: 1.6)),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildFaqTile(
-    BuildContext context, {
-    required String question,
-    required String answer,
-  }) {
+  Widget _buildFaqTile(BuildContext context, {required String question, required String answer}) {
     return ExpansionTile(
       title: Text(
         question,
-        style: context.textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w500,
-        ),
+        style: context.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
       ),
       children: [
         Padding(
@@ -275,9 +262,9 @@ As a Creator, you can add stops with audio, images, and trigger zones.''',
       await launchUrl(uri);
     } else {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open email app')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Could not open email app')));
       }
     }
   }
@@ -286,35 +273,33 @@ As a Creator, you can add stops with audio, images, and trigger zones.''',
     final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Report a Bug'),
-        content: TextField(
-          controller: controller,
-          maxLines: 5,
-          decoration: const InputDecoration(
-            hintText: 'Describe the issue you encountered...',
-            border: OutlineInputBorder(),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Report a Bug'),
+            content: TextField(
+              controller: controller,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                hintText: 'Describe the issue you encountered...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Bug report submitted. Thank you!'),
+                      backgroundColor: AppColors.primary,
+                    ),
+                  );
+                },
+                child: const Text('Submit'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Bug report submitted. Thank you!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            child: const Text('Submit'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -322,35 +307,33 @@ As a Creator, you can add stops with audio, images, and trigger zones.''',
     final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Send Feedback'),
-        content: TextField(
-          controller: controller,
-          maxLines: 5,
-          decoration: const InputDecoration(
-            hintText: 'Share your thoughts and suggestions...',
-            border: OutlineInputBorder(),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Send Feedback'),
+            content: TextField(
+              controller: controller,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                hintText: 'Share your thoughts and suggestions...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Feedback submitted. Thank you!'),
+                      backgroundColor: AppColors.primary,
+                    ),
+                  );
+                },
+                child: const Text('Submit'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Feedback submitted. Thank you!'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            child: const Text('Submit'),
-          ),
-        ],
-      ),
     );
   }
 }

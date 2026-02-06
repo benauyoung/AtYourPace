@@ -1,8 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ayp_tour_guide/data/models/tour_model.dart';
-import 'package:ayp_tour_guide/data/models/tour_version_model.dart';
-import 'package:ayp_tour_guide/data/models/stop_model.dart';
 import '../../helpers/mock_services.dart';
 import '../../helpers/test_helpers.dart';
 

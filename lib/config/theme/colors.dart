@@ -1,98 +1,114 @@
 import 'package:flutter/material.dart';
 
-/// Neumorphic + Minimalist Color Palette
+/// Parisian Botanical Journal Color Palette
 ///
-/// Soft, muted colors with warm undertones designed for
-/// neumorphic shadow effects and visual comfort.
+/// A warm garden-green palette inspired by Parisian botanical journals,
+/// bouquiniste walking guides, and luxury travel magazines.
+/// Primary: Deep Garden Green | Accent: Antique Gold | Surface: Ivory Cream
 class AppColors {
   AppColors._();
 
-  // ============ NEUMORPHIC BASE COLORS ============
+  // ============ BASE SURFACES ============
 
-  /// Primary surface - warm cream/gray for neumorphic effects
-  static const Color surface = Color(0xFFF0F4F8); // Soft blue-gray
-  static const Color surfaceAlt = Color(0xFFE8ECF0); // Slightly darker for contrast
-  static const Color surfaceVariant = Color(0xFFDCE2E8); // Input fields, pressed states
+  /// Primary surface - warm parchment
+  static const Color surface = Color(0xFFF2EDE4); // Warm Parchment
+  static const Color surfaceAlt = Color(0xFFEBE5D8); // Card Parchment
+  static const Color surfaceVariant = Color(0xFFE3DDD0); // Deeper parchment
 
-  /// Background - slightly off-white with warmth
-  static const Color background = Color(0xFFF5F7FA); // Clean, warm white
+  /// Background - ivory cream
+  static const Color background = Color(0xFFF5F0E8); // Ivory Cream
 
-  // ============ PRIMARY PALETTE - Muted Teal ============
+  // ============ PRIMARY PALETTE - Deep Garden Green ============
 
-  static const Color primary = Color(0xFF3D7A8C); // Softer, muted teal
-  static const Color primaryLight = Color(0xFF5A9AAD); // Lighter variant
-  static const Color primaryDark = Color(0xFF2A5A68); // Deeper variant
-  static const Color primary50 = Color(0xFFE6F2F5); // Very light tint
-  static const Color primary100 = Color(0xFFCCE5EB); // Light containers
-  static const Color primary200 = Color(0xFF99CAD6); // Subtle accents
-  static const Color primary700 = Color(0xFF1E4A58); // Deep accent
-  static const Color primary900 = Color(0xFF0F2D36); // Deepest accent
+  static const Color primary = Color(0xFF4A6741); // Deep Garden Green
+  static const Color primaryLight = Color(0xFF6B8A5E); // Soft Sage
+  static const Color primaryDark = Color(0xFF3D5636); // Dark Ivy
+  static const Color primary50 = Color(0xFFEEF2EC); // Very light green tint
+  static const Color primary100 = Color(0xFFD5E0D1); // Light green containers
+  static const Color primary200 = Color(0xFFB0C5A8); // Subtle green accents
+  static const Color primary700 = Color(0xFF354D2E); // Deep green
+  static const Color primary900 = Color(0xFF243620); // Deepest green
 
-  // ============ SECONDARY PALETTE - Sage Green ============
+  // ============ SECONDARY PALETTE - Warm Parchment ============
 
-  static const Color secondary = Color(0xFF7CB69A); // Muted sage
-  static const Color secondaryLight = Color(0xFF9ECAB4); // Lighter sage
-  static const Color secondaryDark = Color(0xFF5A9A7D); // Deeper sage
-  static const Color secondary50 = Color(0xFFEDF5F1); // Very light tint
-  static const Color secondary100 = Color(0xFFD9EBE2); // Light containers
-  static const Color secondary600 = Color(0xFF5A9A7D); // Main shade
-  static const Color secondary700 = Color(0xFF4A8269); // Deep accent
+  static const Color secondary = Color(0xFFEBE5D8); // Card Parchment
+  static const Color secondaryLight = Color(0xFFF2EDE4); // Warm Parchment
+  static const Color secondaryDark = Color(0xFFE0DAC9); // Weathered Parchment
+  static const Color secondary50 = Color(0xFFFAF8F4); // Very light parchment
+  static const Color secondary100 = Color(0xFFF5F0E8); // Ivory Cream
+  static const Color secondary600 = Color(0xFFD8D1C2); // Main shade
+  static const Color secondary700 = Color(0xFFCCC4B3); // Deep parchment
 
-  // ============ ACCENT PALETTE - Warm Coral ============
+  // ============ ACCENT PALETTE - Antique Gold & Warm Tones ============
 
-  static const Color accent = Color(0xFFE8967A); // Muted coral
-  static const Color accentLight = Color(0xFFF0B09A);
-  static const Color accentDark = Color(0xFFD4785C);
+  static const Color accent = Color(0xFFC4A55A); // Antique Gold (stars, fun-facts, audio progress)
+  static const Color accentLight = Color(0xFFD4BA7A); // Light Gold
+  static const Color accentDark = Color(0xFFA88C42); // Deep Gold
 
-  // ============ TEXT COLORS ============
+  // ============ TEXT COLORS - Green-tinted warm blacks ============
 
-  /// Primary text - soft charcoal, not pure black
-  static const Color textPrimary = Color(0xFF2D3748); // Warm charcoal
-  static const Color textSecondary = Color(0xFF718096); // Muted gray
-  static const Color textTertiary = Color(0xFFA0AEC0); // Light gray
-  static const Color textOnPrimary = Color(0xFFFAFAFA); // Off-white
-  static const Color textMuted = Color(0xFFCBD5E0); // Very muted
+  /// Primary text - warm charcoal (green-tinted, never pure black)
+  static const Color textPrimary = Color(0xFF2D3A29); // Warm Charcoal
+  static const Color textSecondary = Color(0xFF6B6459); // Stone Gray
+  static const Color textTertiary = Color(0xFF8A8577); // Muted Taupe
+  static const Color textOnPrimary = Color(0xFFF5F0E8); // Ivory Cream
+  static const Color textMuted = Color(0xFFB5AFA3); // Very muted taupe
 
-  // ============ STATUS COLORS - Muted versions ============
+  // ============ BORDER COLORS ============
 
-  static const Color success = Color(0xFF68B984); // Muted green
-  static const Color warning = Color(0xFFE5A84C); // Muted amber
-  static const Color error = Color(0xFFE57373); // Muted red
-  static const Color info = Color(0xFF64B5F6); // Muted blue
+  static const Color borderLinen = Color(0xFFE0DBD1); // Primary dividers, card borders
+  static const Color borderLinenLight = Color(0xFFE8E3DA); // Subtle borders
+
+  // ============ STATUS COLORS - Warm muted versions ============
+
+  static const Color success = Color(0xFF4A6741); // Garden green (matches primary)
+  static const Color warning = Color(0xFFC4A55A); // Antique gold
+  static const Color error = Color(0xFFC4725C); // Muted terracotta
+  static const Color info = Color(0xFF6B8A5E); // Soft sage
 
   // ============ TOUR TYPE COLORS ============
 
-  static const Color walkingTour = Color(0xFF68B984);
-  static const Color drivingTour = Color(0xFF7986CB);
+  static const Color walkingTour = Color(0xFF4A6741); // Garden green
+  static const Color drivingTour = Color(0xFF8D7B6A); // Warm taupe
 
-  // ============ CATEGORY COLORS - Muted palette ============
+  // ============ CATEGORY COLORS - Botanical palette ============
 
-  static const Color historyCategory = Color(0xFF9575CD); // Muted purple
-  static const Color natureCategory = Color(0xFF68B984); // Muted green
-  static const Color ghostCategory = Color(0xFF78909C); // Blue gray
-  static const Color foodCategory = Color(0xFFE8967A); // Muted coral
-  static const Color artCategory = Color(0xFFF06292); // Muted pink
-  static const Color architectureCategory = Color(0xFF4DB6AC); // Muted cyan
+  static const Color historyCategory = Color(0xFF8B7355); // Aged leather
+  static const Color natureCategory = Color(0xFF4A6741); // Garden green
+  static const Color ghostCategory = Color(0xFF6B7B8A); // Misty slate
+  static const Color foodCategory = Color(0xFFC4725C); // Terracotta
+  static const Color artCategory = Color(0xFFC4A55A); // Antique gold
+  static const Color architectureCategory = Color(0xFF7A6E5E); // Warm stone
 
-  // ============ DARK THEME - Neumorphic Dark ============
+  // ============ DARK THEME - Midnight Garden ============
 
-  /// Dark surface - deep blue-gray for neumorphic effects
-  static const Color backgroundDark = Color(0xFF1A1F2E); // Deep blue-gray
-  static const Color surfaceDark = Color(0xFF242938); // Elevated surface
-  static const Color surfaceElevatedDark = Color(0xFF2E3446); // More elevated
-  static const Color surfaceVariantDark = Color(0xFF3A4255); // Input fields
+  /// Dark surface - deep green-tinted umber
+  static const Color backgroundDark = Color(0xFF1A1E18); // Deep garden night
+  static const Color surfaceDark = Color(0xFF252A22); // Elevated garden dark
+  static const Color surfaceElevatedDark = Color(0xFF303628); // More elevated
+  static const Color surfaceVariantDark = Color(0xFF3E4538); // Input fields
 
   /// Dark text
-  static const Color textPrimaryDark = Color(0xFFF0F4F8); // Soft white
-  static const Color textSecondaryDark = Color(0xFFA0AEC0); // Muted
+  static const Color textPrimaryDark = Color(0xFFF2EDE4); // Warm Parchment
+  static const Color textSecondaryDark = Color(0xFFB5AFA3); // Muted Taupe
 
-  // ============ NEUMORPHIC SHADOW COLORS ============
+  // ============ GLASSMORPHIC COLORS ============
 
-  /// Light theme shadows
-  static const Color shadowLight = Color(0xFFD1D9E6); // Soft shadow
-  static const Color highlightLight = Color(0xFFFFFFFF); // Highlight
+  /// Glass panel tints (ivory cream based)
+  static const Color glassHeavy = Color(0xD9F5F0E8); // 85% ivory cream
+  static const Color glassMedium = Color(0xA6F5F0E8); // 65% ivory cream
+  static const Color glassLight = Color(0x66F5F0E8); // 40% ivory cream
+  static const Color glassWhisper = Color(0x26F5F0E8); // 15% ivory cream
+
+  /// Glass borders
+  static const Color glassBorder = Color(0x4DFFFFFF); // 30% white
+  static const Color glassBorderSubtle = Color(0x26FFFFFF); // 15% white
+
+  /// Shadow colors - green-tinted charcoal
+  static const Color shadowLight = Color(0xFF2D3A29); // Warm charcoal shadow base
+  static const Color highlightLight = Color(0xFFFFFDF8); // Warm highlight
 
   /// Dark theme shadows
-  static const Color shadowDark = Color(0xFF0A0C10); // Deep shadow
-  static const Color highlightDark = Color(0xFF3A4255); // Subtle highlight
+  static const Color shadowDark = Color(0xFF0A0D09); // Deep green-tinted shadow
+  static const Color highlightDark = Color(0xFF3E4538); // Subtle warm highlight
 }

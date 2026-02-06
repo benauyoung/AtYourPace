@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../config/app_config.dart';
+import '../../../config/theme/colors.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/user_model.dart';
 import '../../providers/auth_provider.dart';
@@ -65,9 +66,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final user = ref.watch(currentUserProvider).value;
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -76,13 +75,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         actions: [
           TextButton.icon(
             onPressed: _isSaving ? null : _saveProfile,
-            icon: _isSaving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.check),
+            icon:
+                _isSaving
+                    ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                    : const Icon(Icons.check),
             label: const Text('Save'),
           ),
         ],
@@ -122,9 +122,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             // Basic Info Section
             Text(
               'Basic Information',
-              style: context.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -176,9 +174,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             // App Preferences Section
             Text(
               'App Preferences',
-              style: context.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Card(
@@ -186,9 +182,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 children: [
                   SwitchListTile(
                     title: const Text('Auto-play Audio'),
-                    subtitle: const Text(
-                      'Automatically play audio when arriving at stops',
-                    ),
+                    subtitle: const Text('Automatically play audio when arriving at stops'),
                     value: _autoPlayAudio,
                     onChanged: (value) {
                       setState(() => _autoPlayAudio = value);
@@ -198,9 +192,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   const Divider(height: 1),
                   SwitchListTile(
                     title: const Text('Offline Mode'),
-                    subtitle: const Text(
-                      'Enable downloading tours for offline use',
-                    ),
+                    subtitle: const Text('Enable downloading tours for offline use'),
                     value: _offlineEnabled,
                     onChanged: (value) {
                       setState(() => _offlineEnabled = value);
@@ -215,9 +207,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             // Account Actions
             Text(
               'Account',
-              style: context.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Card(
@@ -231,10 +221,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading: Icon(
-                      Icons.delete_forever,
-                      color: context.colorScheme.error,
-                    ),
+                    leading: Icon(Icons.delete_forever, color: context.colorScheme.error),
                     title: Text(
                       'Delete Account',
                       style: TextStyle(color: context.colorScheme.error),
@@ -252,20 +239,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.1),
+                  color: AppColors.accent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.accent.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, color: Colors.amber),
+                    Icon(Icons.info_outline, color: AppColors.accent),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'Demo Mode: Changes are simulated only',
-                        style: context.textTheme.bodyMedium?.copyWith(
-                          color: Colors.amber.shade800,
-                        ),
+                        style: context.textTheme.bodyMedium?.copyWith(color: AppColors.accent),
                       ),
                     ),
                   ],
@@ -282,23 +267,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera),
-              title: const Text('Take Photo'),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
+      builder:
+          (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_camera),
+                  title: const Text('Take Photo'),
+                  onTap: () => Navigator.pop(context, ImageSource.camera),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library),
+                  title: const Text('Choose from Gallery'),
+                  onTap: () => Navigator.pop(context, ImageSource.gallery),
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from Gallery'),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
 
     if (source == null) return;
@@ -376,79 +362,72 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Change Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'We will send a password reset link to your email address.',
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Change Password'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('We will send a password reset link to your email address.'),
+                const SizedBox(height: 16),
+                Text(
+                  userEmail,
+                  style: dialogContext.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              userEmail,
-              style: dialogContext.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+              FilledButton(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+                  try {
+                    final authService = ref.read(authServiceProvider);
+                    await authService.sendPasswordResetEmail(userEmail);
+                    if (mounted) {
+                      context.showSuccessSnackBar('Password reset email sent');
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      context.showErrorSnackBar('Failed to send reset email: $e');
+                    }
+                  }
+                },
+                child: const Text('Send'),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              try {
-                final authService = ref.read(authServiceProvider);
-                await authService.sendPasswordResetEmail(userEmail);
-                if (mounted) {
-                  context.showSuccessSnackBar('Password reset email sent');
-                }
-              } catch (e) {
-                if (mounted) {
-                  context.showErrorSnackBar('Failed to send reset email: $e');
-                }
-              }
-            },
-            child: const Text('Send'),
-          ),
-        ],
-      ),
     );
   }
 
   void _deleteAccount() {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(
-          'Delete Account',
-          style: TextStyle(color: dialogContext.colorScheme.error),
-        ),
-        content: const Text(
-          'Are you sure you want to delete your account? '
-          'This action cannot be undone and all your data will be permanently deleted.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              await _performAccountDeletion();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: dialogContext.colorScheme.error,
+      builder:
+          (dialogContext) => AlertDialog(
+            title: Text('Delete Account', style: TextStyle(color: dialogContext.colorScheme.error)),
+            content: const Text(
+              'Are you sure you want to delete your account? '
+              'This action cannot be undone and all your data will be permanently deleted.',
             ),
-            child: const Text('Delete'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+                  await _performAccountDeletion();
+                },
+                style: FilledButton.styleFrom(backgroundColor: dialogContext.colorScheme.error),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -497,29 +476,25 @@ class _ProfilePhotoAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     // If there's a new local photo selected
     if (newPhotoPath != null) {
-      return CircleAvatar(
-        radius: 60,
-        backgroundImage: FileImage(File(newPhotoPath!)),
-      );
+      return CircleAvatar(radius: 60, backgroundImage: FileImage(File(newPhotoPath!)));
     }
 
     // If there's a network photo URL
     if (photoUrl != null && photoUrl!.isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: photoUrl!,
-        imageBuilder: (context, imageProvider) => CircleAvatar(
-          radius: 60,
-          backgroundImage: imageProvider,
-        ),
-        placeholder: (context, url) => CircleAvatar(
-          radius: 60,
-          backgroundColor: context.colorScheme.primaryContainer,
-          child: const SizedBox(
-            width: 30,
-            height: 30,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
+        imageBuilder:
+            (context, imageProvider) => CircleAvatar(radius: 60, backgroundImage: imageProvider),
+        placeholder:
+            (context, url) => CircleAvatar(
+              radius: 60,
+              backgroundColor: context.colorScheme.primaryContainer,
+              child: const SizedBox(
+                width: 30,
+                height: 30,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
         errorWidget: (context, url, error) => _buildFallbackAvatar(context),
       );
     }

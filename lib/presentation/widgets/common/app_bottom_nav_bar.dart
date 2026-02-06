@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../config/theme/colors.dart';
 
-/// Custom bottom navigation bar matching Shaka Guide design.
+/// Custom bottom navigation bar — Parisian Botanical Journal.
 ///
 /// Features:
-/// - Dark teal background
+/// - Garden green background
 /// - Rounded top corners
-/// - Mint accent for selected items
+/// - Ivory cream accent for selected items
 /// - Clean icons with labels
 class AppBottomNavBar extends StatelessWidget {
   const AppBottomNavBar({
@@ -31,9 +31,7 @@ class AppBottomNavBar extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.primary, // Dark teal
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(24),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         top: false,
@@ -79,9 +77,11 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isSelected
-        ? AppColors.secondary // Mint for selected
-        : Colors.white.withOpacity(0.7); // Faded white for unselected
+    final color =
+        isSelected
+            ? AppColors
+                .textOnPrimary // Ivory cream for selected
+            : AppColors.textOnPrimary.withOpacity(0.6); // Faded ivory for unselected
 
     return InkWell(
       onTap: onTap,
@@ -114,11 +114,7 @@ class _NavItem extends StatelessWidget {
 
 /// Item for AppBottomNavBar
 class AppBottomNavItem {
-  const AppBottomNavItem({
-    required this.icon,
-    this.activeIcon,
-    required this.label,
-  });
+  const AppBottomNavItem({required this.icon, this.activeIcon, required this.label});
 
   /// Icon to display when not selected
   final IconData icon;

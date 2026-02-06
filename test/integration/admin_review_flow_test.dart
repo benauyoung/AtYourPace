@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mockito/mockito.dart';
 
 import 'package:ayp_tour_guide/data/models/tour_model.dart';

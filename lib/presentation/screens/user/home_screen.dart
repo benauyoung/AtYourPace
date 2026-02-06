@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../config/theme/colors.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/tour_model.dart';
@@ -62,18 +63,12 @@ class HomeScreen extends ConsumerWidget {
                     if (count == 0) return const SizedBox();
                     return Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
+                      decoration: BoxDecoration(color: AppColors.error, shape: BoxShape.circle),
+                      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                       child: Text(
                         count > 9 ? '9+' : count.toString(),
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textOnPrimary,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
@@ -103,10 +98,7 @@ class HomeScreen extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Featured Tours',
-                      style: context.textTheme.titleLarge,
-                    ),
+                    Text('Featured Tours', style: context.textTheme.titleLarge),
                     TextButton(
                       onPressed: () => context.go(RouteNames.discover),
                       child: const Text('See All'),
@@ -134,34 +126,32 @@ class HomeScreen extends ConsumerWidget {
                         return _FeaturedTourCard(
                           key: ValueKey(tour.id),
                           tour: tour,
-                          onTap: () => context.push(
-                            RouteNames.tourDetailsPath(tour.id),
-                          ),
+                          onTap: () => context.push(RouteNames.tourDetailsPath(tour.id)),
                         );
                       },
                     ),
                   );
                 },
-                loading: () => SizedBox(
-                  height: 220,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: 3,
-                    itemBuilder: (context, index) => const Padding(
-                      padding: EdgeInsets.only(right: 16),
-                      child: SizedBox(
-                        width: 280,
-                        child: TourCardSkeleton(),
+                loading:
+                    () => SizedBox(
+                      height: 220,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: 3,
+                        itemBuilder:
+                            (context, index) => const Padding(
+                              padding: EdgeInsets.only(right: 16),
+                              child: SizedBox(width: 280, child: TourCardSkeleton()),
+                            ),
                       ),
                     ),
-                  ),
-                ),
-                error: (error, _) => ErrorView(
-                  message: error.toString(),
-                  onRetry: () => ref.invalidate(featuredToursProvider),
-                  compact: true,
-                ),
+                error:
+                    (error, _) => ErrorView(
+                      message: error.toString(),
+                      onRetry: () => ref.invalidate(featuredToursProvider),
+                      compact: true,
+                    ),
               ),
               const SizedBox(height: 24),
 
@@ -172,10 +162,7 @@ class HomeScreen extends ConsumerWidget {
               // Categories section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'Browse by Category',
-                  style: context.textTheme.titleLarge,
-                ),
+                child: Text('Browse by Category', style: context.textTheme.titleLarge),
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -183,17 +170,18 @@ class HomeScreen extends ConsumerWidget {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: TourCategory.values.map((category) {
-                    return _CategoryCard(
-                      key: ValueKey(category),
-                      category: category,
-                      onTap: () {
-                        // Set the category filter and navigate to discover
-                        ref.read(selectedCategoryProvider.notifier).state = category;
-                        context.go(RouteNames.discover);
-                      },
-                    );
-                  }).toList(),
+                  children:
+                      TourCategory.values.map((category) {
+                        return _CategoryCard(
+                          key: ValueKey(category),
+                          category: category,
+                          onTap: () {
+                            // Set the category filter and navigate to discover
+                            ref.read(selectedCategoryProvider.notifier).state = category;
+                            context.go(RouteNames.discover);
+                          },
+                        );
+                      }).toList(),
                 ),
               ),
               const SizedBox(height: 24),
@@ -202,10 +190,7 @@ class HomeScreen extends ConsumerWidget {
               if (user?.isCreator ?? false) ...[
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'Creator Tools',
-                    style: context.textTheme.titleLarge,
-                  ),
+                  child: Text('Creator Tools', style: context.textTheme.titleLarge),
                 ),
                 const SizedBox(height: 12),
                 Padding(
@@ -244,19 +229,19 @@ class HomeScreen extends ConsumerWidget {
 List<Color> _categoryGradientColors(TourCategory category) {
   switch (category) {
     case TourCategory.history:
-      return [Colors.amber.shade300, Colors.amber.shade700];
+      return [AppColors.historyCategory.withOpacity(0.7), AppColors.historyCategory];
     case TourCategory.nature:
-      return [Colors.green.shade300, Colors.green.shade700];
+      return [AppColors.natureCategory.withOpacity(0.7), AppColors.natureCategory];
     case TourCategory.ghost:
-      return [Colors.grey.shade600, Colors.grey.shade900];
+      return [AppColors.ghostCategory.withOpacity(0.7), AppColors.ghostCategory];
     case TourCategory.food:
-      return [Colors.orange.shade300, Colors.orange.shade700];
+      return [AppColors.foodCategory.withOpacity(0.7), AppColors.foodCategory];
     case TourCategory.art:
-      return [Colors.purple.shade300, Colors.purple.shade700];
+      return [AppColors.artCategory.withOpacity(0.7), AppColors.artCategory];
     case TourCategory.architecture:
-      return [Colors.blue.shade300, Colors.blue.shade700];
+      return [AppColors.architectureCategory.withOpacity(0.7), AppColors.architectureCategory];
     case TourCategory.other:
-      return [Colors.blueGrey.shade300, Colors.blueGrey.shade600];
+      return [AppColors.textTertiary.withOpacity(0.7), AppColors.textTertiary];
   }
 }
 
@@ -264,18 +249,12 @@ class _FeaturedTourCard extends ConsumerWidget {
   final TourModel tour;
   final VoidCallback onTap;
 
-  const _FeaturedTourCard({
-    super.key,
-    required this.tour,
-    required this.onTap,
-  });
+  const _FeaturedTourCard({super.key, required this.tour, required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final versionId = tour.liveVersionId ?? tour.draftVersionId;
-    final versionAsync = ref.watch(
-      tourVersionProvider((tourId: tour.id, versionId: versionId)),
-    );
+    final versionAsync = ref.watch(tourVersionProvider((tourId: tour.id, versionId: versionId)));
 
     return GestureDetector(
       onTap: onTap,
@@ -319,10 +298,7 @@ class _FeaturedTourCard extends ConsumerWidget {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: context.colorScheme.secondaryContainer,
                               borderRadius: BorderRadius.circular(12),
@@ -335,10 +311,10 @@ class _FeaturedTourCard extends ConsumerWidget {
                             ),
                           ),
                           const Spacer(),
-                          const Icon(
+                          Icon(
                             Icons.star,
                             size: 16,
-                            color: Colors.amber,
+                            color: AppColors.accent,
                             semanticLabel: 'Rating',
                           ),
                           const SizedBox(width: 4),
@@ -387,11 +363,7 @@ class _FeaturedTourCard extends ConsumerWidget {
         ),
       ),
       child: Center(
-        child: Icon(
-          tour.category.icon,
-          size: 48,
-          color: Colors.white.withValues(alpha: 0.7),
-        ),
+        child: Icon(tour.category.icon, size: 48, color: AppColors.textOnPrimary.withOpacity(0.7)),
       ),
     );
   }
@@ -401,11 +373,7 @@ class _CategoryCard extends StatelessWidget {
   final TourCategory category;
   final VoidCallback onTap;
 
-  const _CategoryCard({
-    super.key,
-    required this.category,
-    required this.onTap,
-  });
+  const _CategoryCard({super.key, required this.category, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -418,11 +386,7 @@ class _CategoryCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                _getCategoryIcon(category),
-                size: 32,
-                color: context.primaryColor,
-              ),
+              Icon(_getCategoryIcon(category), size: 32, color: context.primaryColor),
               const SizedBox(height: 8),
               Text(
                 category.displayName,
@@ -478,10 +442,7 @@ class _RecommendedSection extends ConsumerWidget {
                 children: [
                   const Icon(Icons.auto_awesome, size: 20),
                   const SizedBox(width: 8),
-                  Text(
-                    'Recommended for You',
-                    style: context.textTheme.titleLarge,
-                  ),
+                  Text('Recommended for You', style: context.textTheme.titleLarge),
                 ],
               ),
             ),
@@ -497,9 +458,7 @@ class _RecommendedSection extends ConsumerWidget {
                   return _RecommendedTourCard(
                     key: ValueKey(rec.tour.id),
                     recommendation: rec,
-                    onTap: () => context.push(
-                      RouteNames.tourDetailsPath(rec.tour.id),
-                    ),
+                    onTap: () => context.push(RouteNames.tourDetailsPath(rec.tour.id)),
                   );
                 },
               ),
@@ -517,19 +476,13 @@ class _RecommendedTourCard extends ConsumerWidget {
   final TourRecommendation recommendation;
   final VoidCallback onTap;
 
-  const _RecommendedTourCard({
-    super.key,
-    required this.recommendation,
-    required this.onTap,
-  });
+  const _RecommendedTourCard({super.key, required this.recommendation, required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tour = recommendation.tour;
     final versionId = tour.liveVersionId ?? tour.draftVersionId;
-    final versionAsync = ref.watch(
-      tourVersionProvider((tourId: tour.id, versionId: versionId)),
-    );
+    final versionAsync = ref.watch(tourVersionProvider((tourId: tour.id, versionId: versionId)));
 
     return GestureDetector(
       onTap: onTap,
@@ -571,18 +524,18 @@ class _RecommendedTourCard extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.amber,
+                          color: AppColors.accent,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.auto_awesome, size: 10, color: Colors.white),
+                            Icon(Icons.auto_awesome, size: 10, color: AppColors.textOnPrimary),
                             const SizedBox(width: 2),
                             Text(
                               'For You',
                               style: context.textTheme.labelSmall?.copyWith(
-                                color: Colors.white,
+                                color: AppColors.textOnPrimary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 9,
                               ),
@@ -602,9 +555,7 @@ class _RecommendedTourCard extends ConsumerWidget {
                     children: [
                       Text(
                         tour.displayName,
-                        style: context.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -623,7 +574,12 @@ class _RecommendedTourCard extends ConsumerWidget {
                       Row(
                         children: [
                           if (tour.stats.averageRating > 0) ...[
-                            const Icon(Icons.star, size: 12, color: Colors.amber, semanticLabel: 'Rating'),
+                            Icon(
+                              Icons.star,
+                              size: 12,
+                              color: AppColors.accent,
+                              semanticLabel: 'Rating',
+                            ),
                             const SizedBox(width: 2),
                             Text(
                               tour.stats.averageRating.toStringAsFixed(1),
@@ -667,11 +623,7 @@ class _RecommendedTourCard extends ConsumerWidget {
         ),
       ),
       child: Center(
-        child: Icon(
-          tour.category.icon,
-          size: 36,
-          color: Colors.white.withValues(alpha: 0.7),
-        ),
+        child: Icon(tour.category.icon, size: 36, color: AppColors.textOnPrimary.withOpacity(0.7)),
       ),
     );
   }

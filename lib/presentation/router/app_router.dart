@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../config/app_config.dart';
+import '../../config/theme/colors.dart';
 import '../../core/constants/route_names.dart';
 import '../providers/auth_provider.dart';
 import '../providers/demo_auth_provider.dart';
@@ -18,9 +19,9 @@ import '../screens/auth/register_screen.dart';
 import '../screens/creator/creator_analytics_screen.dart';
 import '../screens/creator/creator_dashboard_screen.dart';
 import '../screens/creator/tour_editor_screen.dart';
-import '../screens/user/achievements_screen.dart';
 import '../screens/modules/marketplace/collection_details_screen.dart';
 import '../screens/modules/marketplace/marketplace_screen.dart';
+import '../screens/user/achievements_screen.dart';
 import '../screens/user/downloads_screen.dart';
 import '../screens/user/edit_profile_screen.dart';
 import '../screens/user/favorites_screen.dart';
@@ -195,11 +196,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'play',
             builder:
-                (context, state) =>
-                    playback.TourPlaybackScreen(
-                      tourId: state.pathParameters['tourId']!,
-                      previewMode: state.uri.queryParameters['preview'] == 'true',
-                    ),
+                (context, state) => playback.TourPlaybackScreen(
+                  tourId: state.pathParameters['tourId']!,
+                  previewMode: state.uri.queryParameters['preview'] == 'true',
+                ),
           ),
         ],
       ),
@@ -325,7 +325,7 @@ class SplashScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.tour, size: 80, color: Colors.blue),
+            const Icon(Icons.tour, size: 80, color: AppColors.primary),
             const SizedBox(height: 24),
             const Text(
               'AYP Tour Guide',
@@ -338,7 +338,7 @@ class SplashScreen extends ConsumerWidget {
               error:
                   (e, _) => Column(
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                      const Icon(Icons.error_outline, color: AppColors.error, size: 48),
                       const SizedBox(height: 8),
                       Text('Error: $e', textAlign: TextAlign.center),
                       const SizedBox(height: 16),
@@ -369,7 +369,7 @@ class ErrorScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const Icon(Icons.error_outline, size: 64, color: AppColors.error),
             const SizedBox(height: 16),
             const Text(
               'Page not found',

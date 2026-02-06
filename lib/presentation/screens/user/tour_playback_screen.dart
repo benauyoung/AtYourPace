@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
+import '../../../config/theme/colors.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/stop_model.dart';
 import '../../../services/audio_service.dart';
@@ -30,10 +31,9 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
     super.initState();
     // Start the tour
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(playbackStateProvider.notifier).startTour(
-        widget.tourId,
-        previewMode: widget.previewMode,
-      );
+      ref
+          .read(playbackStateProvider.notifier)
+          .startTour(widget.tourId, previewMode: widget.previewMode);
     });
   }
 
@@ -60,6 +60,10 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
     final stops = ref.watch(playbackStateProvider.select((s) => s.stops));
     final version = ref.watch(playbackStateProvider.select((s) => s.version));
 
+    // Watch additional fields for first-stop prompt
+    final startedAt = ref.watch(playbackStateProvider.select((s) => s.startedAt));
+    final previewMode = ref.watch(playbackStateProvider.select((s) => s.previewMode));
+
     // Reconstruct PlaybackState for compatibility with existing widgets logic
     final playbackState = PlaybackState(
       tour: tour,
@@ -71,6 +75,8 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
       isLoading: isLoading,
       error: error,
       isPlaying: audioState == AudioState.playing,
+      startedAt: startedAt,
+      previewMode: previewMode,
     );
 
     if (isLoading) {
@@ -145,21 +151,22 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
             routeCoordinates: routeCoordinates,
             stops: markers,
             showUserLocation: true,
-            userPosition: userPosition != null
-                ? mapbox.Position(userPosition.longitude, userPosition.latitude)
-                : null,
+            userPosition:
+                userPosition != null
+                    ? mapbox.Position(userPosition.longitude, userPosition.latitude)
+                    : null,
             onStopTapped: (marker) {
-                    if (widget.previewMode) {
-                      if (marker.order < stops.length) {
-                        _showStopInfoSheet(context, stops[marker.order]);
-                      }
-                    } else {
-                      ref.read(playbackStateProvider.notifier).triggerStop(marker.order);
-                      if (marker.order < stops.length && !stops[marker.order].hasAudio) {
-                        context.showInfoSnackBar('No audio available for this stop');
-                      }
-                    }
-                  },
+              if (widget.previewMode) {
+                if (marker.order < stops.length) {
+                  _showStopInfoSheet(context, stops[marker.order]);
+                }
+              } else {
+                ref.read(playbackStateProvider.notifier).triggerStop(marker.order);
+                if (marker.order < stops.length && !stops[marker.order].hasAudio) {
+                  context.showInfoSnackBar('No audio available for this stop');
+                }
+              }
+            },
           ),
 
           // Top bar with tour info
@@ -173,11 +180,11 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: context.colorScheme.surface,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: AppColors.shadowLight.withOpacity(0.08),
                         blurRadius: 10,
                         offset: const Offset(0, 2),
                       ),
@@ -187,9 +194,10 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.close),
-                        onPressed: widget.previewMode
-                            ? () => GoRouter.of(context).pop()
-                            : () => showEndTourDialog(context),
+                        onPressed:
+                            widget.previewMode
+                                ? () => GoRouter.of(context).pop()
+                                : () => showEndTourDialog(context),
                         tooltip: widget.previewMode ? 'Close preview' : 'End tour',
                       ),
                       Expanded(
@@ -235,6 +243,27 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
               ),
             ),
           ),
+          // Navigate to first stop prompt
+          if (!widget.previewMode && playbackState.isWaitingForFirstStop)
+            Positioned(
+              bottom: 160,
+              left: 16,
+              right: 16,
+              child: _NavigateToFirstStopCard(
+                playbackState: playbackState,
+                onCenterOnStop: () {
+                  if (stops.isNotEmpty) {
+                    _mapKey.currentState?.flyTo(
+                      mapbox.Position(
+                        stops.first.location.longitude,
+                        stops.first.location.latitude,
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+
           // Bottom Sheet (only in full playback mode)
           if (!widget.previewMode)
             PlaybackBottomSheet(
@@ -288,7 +317,7 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                           height: 4,
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
-                            color: Colors.grey[400],
+                            color: AppColors.borderLinen,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -296,9 +325,7 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                       // Stop name
                       Text(
                         stop.name,
-                        style: context.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
                       // Images carousel
@@ -324,7 +351,9 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                                       width: 240,
                                       height: 180,
                                       color: context.colorScheme.surfaceContainerHighest,
-                                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      ),
                                     );
                                   },
                                   errorBuilder: (context, error, stackTrace) {
@@ -356,7 +385,11 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
                       if (stop.hasAudio)
                         Row(
                           children: [
-                            Icon(Icons.volume_up_outlined, size: 18, color: context.colorScheme.primary),
+                            Icon(
+                              Icons.volume_up_outlined,
+                              size: 18,
+                              color: context.colorScheme.primary,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               'Audio available — start the tour to listen',
@@ -401,7 +434,6 @@ class _TourPlaybackScreenState extends ConsumerState<TourPlaybackScreen> {
           ),
     );
   }
-
 }
 
 class _MapOverlayButton extends StatelessWidget {
@@ -416,17 +448,96 @@ class _MapOverlayButton extends StatelessWidget {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: AppColors.shadowLight.withOpacity(0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: IconButton(icon: Icon(icon, color: Colors.black87), onPressed: onPressed),
+      child: IconButton(icon: Icon(icon, color: AppColors.textPrimary), onPressed: onPressed),
+    );
+  }
+}
+
+class _NavigateToFirstStopCard extends StatelessWidget {
+  final PlaybackState playbackState;
+  final VoidCallback onCenterOnStop;
+
+  const _NavigateToFirstStopCard({required this.playbackState, required this.onCenterOnStop});
+
+  String _formatDistance(double meters) {
+    if (meters >= 1000) {
+      return '${(meters / 1000).toStringAsFixed(1)} km';
+    }
+    return '${meters.round()} m';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final distance = playbackState.distanceToFirstStop;
+    final stopName = playbackState.stops.isNotEmpty ? playbackState.stops.first.name : 'Stop 1';
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.directions_walk, color: AppColors.primary, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Head to the first stop',
+                        style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        distance != null
+                            ? '$stopName · ${_formatDistance(distance)} away'
+                            : stopName,
+                        style: context.textTheme.bodySmall?.copyWith(
+                          color: context.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                FilledButton.tonalIcon(
+                  onPressed: onCenterOnStop,
+                  icon: const Icon(Icons.map_outlined, size: 18),
+                  label: const Text('Show'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Audio will play automatically when you arrive',
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colorScheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -440,7 +551,7 @@ class _TourCompletedOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black54,
+      color: AppColors.textPrimary.withOpacity(0.6),
       child: Center(
         child: Card(
           margin: const EdgeInsets.all(32),
@@ -471,5 +582,4 @@ class _TourCompletedOverlay extends StatelessWidget {
       ),
     );
   }
-
 }

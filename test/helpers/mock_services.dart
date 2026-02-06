@@ -1,11 +1,9 @@
 import 'dart:async';
 
 import 'package:geolocator/geolocator.dart';
-import 'package:just_audio/just_audio.dart';
 
 import 'package:ayp_tour_guide/services/audio_service.dart';
 import 'package:ayp_tour_guide/services/location_service.dart';
-import 'package:ayp_tour_guide/services/geofence_service.dart';
 import 'package:ayp_tour_guide/data/local/offline_storage_service.dart';
 import 'package:ayp_tour_guide/data/models/tour_model.dart';
 import 'package:ayp_tour_guide/data/models/tour_version_model.dart';

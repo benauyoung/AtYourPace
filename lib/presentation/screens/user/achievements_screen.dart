@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme/colors.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../providers/achievements_provider.dart';
 
@@ -14,9 +15,7 @@ class AchievementsScreen extends ConsumerWidget {
     final totalPoints = ref.watch(achievementPointsProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Achievements'),
-      ),
+      appBar: AppBar(title: const Text('Achievements')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -26,17 +25,11 @@ class AchievementsScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  Icon(
-                    Icons.emoji_events,
-                    size: 48,
-                    color: Colors.amber,
-                  ),
+                  Icon(Icons.emoji_events, size: 48, color: AppColors.accent),
                   const SizedBox(height: 12),
                   Text(
                     '$totalPoints',
-                    style: context.textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: context.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   Text(
                     'Achievement Points',
@@ -52,14 +45,14 @@ class AchievementsScreen extends ConsumerWidget {
                         icon: Icons.check_circle,
                         label: 'Unlocked',
                         value: unlockedAchievements.length.toString(),
-                        color: Colors.green,
+                        color: AppColors.primary,
                       ),
                       const SizedBox(width: 24),
                       _StatChip(
                         icon: Icons.lock,
                         label: 'Locked',
                         value: lockedAchievements.length.toString(),
-                        color: Colors.grey,
+                        color: AppColors.textTertiary,
                       ),
                     ],
                   ),
@@ -71,27 +64,19 @@ class AchievementsScreen extends ConsumerWidget {
 
           // Unlocked achievements
           if (unlockedAchievements.isNotEmpty) ...[
-            _SectionHeader(
-              title: 'Unlocked',
-              count: unlockedAchievements.length,
+            _SectionHeader(title: 'Unlocked', count: unlockedAchievements.length),
+            ...unlockedAchievements.map(
+              (progress) => _AchievementCard(progress: progress, isUnlocked: true),
             ),
-            ...unlockedAchievements.map((progress) => _AchievementCard(
-                  progress: progress,
-                  isUnlocked: true,
-                )),
             const SizedBox(height: 24),
           ],
 
           // Locked achievements
           if (lockedAchievements.isNotEmpty) ...[
-            _SectionHeader(
-              title: 'In Progress',
-              count: lockedAchievements.length,
+            _SectionHeader(title: 'In Progress', count: lockedAchievements.length),
+            ...lockedAchievements.map(
+              (progress) => _AchievementCard(progress: progress, isUnlocked: false),
             ),
-            ...lockedAchievements.map((progress) => _AchievementCard(
-                  progress: progress,
-                  isUnlocked: false,
-                )),
           ],
         ],
       ),
@@ -118,18 +103,11 @@ class _StatChip extends StatelessWidget {
       children: [
         Icon(icon, size: 20, color: color),
         const SizedBox(width: 4),
-        Text(
-          value,
-          style: context.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        Text(value, style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(width: 4),
         Text(
           label,
-          style: context.textTheme.bodySmall?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
+          style: context.textTheme.bodySmall?.copyWith(color: context.colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -148,12 +126,7 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Text(
-            title,
-            style: context.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text(title, style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -161,10 +134,7 @@ class _SectionHeader extends StatelessWidget {
               color: context.colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(
-              count.toString(),
-              style: context.textTheme.labelSmall,
-            ),
+            child: Text(count.toString(), style: context.textTheme.labelSmall),
           ),
         ],
       ),
@@ -176,10 +146,7 @@ class _AchievementCard extends StatelessWidget {
   final AchievementProgress progress;
   final bool isUnlocked;
 
-  const _AchievementCard({
-    required this.progress,
-    required this.isUnlocked,
-  });
+  const _AchievementCard({required this.progress, required this.isUnlocked});
 
   @override
   Widget build(BuildContext context) {
@@ -199,17 +166,19 @@ class _AchievementCard extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: isUnlocked
-                      ? achievement.color.withValues(alpha: 0.2)
-                      : context.colorScheme.surfaceContainerHighest,
+                  color:
+                      isUnlocked
+                          ? achievement.color.withValues(alpha: 0.2)
+                          : context.colorScheme.surfaceContainerHighest,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   achievement.icon,
                   size: 28,
-                  color: isUnlocked
-                      ? achievement.color
-                      : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color:
+                      isUnlocked
+                          ? achievement.color
+                          : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(width: 16),
@@ -230,11 +199,7 @@ class _AchievementCard extends StatelessWidget {
                         ),
                         if (isUnlocked) ...[
                           const SizedBox(width: 8),
-                          Icon(
-                            Icons.check_circle,
-                            size: 16,
-                            color: Colors.green,
-                          ),
+                          Icon(Icons.check_circle, size: 16, color: AppColors.primary),
                         ],
                       ],
                     ),
@@ -279,18 +244,17 @@ class _AchievementCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isUnlocked
-                      ? Colors.amber.withValues(alpha: 0.2)
-                      : context.colorScheme.surfaceContainerHighest,
+                  color:
+                      isUnlocked
+                          ? AppColors.accent.withOpacity(0.2)
+                          : context.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
                   '+100',
                   style: context.textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isUnlocked
-                        ? Colors.amber.shade700
-                        : context.colorScheme.onSurfaceVariant,
+                    color: isUnlocked ? AppColors.accent : context.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -306,110 +270,102 @@ class _AchievementCard extends StatelessWidget {
 
     showModalBottomSheet(
       context: context,
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: isUnlocked
-                    ? achievement.color.withValues(alpha: 0.2)
-                    : context.colorScheme.surfaceContainerHighest,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                achievement.icon,
-                size: 40,
-                color: isUnlocked
-                    ? achievement.color
-                    : context.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              achievement.name,
-              style: context.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              achievement.description,
-              style: context.textTheme.bodyLarge?.copyWith(
-                color: context.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: achievement.category.icon == Icons.tour
-                    ? Colors.blue.withValues(alpha: 0.1)
-                    : context.colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    achievement.category.icon,
-                    size: 18,
-                    color: context.colorScheme.primary,
+      builder:
+          (context) => Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color:
+                        isUnlocked
+                            ? achievement.color.withValues(alpha: 0.2)
+                            : context.colorScheme.surfaceContainerHighest,
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    achievement.category.displayName,
-                    style: context.textTheme.labelMedium,
+                  child: Icon(
+                    achievement.icon,
+                    size: 40,
+                    color: isUnlocked ? achievement.color : context.colorScheme.onSurfaceVariant,
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            if (isUnlocked)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.check_circle, color: Colors.green),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Unlocked!',
-                    style: context.textTheme.titleMedium?.copyWith(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                    ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  achievement.name,
+                  style: context.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  achievement.description,
+                  style: context.textTheme.bodyLarge?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
                   ),
-                ],
-              )
-            else
-              Column(
-                children: [
-                  Text(
-                    'Progress: ${progress.currentProgress}/${achievement.requirement}',
-                    style: context.textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color:
+                        achievement.category.icon == Icons.tour
+                            ? AppColors.primary.withOpacity(0.1)
+                            : context.colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: 200,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: progress.progressPercent,
-                        minHeight: 10,
-                        backgroundColor: context.colorScheme.surfaceContainerHighest,
-                        valueColor: AlwaysStoppedAnimation(achievement.color),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(achievement.category.icon, size: 18, color: context.colorScheme.primary),
+                      const SizedBox(width: 8),
+                      Text(achievement.category.displayName, style: context.textTheme.labelMedium),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                if (isUnlocked)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Unlocked!',
+                        style: context.textTheme.titleMedium?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
+                    ],
+                  )
+                else
+                  Column(
+                    children: [
+                      Text(
+                        'Progress: ${progress.currentProgress}/${achievement.requirement}',
+                        style: context.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 200,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: progress.progressPercent,
+                            minHeight: 10,
+                            backgroundColor: context.colorScheme.surfaceContainerHighest,
+                            valueColor: AlwaysStoppedAnimation(achievement.color),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
     );
   }
 }

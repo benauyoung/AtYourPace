@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:go_router/go_router.dart';
 
 import '../../../config/app_config.dart';
+import '../../../config/theme/colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 
 /// Provider for user notification settings
-final notificationSettingsProvider = StateNotifierProvider<NotificationSettingsNotifier, NotificationSettings>((ref) {
-  return NotificationSettingsNotifier();
-});
+final notificationSettingsProvider =
+    StateNotifierProvider<NotificationSettingsNotifier, NotificationSettings>((ref) {
+      return NotificationSettingsNotifier();
+    });
 
 class NotificationSettings {
   final bool pushEnabled;
@@ -66,9 +67,10 @@ class NotificationSettingsNotifier extends StateNotifier<NotificationSettings> {
 }
 
 /// Provider for app appearance settings
-final appearanceSettingsProvider = StateNotifierProvider<AppearanceSettingsNotifier, AppearanceSettings>((ref) {
-  return AppearanceSettingsNotifier();
-});
+final appearanceSettingsProvider =
+    StateNotifierProvider<AppearanceSettingsNotifier, AppearanceSettings>((ref) {
+      return AppearanceSettingsNotifier();
+    });
 
 class AppearanceSettings {
   final ThemeMode themeMode;
@@ -118,9 +120,7 @@ class SettingsScreen extends ConsumerWidget {
     final appearanceNotifier = ref.read(appearanceSettingsProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-      ),
+      appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
           // Notifications Section
@@ -159,9 +159,10 @@ class SettingsScreen extends ConsumerWidget {
                   title: const Text('New Tours Nearby'),
                   subtitle: const Text('Get notified when new tours are available near you'),
                   value: notificationSettings.newToursNearby,
-                  onChanged: notificationSettings.pushEnabled || notificationSettings.emailEnabled
-                      ? notificationNotifier.setNewToursNearby
-                      : null,
+                  onChanged:
+                      notificationSettings.pushEnabled || notificationSettings.emailEnabled
+                          ? notificationNotifier.setNewToursNearby
+                          : null,
                   secondary: const Icon(Icons.location_on),
                 ),
                 const Divider(height: 1),
@@ -169,9 +170,10 @@ class SettingsScreen extends ConsumerWidget {
                   title: const Text('Tour Updates'),
                   subtitle: const Text('Updates to tours you\'ve saved or completed'),
                   value: notificationSettings.tourUpdates,
-                  onChanged: notificationSettings.pushEnabled || notificationSettings.emailEnabled
-                      ? notificationNotifier.setTourUpdates
-                      : null,
+                  onChanged:
+                      notificationSettings.pushEnabled || notificationSettings.emailEnabled
+                          ? notificationNotifier.setTourUpdates
+                          : null,
                   secondary: const Icon(Icons.update),
                 ),
                 const Divider(height: 1),
@@ -179,9 +181,10 @@ class SettingsScreen extends ConsumerWidget {
                   title: const Text('Achievement Alerts'),
                   subtitle: const Text('Get notified when you unlock achievements'),
                   value: notificationSettings.achievementAlerts,
-                  onChanged: notificationSettings.pushEnabled || notificationSettings.emailEnabled
-                      ? notificationNotifier.setAchievementAlerts
-                      : null,
+                  onChanged:
+                      notificationSettings.pushEnabled || notificationSettings.emailEnabled
+                          ? notificationNotifier.setAchievementAlerts
+                          : null,
                   secondary: const Icon(Icons.emoji_events),
                 ),
                 const Divider(height: 1),
@@ -189,9 +192,10 @@ class SettingsScreen extends ConsumerWidget {
                   title: const Text('Weekly Digest'),
                   subtitle: const Text('Weekly summary of new tours and activity'),
                   value: notificationSettings.weeklyDigest,
-                  onChanged: notificationSettings.emailEnabled
-                      ? notificationNotifier.setWeeklyDigest
-                      : null,
+                  onChanged:
+                      notificationSettings.emailEnabled
+                          ? notificationNotifier.setWeeklyDigest
+                          : null,
                   secondary: const Icon(Icons.calendar_today),
                 ),
                 const Divider(height: 1),
@@ -199,9 +203,10 @@ class SettingsScreen extends ConsumerWidget {
                   title: const Text('Promotions'),
                   subtitle: const Text('Deals and special offers'),
                   value: notificationSettings.promotions,
-                  onChanged: notificationSettings.pushEnabled || notificationSettings.emailEnabled
-                      ? notificationNotifier.setPromotions
-                      : null,
+                  onChanged:
+                      notificationSettings.pushEnabled || notificationSettings.emailEnabled
+                          ? notificationNotifier.setPromotions
+                          : null,
                   secondary: const Icon(Icons.local_offer),
                 ),
               ],
@@ -251,7 +256,8 @@ class SettingsScreen extends ConsumerWidget {
                       ButtonSegment(value: 'mi', label: Text('mi')),
                     ],
                     selected: {appearanceSettings.distanceUnit},
-                    onSelectionChanged: (values) => appearanceNotifier.setDistanceUnit(values.first),
+                    onSelectionChanged:
+                        (values) => appearanceNotifier.setDistanceUnit(values.first),
                   ),
                 ),
                 const Divider(height: 1),
@@ -342,20 +348,18 @@ class SettingsScreen extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.1),
+                  color: AppColors.accent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                  border: Border.all(color: AppColors.accent.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, color: Colors.amber),
+                    Icon(Icons.info_outline, color: AppColors.accent),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'Demo Mode: Settings are not persisted',
-                        style: context.textTheme.bodyMedium?.copyWith(
-                          color: Colors.amber.shade800,
-                        ),
+                        style: context.textTheme.bodyMedium?.copyWith(color: AppColors.accent),
                       ),
                     ),
                   ],
@@ -379,71 +383,74 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  void _showThemeDialog(BuildContext context, AppearanceSettings settings, AppearanceSettingsNotifier notifier) {
+  void _showThemeDialog(
+    BuildContext context,
+    AppearanceSettings settings,
+    AppearanceSettingsNotifier notifier,
+  ) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Choose Theme'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<ThemeMode>(
-              title: const Text('System default'),
-              value: ThemeMode.system,
-              groupValue: settings.themeMode,
-              onChanged: (value) {
-                if (value != null) notifier.setThemeMode(value);
-                Navigator.pop(context);
-              },
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Choose Theme'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<ThemeMode>(
+                  title: const Text('System default'),
+                  value: ThemeMode.system,
+                  groupValue: settings.themeMode,
+                  onChanged: (value) {
+                    if (value != null) notifier.setThemeMode(value);
+                    Navigator.pop(context);
+                  },
+                ),
+                RadioListTile<ThemeMode>(
+                  title: const Text('Light'),
+                  value: ThemeMode.light,
+                  groupValue: settings.themeMode,
+                  onChanged: (value) {
+                    if (value != null) notifier.setThemeMode(value);
+                    Navigator.pop(context);
+                  },
+                ),
+                RadioListTile<ThemeMode>(
+                  title: const Text('Dark'),
+                  value: ThemeMode.dark,
+                  groupValue: settings.themeMode,
+                  onChanged: (value) {
+                    if (value != null) notifier.setThemeMode(value);
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
             ),
-            RadioListTile<ThemeMode>(
-              title: const Text('Light'),
-              value: ThemeMode.light,
-              groupValue: settings.themeMode,
-              onChanged: (value) {
-                if (value != null) notifier.setThemeMode(value);
-                Navigator.pop(context);
-              },
-            ),
-            RadioListTile<ThemeMode>(
-              title: const Text('Dark'),
-              value: ThemeMode.dark,
-              groupValue: settings.themeMode,
-              onChanged: (value) {
-                if (value != null) notifier.setThemeMode(value);
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
   void _showClearCacheDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear Cache?'),
-        content: const Text(
-          'This will remove cached images and data. Downloaded tours will not be affected.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Clear Cache?'),
+            content: const Text(
+              'This will remove cached images and data. Downloaded tours will not be affected.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('Cache cleared')));
+                },
+                child: const Text('Clear'),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Cache cleared')),
-              );
-            },
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
     );
   }
 }

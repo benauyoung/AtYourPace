@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../../config/theme/app_spacing.dart';
-import '../../../../../config/theme/neumorphic.dart';
+import '../../../../../config/theme/colors.dart';
 import '../../../../../core/constants/route_names.dart';
 import '../../../../../data/models/tour_model.dart';
 import '../../../../providers/collections_provider.dart';
@@ -89,9 +89,10 @@ class MarketplaceListView extends ConsumerWidget {
                           (context, index) => Container(
                             width: 200,
                             margin: const EdgeInsets.only(right: AppSpacing.md),
-                            decoration: Neumorphic.box(
+                            decoration: BoxDecoration(
                               color: theme.colorScheme.surface,
-                              borderRadius: AppSpacing.radiusLg,
+                              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                              border: Border.all(color: AppColors.glassBorder, width: 0.5),
                             ),
                           ),
                     ),
@@ -216,11 +217,23 @@ class _CategoryPill extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: 100,
-        decoration: Neumorphic.box(
+        decoration: BoxDecoration(
           color: isSelected ? theme.colorScheme.primaryContainer : theme.colorScheme.surface,
-          borderRadius: AppSpacing.radiusMd,
-          shadows: isSelected ? Neumorphic.inset() : Neumorphic.subtle,
-          border: isSelected ? Border.all(color: theme.colorScheme.primary, width: 2) : null,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          border: Border.all(
+            color: isSelected ? theme.colorScheme.primary : AppColors.glassBorder,
+            width: isSelected ? 2 : 0.5,
+          ),
+          boxShadow:
+              isSelected
+                  ? []
+                  : [
+                    BoxShadow(
+                      color: AppColors.accent.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

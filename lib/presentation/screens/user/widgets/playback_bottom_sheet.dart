@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../config/theme/colors.dart';
 import '../../../../core/extensions/context_extensions.dart';
 import '../../../../data/models/stop_model.dart';
 import '../../../providers/playback_provider.dart';
@@ -30,7 +31,7 @@ class _PlaybackBottomSheetState extends State<PlaybackBottomSheet> {
 
     return DraggableScrollableSheet(
       initialChildSize: 0.4,
-      minChildSize: 0.2,
+      minChildSize: 0.25,
       maxChildSize: 0.85,
       builder: (context, scrollController) {
         return Container(
@@ -39,7 +40,7 @@ class _PlaybackBottomSheetState extends State<PlaybackBottomSheet> {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
+                color: AppColors.shadowLight.withOpacity(0.10),
                 blurRadius: 20,
                 offset: const Offset(0, -5),
               ),
@@ -67,9 +68,7 @@ class _PlaybackBottomSheetState extends State<PlaybackBottomSheet> {
                   children: [
                     Text(
                       'Tour Stops',
-                      style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -121,17 +120,20 @@ class _PlaybackBottomSheetState extends State<PlaybackBottomSheet> {
               ),
 
               // Bottom Status Bar
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: context.colorScheme.surface,
-                  border: Border(top: BorderSide(color: context.colorScheme.outlineVariant)),
-                ),
-                child: Text(
-                  '${widget.playbackState.tour?.city ?? "Tour"} in progress...',
-                  style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              SafeArea(
+                top: false,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: context.colorScheme.surface,
+                    border: Border(top: BorderSide(color: context.colorScheme.outlineVariant)),
+                  ),
+                  child: Text(
+                    '${widget.playbackState.tour?.city ?? "Tour"} in progress...',
+                    style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
             ],
@@ -172,7 +174,7 @@ class _StopListItem extends StatelessWidget {
   }
 
   Color _statusColor(BuildContext context) {
-    if (isCompleted) return Colors.green;
+    if (isCompleted) return AppColors.primary;
     if (isCurrent) return context.colorScheme.primary;
     return context.colorScheme.onSurfaceVariant;
   }
@@ -184,9 +186,10 @@ class _StopListItem extends StatelessWidget {
       curve: Curves.easeInOut,
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
-        color: isExpanded
-            ? context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
-            : Colors.transparent,
+        color:
+            isExpanded
+                ? context.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+                : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -207,9 +210,10 @@ class _StopListItem extends StatelessWidget {
                       width: 64,
                       height: 64,
                       color: context.colorScheme.surfaceContainerHighest,
-                      child: stop.media.images.isNotEmpty
-                          ? Image.network(stop.media.images.first.url, fit: BoxFit.cover)
-                          : const Icon(Icons.landscape),
+                      child:
+                          stop.media.images.isNotEmpty
+                              ? Image.network(stop.media.images.first.url, fit: BoxFit.cover)
+                              : const Icon(Icons.landscape),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -231,12 +235,12 @@ class _StopListItem extends StatelessWidget {
                               isCompleted
                                   ? Icons.check_circle
                                   : isCurrent && isPlaying
-                                      ? Icons.play_circle_filled
-                                      : isCurrent
-                                          ? Icons.pause_circle_filled
-                                          : stop.hasAudio
-                                              ? Icons.volume_up_outlined
-                                              : Icons.volume_off_outlined,
+                                  ? Icons.play_circle_filled
+                                  : isCurrent
+                                  ? Icons.pause_circle_filled
+                                  : stop.hasAudio
+                                  ? Icons.volume_up_outlined
+                                  : Icons.volume_off_outlined,
                               size: 14,
                               color: _statusColor(context),
                             ),
@@ -260,9 +264,10 @@ class _StopListItem extends StatelessWidget {
                         isCurrent && isPlaying
                             ? Icons.pause_circle_filled
                             : Icons.play_circle_filled,
-                        color: isCurrent
-                            ? context.colorScheme.primary
-                            : context.colorScheme.onSurfaceVariant,
+                        color:
+                            isCurrent
+                                ? context.colorScheme.primary
+                                : context.colorScheme.onSurfaceVariant,
                         size: 36,
                       ),
                       onPressed: onPlay,
@@ -383,17 +388,17 @@ class _ExpandedContent extends StatelessWidget {
                   isCurrent && isPlaying
                       ? Icons.pause
                       : isCompleted
-                          ? Icons.replay
-                          : Icons.play_arrow,
+                      ? Icons.replay
+                      : Icons.play_arrow,
                 ),
                 label: Text(
                   isCurrent && isPlaying
                       ? 'Pause Audio'
                       : isCompleted
-                          ? 'Replay Audio'
-                          : isCurrent
-                              ? 'Resume Audio'
-                              : 'Play Audio',
+                      ? 'Replay Audio'
+                      : isCurrent
+                      ? 'Resume Audio'
+                      : 'Play Audio',
                 ),
               ),
             ),

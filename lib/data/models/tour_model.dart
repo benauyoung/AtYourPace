@@ -82,15 +82,11 @@ class TourModel with _$TourModel {
     @NullableTimestampConverter() DateTime? lastReviewedAt,
   }) = _TourModel;
 
-  factory TourModel.fromJson(Map<String, dynamic> json) =>
-      _$TourModelFromJson(json);
+  factory TourModel.fromJson(Map<String, dynamic> json) => _$TourModelFromJson(json);
 
   factory TourModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    return TourModel.fromJson({
-      'id': doc.id,
-      ...data,
-    });
+    return TourModel.fromJson({'id': doc.id, ...data});
   }
 
   Map<String, dynamic> toFirestore() {
@@ -105,8 +101,7 @@ class TourModel with _$TourModel {
   bool get isPendingReview => status == TourStatus.pendingReview;
   bool get isApproved => status == TourStatus.approved;
   bool get isEditable => status == TourStatus.draft || status == TourStatus.rejected;
-  bool get hasPendingChanges =>
-      isPublished && draftVersionId != liveVersionId;
+  bool get hasPendingChanges => isPublished && draftVersionId != liveVersionId;
 }
 
 @freezed
@@ -119,8 +114,7 @@ class TourStats with _$TourStats {
     @Default(0) int totalRevenue,
   }) = _TourStats;
 
-  factory TourStats.fromJson(Map<String, dynamic> json) =>
-      _$TourStatsFromJson(json);
+  factory TourStats.fromJson(Map<String, dynamic> json) => _$TourStatsFromJson(json);
 }
 
 /// Converter for Firestore GeoPoint
@@ -141,7 +135,10 @@ class GeoPointConverter implements JsonConverter<GeoPoint, dynamic> {
   }
 
   @override
-  dynamic toJson(GeoPoint geoPoint) => geoPoint;
+  dynamic toJson(GeoPoint geoPoint) => {
+    'latitude': geoPoint.latitude,
+    'longitude': geoPoint.longitude,
+  };
 }
 
 /// Converter for nullable GeoPoint
@@ -162,7 +159,8 @@ class NullableGeoPointConverter implements JsonConverter<GeoPoint?, dynamic> {
   }
 
   @override
-  dynamic toJson(GeoPoint? geoPoint) => geoPoint;
+  dynamic toJson(GeoPoint? geoPoint) =>
+      geoPoint == null ? null : {'latitude': geoPoint.latitude, 'longitude': geoPoint.longitude};
 }
 
 extension TourCategoryExtension on TourCategory {

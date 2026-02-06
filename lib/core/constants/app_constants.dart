@@ -84,11 +84,9 @@ class StoragePaths {
   StoragePaths._();
 
   static String tourCover(String tourId) => 'tours/$tourId/cover';
-  static String tourAudio(String tourId, String stopId) =>
-      'tours/$tourId/audio/$stopId';
+  static String tourAudio(String tourId, String stopId) => 'tours/$tourId/audio/$stopId';
   static String tourImage(String tourId, String stopId, int index) =>
       'tours/$tourId/images/$stopId/$index';
-  static String tourVideo(String tourId, String stopId) =>
-      'tours/$tourId/video/$stopId';
-  static String userAvatar(String userId) => 'users/$userId/avatar';
+  static String tourVideo(String tourId, String stopId) => 'tours/$tourId/video/$stopId';
+  static String userAvatar(String userId) => 'users/$userId/profile/avatar';
 }

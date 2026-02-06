@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/extensions/context_extensions.dart';
+import '../../../config/theme/colors.dart';
 import '../../../core/constants/route_names.dart';
+import '../../../core/extensions/context_extensions.dart';
 import '../../../data/local/offline_storage_service.dart';
 import '../../../services/download_manager.dart';
 import '../../providers/offline_map_provider.dart';
@@ -47,16 +48,14 @@ class DownloadsScreen extends ConsumerWidget {
       body: Column(
         children: [
           // Storage info header
-          _StorageInfoCard(
-            cacheSizeAsync: cacheSizeAsync,
-            downloadCount: downloadedIds.length,
-          ),
+          _StorageInfoCard(cacheSizeAsync: cacheSizeAsync, downloadCount: downloadedIds.length),
 
           // Downloads list
           Expanded(
-            child: downloadedIds.isEmpty
-                ? _buildEmptyState(context)
-                : _buildDownloadsList(context, ref, downloadedIds),
+            child:
+                downloadedIds.isEmpty
+                    ? _buildEmptyState(context)
+                    : _buildDownloadsList(context, ref, downloadedIds),
           ),
         ],
       ),
@@ -64,16 +63,10 @@ class DownloadsScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return EmptyState.noDownloads(
-      onExplore: () => context.go(RouteNames.discover),
-    );
+    return EmptyState.noDownloads(onExplore: () => context.go(RouteNames.discover));
   }
 
-  Widget _buildDownloadsList(
-    BuildContext context,
-    WidgetRef ref,
-    List<String> downloadedIds,
-  ) {
+  Widget _buildDownloadsList(BuildContext context, WidgetRef ref, List<String> downloadedIds) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: downloadedIds.length,
@@ -91,58 +84,52 @@ class DownloadsScreen extends ConsumerWidget {
   void _showDeleteDialog(BuildContext context, WidgetRef ref, String tourId) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Download'),
-        content: const Text(
-          'This will remove the downloaded tour from your device. You can download it again later.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Download'),
+            content: const Text(
+              'This will remove the downloaded tour from your device. You can download it again later.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: () {
+                  ref.read(downloadManagerProvider.notifier).deleteDownload(tourId);
+                  Navigator.pop(context);
+                  context.showSuccessSnackBar('Download removed');
+                },
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () {
-              ref.read(downloadManagerProvider.notifier).deleteDownload(tourId);
-              Navigator.pop(context);
-              context.showSuccessSnackBar('Download removed');
-            },
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
   }
 
   void _showClearAllDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear All Downloads'),
-        content: const Text(
-          'This will remove all downloaded tours from your device. You can download them again later.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: context.colorScheme.error,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Clear All Downloads'),
+            content: const Text(
+              'This will remove all downloaded tours from your device. You can download them again later.',
             ),
-            onPressed: () async {
-              final storage = ref.read(offlineStorageServiceProvider);
-              await storage.clearAll();
-              if (context.mounted) {
-                Navigator.pop(context);
-                context.showSuccessSnackBar('All downloads cleared');
-              }
-            },
-            child: const Text('Clear All'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: context.colorScheme.error),
+                onPressed: () async {
+                  final storage = ref.read(offlineStorageServiceProvider);
+                  await storage.clearAll();
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    context.showSuccessSnackBar('All downloads cleared');
+                  }
+                },
+                child: const Text('Clear All'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
@@ -151,10 +138,7 @@ class _StorageInfoCard extends ConsumerWidget {
   final AsyncValue<int> cacheSizeAsync;
   final int downloadCount;
 
-  const _StorageInfoCard({
-    required this.cacheSizeAsync,
-    required this.downloadCount,
-  });
+  const _StorageInfoCard({required this.cacheSizeAsync, required this.downloadCount});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -175,11 +159,7 @@ class _StorageInfoCard extends ConsumerWidget {
               color: context.colorScheme.primary,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              Icons.storage,
-              color: context.colorScheme.onPrimary,
-              size: 24,
-            ),
+            child: Icon(Icons.storage, color: context.colorScheme.onPrimary, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -255,33 +235,37 @@ class _StorageInfoCard extends ConsumerWidget {
               ),
             );
           },
-          loading: () => Text(
-            _formatBytes(mediaBytes),
-            style: context.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: context.colorScheme.onPrimaryContainer,
-            ),
-          ),
-          error: (_, __) => Text(
-            _formatBytes(mediaBytes),
-            style: context.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: context.colorScheme.onPrimaryContainer,
-            ),
-          ),
+          loading:
+              () => Text(
+                _formatBytes(mediaBytes),
+                style: context.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: context.colorScheme.onPrimaryContainer,
+                ),
+              ),
+          error:
+              (_, __) => Text(
+                _formatBytes(mediaBytes),
+                style: context.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: context.colorScheme.onPrimaryContainer,
+                ),
+              ),
         );
       },
-      loading: () => const SizedBox(
-        height: 20,
-        width: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
-      error: (_, __) => Text(
-        'Unknown',
-        style: context.textTheme.headlineSmall?.copyWith(
-          color: context.colorScheme.onPrimaryContainer,
-        ),
-      ),
+      loading:
+          () => const SizedBox(
+            height: 20,
+            width: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+      error:
+          (_, __) => Text(
+            'Unknown',
+            style: context.textTheme.headlineSmall?.copyWith(
+              color: context.colorScheme.onPrimaryContainer,
+            ),
+          ),
     );
   }
 
@@ -302,11 +286,7 @@ class _DownloadedTourItem extends ConsumerStatefulWidget {
   final String tourId;
   final VoidCallback onDelete;
 
-  const _DownloadedTourItem({
-    super.key,
-    required this.tourId,
-    required this.onDelete,
-  });
+  const _DownloadedTourItem({super.key, required this.tourId, required this.onDelete});
 
   @override
   ConsumerState<_DownloadedTourItem> createState() => _DownloadedTourItemState();
@@ -365,27 +345,20 @@ class _DownloadedTourItemState extends ConsumerState<_DownloadedTourItem> {
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.green,
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.download_done,
-                            size: 14,
-                            color: Colors.white,
-                          ),
+                          const Icon(Icons.download_done, size: 14, color: AppColors.textOnPrimary),
                           const SizedBox(width: 4),
                           Text(
                             _formatSize(downloadStatus?['fileSize'] as int?),
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.textOnPrimary,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -396,12 +369,9 @@ class _DownloadedTourItemState extends ConsumerState<_DownloadedTourItem> {
                     const SizedBox(width: 4),
                     // Map tiles indicator
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: hasMapTiles ? Colors.blue : Colors.grey,
+                        color: hasMapTiles ? AppColors.primaryLight : AppColors.textTertiary,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Row(
@@ -410,7 +380,7 @@ class _DownloadedTourItemState extends ConsumerState<_DownloadedTourItem> {
                           Icon(
                             hasMapTiles ? Icons.map : Icons.map_outlined,
                             size: 14,
-                            color: Colors.white,
+                            color: AppColors.textOnPrimary,
                           ),
                           if (!hasMapTiles && !_isDownloadingMap) ...[
                             const SizedBox(width: 4),
@@ -419,7 +389,7 @@ class _DownloadedTourItemState extends ConsumerState<_DownloadedTourItem> {
                               child: const Text(
                                 'Get Map',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.textOnPrimary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -433,7 +403,7 @@ class _DownloadedTourItemState extends ConsumerState<_DownloadedTourItem> {
                               height: 10,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: AppColors.textOnPrimary,
                               ),
                             ),
                           ],
@@ -448,18 +418,14 @@ class _DownloadedTourItemState extends ConsumerState<_DownloadedTourItem> {
                 top: 8,
                 right: 8,
                 child: Material(
-                  color: Colors.black54,
+                  color: AppColors.textPrimary.withOpacity(0.5),
                   shape: const CircleBorder(),
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: widget.onDelete,
                     child: const Padding(
                       padding: EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.delete_outline,
-                        size: 20,
-                        color: Colors.white,
-                      ),
+                      child: Icon(Icons.delete_outline, size: 20, color: AppColors.textOnPrimary),
                     ),
                   ),
                 ),
@@ -470,29 +436,19 @@ class _DownloadedTourItemState extends ConsumerState<_DownloadedTourItem> {
                   bottom: 8,
                   left: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.black54,
+                      color: AppColors.textPrimary.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.schedule,
-                          size: 14,
-                          color: Colors.white,
-                        ),
+                        const Icon(Icons.schedule, size: 14, color: AppColors.textOnPrimary),
                         const SizedBox(width: 4),
                         Text(
                           _formatExpiration(downloadStatus!['expiresAt']),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
+                          style: const TextStyle(color: AppColors.textOnPrimary, fontSize: 12),
                         ),
                       ],
                     ),
@@ -517,32 +473,21 @@ class _DownloadedTourItemState extends ConsumerState<_DownloadedTourItem> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(
-              Icons.error_outline,
-              color: context.colorScheme.error,
-            ),
+            Icon(Icons.error_outline, color: context.colorScheme.error),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Error loading tour',
-                    style: context.textTheme.titleMedium,
-                  ),
+                  Text('Error loading tour', style: context.textTheme.titleMedium),
                   Text(
                     error,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: context.colorScheme.error,
-                    ),
+                    style: context.textTheme.bodySmall?.copyWith(color: context.colorScheme.error),
                   ),
                 ],
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: widget.onDelete,
-            ),
+            IconButton(icon: const Icon(Icons.delete), onPressed: widget.onDelete),
           ],
         ),
       ),

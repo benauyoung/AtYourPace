@@ -123,6 +123,21 @@ class PlaybackState {
   /// Whether a specific stop is completed
   bool isStopCompleted(int index) => completedStopIndices.contains(index);
 
+  /// Whether the user is waiting to reach the first stop (tour started but no stop triggered yet)
+  bool get isWaitingForFirstStop =>
+      hasStarted && currentStopIndex == -1 && stops.isNotEmpty && !previewMode;
+
+  /// Distance in meters from user to the first stop (null if no position or no stops)
+  double? get distanceToFirstStop {
+    if (userPosition == null || stops.isEmpty) return null;
+    return Geolocator.distanceBetween(
+      userPosition!.latitude,
+      userPosition!.longitude,
+      stops.first.location.latitude,
+      stops.first.location.longitude,
+    );
+  }
+
   /// Get distance to a stop from user position
   double? distanceToStop(StopModel stop) {
     if (userPosition == null) return null;
@@ -202,7 +217,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       }
 
       // Load version data
-      debugPrint('[Playback] Tour ${tour.id}: status=${tour.status}, liveVersionId=${tour.liveVersionId}, draftVersionId=${tour.draftVersionId}');
+      debugPrint(
+        '[Playback] Tour ${tour.id}: status=${tour.status}, liveVersionId=${tour.liveVersionId}, draftVersionId=${tour.draftVersionId}',
+      );
       final versionId = tour.liveVersionId ?? tour.draftVersionId;
       debugPrint('[Playback] Using versionId=$versionId');
 
@@ -259,6 +276,10 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
         // Listen for audio completion
         _listenToAudioState();
+
+        // Immediate proximity check — if user is already at a stop, trigger it
+        // (geofence "enter" events only fire on boundary crossing, not if already inside)
+        await _initialProximityCheck();
       }
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -525,6 +546,20 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     _audioSubscription?.cancel();
 
     state = const PlaybackState();
+  }
+
+  /// One-time check right after tour start to trigger any stop the user is already inside
+  Future<void> _initialProximityCheck() async {
+    // Get current position
+    try {
+      final position = await _locationService.getCurrentPosition();
+      if (position != null) {
+        state = state.copyWith(userPosition: position);
+        _checkProximityToStops(position);
+      }
+    } catch (e) {
+      debugPrint('[Playback] Initial proximity check failed: $e');
+    }
   }
 
   void _checkProximityToStops(Position position) {

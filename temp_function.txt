@@ -1,0 +1,15 @@
+  Future<void> _handleClusterClick(QueriedRenderedFeature feature) async {
+    try {
+      final camera = await _mapboxMap!.getCameraState();
+      
+      // Zoom in on cluster click (geometry API not available in current Mapbox version)
+      await _mapboxMap!.flyTo(
+        CameraOptions(
+          zoom: (camera.zoom + 2).clamp(0, 20),
+        ),
+        MapAnimationOptions(duration: 500),
+      );
+    } catch (e) {
+      debugPrint("Cluster click error: $e");
+    }
+  }

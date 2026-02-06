@@ -4,7 +4,6 @@ import 'package:mockito/mockito.dart';
 
 import 'package:ayp_tour_guide/data/models/stop_model.dart';
 import 'package:ayp_tour_guide/data/models/tour_model.dart';
-import 'package:ayp_tour_guide/data/models/tour_version_model.dart';
 
 import '../helpers/test_helpers.dart';
 import '../helpers/test_helpers.mocks.dart';

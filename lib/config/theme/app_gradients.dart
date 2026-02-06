@@ -1,61 +1,80 @@
 import 'package:flutter/material.dart';
 
-/// Gradient definitions for the app - Fresh Shaka Guide inspired palette.
+import 'colors.dart';
+
+/// Parisian Botanical Journal Gradient Definitions
 ///
-/// Provides pre-defined gradients for consistent use across the application.
-/// Each gradient is designed for specific use cases:
-/// - [teal]: Navigation bars, primary UI elements
-/// - [mint]: CTA buttons, highlights, success states
-/// - [nature]: Header decorations, tropical feel
+/// Warm garden-green and parchment gradients inspired by watercolor washes,
+/// botanical illustrations, and luxury travel magazines.
 class AppGradients {
   AppGradients._();
 
-  /// Teal gradient - Dark teal navy
+  // ============ CARD & SURFACE GRADIENTS ============
+
+  /// Card parchment — ivory cream to warm parchment at 145°
   ///
-  /// Use for: Navigation bars, primary buttons, dark UI elements
-  static const LinearGradient teal = LinearGradient(
-    colors: [Color(0xFF1E3D4C), Color(0xFF2C5364)],
+  /// Use for: Default card backgrounds, content containers
+  static const LinearGradient cardParchment = LinearGradient(
+    begin: Alignment(-0.57, -0.82), // ~145° angle
+    end: Alignment(0.57, 0.82),
+    colors: [Color(0xFFF5F0E8), Color(0xFFEBE5D8)], // Ivory Cream → Card Parchment
+  );
+
+  /// Parchment fade — ivory cream to warm parchment (vertical)
+  ///
+  /// Use for: Backgrounds, subtle depth, section separators
+  static const LinearGradient parchmentFade = LinearGradient(
+    colors: [Color(0xFFF5F0E8), Color(0xFFEBE5D8)],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  /// Header decoration gradient — very subtle green tint fading to ivory
+  ///
+  /// Use for: Screen headers, hero sections
+  static const LinearGradient headerDecoration = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFFEEF2EC), // Very light green tint (primary50)
+      Color(0xFFF5F0E8), // Ivory Cream
+    ],
+  );
+
+  // ============ PRIMARY GREEN GRADIENTS ============
+
+  /// Garden green — Deep Garden Green to Dark Ivy
+  ///
+  /// Use for: Primary buttons, audio player, active states
+  static const LinearGradient gardenGreen = LinearGradient(
+    colors: [Color(0xFF4A6741), Color(0xFF3D5636)], // Deep Garden Green → Dark Ivy
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  /// Mint gradient - Fresh mint teal
+  /// Sage highlight — Soft Sage to Deep Garden Green
   ///
-  /// Use for: CTA buttons, highlights, action elements
-  static const LinearGradient mint = LinearGradient(
-    colors: [Color(0xFF5DD4B3), Color(0xFF7DE4C8)],
+  /// Use for: Secondary green elements, hover states
+  static const LinearGradient sageHighlight = LinearGradient(
+    colors: [Color(0xFF6B8A5E), Color(0xFF4A6741)], // Soft Sage → Deep Garden Green
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  /// Nature gradient - Soft green for tropical feel
+  // ============ ACCENT GRADIENTS ============
+
+  /// Antique gold — for star ratings, audio progress, fun-fact accents
   ///
-  /// Use for: Header decorations, success states, nature elements
-  static const LinearGradient nature = LinearGradient(
-    colors: [Color(0xFF90BE6D), Color(0xFF43AA8B)],
+  /// Use for: Rating stars, audio progress bar, premium highlights
+  static const LinearGradient accentGold = LinearGradient(
+    colors: [Color(0xFFD4BA7A), Color(0xFFC4A55A)], // Light Gold → Antique Gold
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  /// Orange gradient - Warm orange for prices
-  ///
-  /// Use for: Price badges, sale highlights, attention grabbers
-  static const LinearGradient orange = LinearGradient(
-    colors: [Color(0xFFFF9F43), Color(0xFFFFBE76)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+  // ============ OVERLAY GRADIENTS ============
 
-  /// Purple gradient - Violet to purple
-  ///
-  /// Use for: Premium features, special content
-  static const LinearGradient purple = LinearGradient(
-    colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  /// Dark gradient - For overlays and shadows
+  /// Dark overlay — green-tinted charcoal for image overlays
   ///
   /// Use for: Image overlays, text readability improvements
   static const LinearGradient darkOverlay = LinearGradient(
@@ -63,32 +82,50 @@ class AppGradients {
     end: Alignment.bottomCenter,
     colors: [
       Colors.transparent,
-      Color(0x99000000), // 60% opacity black
+      Color(0x992D3A29), // 60% opacity warm charcoal
     ],
     stops: [0.3, 1.0],
   );
 
-  /// Header decoration gradient - Soft green fade
-  ///
-  /// Use for: Screen headers with palm tree/tropical decorations
-  static const LinearGradient headerDecoration = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [
-      Color(0xFFE8F5E9), // Very light green
-      Color(0xFFF5F7F9), // Background color
-    ],
-  );
-
-  /// Subtle gradient for elevated surfaces
+  /// Subtle surface gradient for dark mode
   ///
   /// Use for: Card backgrounds in dark mode
   static const LinearGradient subtleSurface = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFF1A1F35),
-      Color(0xFF242938),
+      Color(0xFF1A1E18), // Deep garden night
+      Color(0xFF252A22), // Elevated garden dark
     ],
   );
+
+  // ============ WATERCOLOR WASH HELPERS ============
+
+  /// Creates a radial watercolor wash gradient for decorative backgrounds.
+  /// Place behind headers/cards at 8–15% opacity.
+  static RadialGradient watercolorWash({
+    Color color = AppColors.primaryLight,
+    double opacity = 0.10,
+    double radius = 0.8,
+  }) => RadialGradient(colors: [color.withOpacity(opacity), color.withOpacity(0)], radius: radius);
+
+  /// Green watercolor wash — for behind headers
+  static RadialGradient get greenWash =>
+      watercolorWash(color: AppColors.primaryLight, opacity: 0.12);
+
+  /// Gold watercolor wash — for behind accent elements
+  static RadialGradient get goldWash => watercolorWash(color: AppColors.accent, opacity: 0.08);
+
+  // ============ LEGACY ALIASES ============
+
+  /// Legacy alias
+  static const LinearGradient goldShimmer = accentGold;
+  static const LinearGradient teal = gardenGreen;
+  static const LinearGradient mint = sageHighlight;
+  static const LinearGradient nature = parchmentFade;
+  static const LinearGradient orange = accentGold;
+  static const LinearGradient purple = gardenGreen;
+  static const LinearGradient warmAmber = accentGold;
+  static const LinearGradient inkWash = gardenGreen;
+  static const LinearGradient sepiaWash = gardenGreen;
 }

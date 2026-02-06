@@ -36,15 +36,11 @@ class UserModel with _$UserModel {
     @TimestampConverter() required DateTime updatedAt,
   }) = _UserModel;
 
-  factory UserModel.fromJson(Map<String, dynamic> json) =>
-      _$UserModelFromJson(json);
+  factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    return UserModel.fromJson({
-      'uid': doc.id,
-      ...data,
-    });
+    return UserModel.fromJson({'uid': doc.id, ...data});
   }
 
   Map<String, dynamic> toFirestore() {
@@ -66,8 +62,7 @@ class CreatorProfile with _$CreatorProfile {
     @Default(0) int totalDownloads,
   }) = _CreatorProfile;
 
-  factory CreatorProfile.fromJson(Map<String, dynamic> json) =>
-      _$CreatorProfileFromJson(json);
+  factory CreatorProfile.fromJson(Map<String, dynamic> json) => _$CreatorProfileFromJson(json);
 }
 
 @freezed
@@ -79,8 +74,7 @@ class UserPreferences with _$UserPreferences {
     String? preferredVoice,
   }) = _UserPreferences;
 
-  factory UserPreferences.fromJson(Map<String, dynamic> json) =>
-      _$UserPreferencesFromJson(json);
+  factory UserPreferences.fromJson(Map<String, dynamic> json) => _$UserPreferencesFromJson(json);
 }
 
 /// Converter for Firestore Timestamp to DateTime
@@ -100,7 +94,7 @@ class TimestampConverter implements JsonConverter<DateTime, dynamic> {
   }
 
   @override
-  dynamic toJson(DateTime date) => Timestamp.fromDate(date);
+  dynamic toJson(DateTime date) => date.toIso8601String();
 }
 
 /// Converter for nullable Timestamp
@@ -121,6 +115,5 @@ class NullableTimestampConverter implements JsonConverter<DateTime?, dynamic> {
   }
 
   @override
-  dynamic toJson(DateTime? date) =>
-      date != null ? Timestamp.fromDate(date) : null;
+  dynamic toJson(DateTime? date) => date != null ? date.toIso8601String() : null;
 }

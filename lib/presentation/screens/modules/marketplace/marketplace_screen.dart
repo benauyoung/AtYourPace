@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../config/theme/app_spacing.dart';
-import '../../../../config/theme/neumorphic.dart';
+import '../../../../config/theme/colors.dart';
 import 'view_models/marketplace_view_model.dart';
 import 'widgets/marketplace_list_view.dart';
 import 'widgets/marketplace_map_view.dart';
@@ -72,7 +72,13 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen>
               padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
                 color: theme.scaffoldBackgroundColor,
-                boxShadow: Neumorphic.subtle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.accent.withOpacity(0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

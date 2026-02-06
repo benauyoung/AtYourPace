@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 import 'package:share_plus/share_plus.dart';
 
+import '../../../config/theme/colors.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/tour_model.dart';
@@ -10,9 +12,8 @@ import '../../../data/models/tour_version_model.dart';
 import '../../providers/favorites_provider.dart';
 import '../../providers/tour_providers.dart';
 import '../../widgets/map/tour_map_widget.dart';
-import '../../widgets/tour/tour_reviews_section.dart';
+import '../../widgets/tour/download_button.dart';
 import '../../widgets/tour/tour_stop_card.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mapbox;
 
 class TourDetailsScreen extends ConsumerWidget {
   final String tourId;
@@ -38,21 +39,24 @@ class TourDetailsScreen extends ConsumerWidget {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
-                    color: Colors.grey[400],
+                    color: AppColors.borderLinen,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 Text(
                   'How would you like to start?',
-                  style: Theme.of(sheetContext).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    sheetContext,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
                 // Browse Tour Map option
                 ListTile(
                   leading: const Icon(Icons.map_outlined, size: 32),
-                  title: const Text('Browse Tour Map', style: TextStyle(fontWeight: FontWeight.w600)),
+                  title: const Text(
+                    'Browse Tour Map',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   subtitle: const Text('Explore stops on the map without audio or tracking'),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   tileColor: Theme.of(sheetContext).colorScheme.surfaceContainerHighest,
@@ -64,11 +68,14 @@ class TourDetailsScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 // Start Tour Now option
                 ListTile(
-                  leading: const Icon(Icons.play_circle_filled, size: 32, color: Color(0xFF1E2F36)),
-                  title: const Text('Start Tour Now', style: TextStyle(fontWeight: FontWeight.w600)),
+                  leading: Icon(Icons.play_circle_filled, size: 32, color: AppColors.primary),
+                  title: const Text(
+                    'Start Tour Now',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   subtitle: const Text('Begin guided tour with audio and location tracking'),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  tileColor: const Color(0xFF90F6D7).withValues(alpha: 0.3),
+                  tileColor: AppColors.primary.withOpacity(0.12),
                   onTap: () {
                     Navigator.pop(sheetContext);
                     context.push(RouteNames.tourPlaybackPath(tourId));
@@ -121,6 +128,7 @@ https://ayp.tours/${tour.slug ?? tour.id}
                 expandedHeight: 250,
                 pinned: true,
                 actions: [
+                  TourDownloadButton(tourId: tourId, showLabel: false),
                   IconButton(
                     icon: const Icon(Icons.share_outlined),
                     onPressed: () => _shareTour(context, tour),
@@ -147,7 +155,10 @@ https://ayp.tours/${tour.slug ?? tour.id}
                         bottom: 20,
                         right: 20,
                         child: FilledButton.icon(
-                          onPressed: () => context.push('${RouteNames.tourPlaybackPath(tourId)}?preview=true'),
+                          onPressed:
+                              () => context.push(
+                                '${RouteNames.tourPlaybackPath(tourId)}?preview=true',
+                              ),
                           icon: const Icon(Icons.map, size: 16),
                           label: const Text('Explore Tour Map'),
                           style: FilledButton.styleFrom(
@@ -198,9 +209,6 @@ https://ayp.tours/${tour.slug ?? tour.id}
                       const SizedBox(height: 12),
                       _TourStopsList(tourId: tourId, versionId: versionId),
 
-                      const SizedBox(height: 32),
-                      // Reviews section
-                      TourReviewsSection(tourId: tourId, stats: tour.stats),
                       const SizedBox(height: 100), // Spacing for bottom bar
                     ],
                   ),
@@ -217,35 +225,44 @@ https://ayp.tours/${tour.slug ?? tour.id}
             (tour) =>
                 tour != null
                     ? Container(
-                        padding: EdgeInsets.fromLTRB(
-                          16, 16, 16,
-                          16 + MediaQuery.of(context).padding.bottom,
-                        ),
-                        decoration: BoxDecoration(
-                          color: context.colorScheme.surface,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, -2),
-                            ),
-                          ],
-                        ),
-                        child: FilledButton(
-                          onPressed: () => _showBeginTourSheet(context),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFF90F6D7),
-                            foregroundColor: const Color(0xFF1E2F36),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            minimumSize: const Size(double.infinity, 0),
-                            textStyle: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        16,
+                        16,
+                        16 + MediaQuery.of(context).padding.bottom,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadowLight.withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, -2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: () => _showBeginTourSheet(context),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: AppColors.textOnPrimary,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                textStyle: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              child: const Text('Begin Tour'),
                             ),
                           ),
-                          child: const Text('Begin Tour'),
-                        ),
-                      )
+                          const SizedBox(width: 12),
+                          TourDownloadButton(tourId: tourId, showLabel: false, size: 28),
+                        ],
+                      ),
+                    )
                     : null,
         loading: () => null,
         error: (_, __) => null,
@@ -344,7 +361,7 @@ class _MetricItem extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 28, color: const Color(0xFF1E2F36)),
+        Icon(icon, size: 28, color: AppColors.textPrimary),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -404,11 +421,7 @@ class _TourDetailsMap extends ConsumerWidget {
   final TourModel tour;
   final String versionId;
 
-  const _TourDetailsMap({
-    required this.tourId,
-    required this.tour,
-    required this.versionId,
-  });
+  const _TourDetailsMap({required this.tourId, required this.tour, required this.versionId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -418,41 +431,36 @@ class _TourDetailsMap extends ConsumerWidget {
       data: (stops) {
         if (stops.isEmpty) {
           return Container(
-            color: Colors.blue[100],
+            color: AppColors.primary50,
             child: Center(
               child: Icon(
-                tour.tourType.name == 'walking'
-                    ? Icons.directions_walk
-                    : Icons.directions_car,
+                tour.tourType.name == 'walking' ? Icons.directions_walk : Icons.directions_car,
                 size: 80,
-                color: Colors.blue[300],
+                color: AppColors.primaryLight,
               ),
             ),
           );
         }
 
-        final markers = stops.asMap().entries.map((entry) {
-          final index = entry.key;
-          final stop = entry.value;
-          return StopMarker(
-            id: stop.id,
-            name: stop.name,
-            latitude: stop.location.latitude,
-            longitude: stop.location.longitude,
-            order: index,
-            triggerRadius: stop.triggerRadius.toDouble(),
-          );
-        }).toList();
+        final markers =
+            stops.asMap().entries.map((entry) {
+              final index = entry.key;
+              final stop = entry.value;
+              return StopMarker(
+                id: stop.id,
+                name: stop.name,
+                latitude: stop.location.latitude,
+                longitude: stop.location.longitude,
+                order: index,
+                triggerRadius: stop.triggerRadius.toDouble(),
+              );
+            }).toList();
 
-        final routeCoordinates = stops
-            .map((stop) => [stop.location.longitude, stop.location.latitude])
-            .toList();
+        final routeCoordinates =
+            stops.map((stop) => [stop.location.longitude, stop.location.latitude]).toList();
 
         return TourMapWidget(
-          initialCenter: mapbox.Position(
-            tour.startLocation.longitude,
-            tour.startLocation.latitude,
-          ),
+          initialCenter: mapbox.Position(tour.startLocation.longitude, tour.startLocation.latitude),
           initialZoom: 14.0,
           routeCoordinates: routeCoordinates,
           stops: markers,
@@ -460,14 +468,16 @@ class _TourDetailsMap extends ConsumerWidget {
           interactive: false,
         );
       },
-      loading: () => Container(
-        color: Colors.blue[100],
-        child: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (_, __) => Container(
-        color: Colors.blue[100],
-        child: const Center(child: Icon(Icons.map_outlined, size: 80)),
-      ),
+      loading:
+          () => Container(
+            color: AppColors.primary50,
+            child: const Center(child: CircularProgressIndicator()),
+          ),
+      error:
+          (_, __) => Container(
+            color: AppColors.primary50,
+            child: const Center(child: Icon(Icons.map_outlined, size: 80)),
+          ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/app_config.dart';
+import '../../../config/theme/colors.dart';
 import '../../../services/download_manager.dart';
 
 /// Button to download a tour for offline use
@@ -10,12 +11,7 @@ class TourDownloadButton extends ConsumerWidget {
   final bool showLabel;
   final double? size;
 
-  const TourDownloadButton({
-    super.key,
-    required this.tourId,
-    this.showLabel = true,
-    this.size,
-  });
+  const TourDownloadButton({super.key, required this.tourId, this.showLabel = true, this.size});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,14 +28,12 @@ class TourDownloadButton extends ConsumerWidget {
           onPressed: () => _showDeleteDialog(context, ref),
           icon: Icon(Icons.download_done, size: iconSize),
           label: const Text('Downloaded'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.green,
-          ),
+          style: OutlinedButton.styleFrom(foregroundColor: AppColors.primary),
         );
       }
       return IconButton(
         onPressed: () => _showDeleteDialog(context, ref),
-        icon: Icon(Icons.download_done, size: iconSize, color: Colors.green),
+        icon: Icon(Icons.download_done, size: iconSize, color: AppColors.primary),
         tooltip: 'Downloaded - tap to delete',
       );
     }
@@ -53,10 +47,7 @@ class TourDownloadButton extends ConsumerWidget {
           icon: SizedBox(
             width: iconSize,
             height: iconSize,
-            child: CircularProgressIndicator(
-              value: progress,
-              strokeWidth: 2,
-            ),
+            child: CircularProgressIndicator(value: progress, strokeWidth: 2),
           ),
           label: Text('${(progress * 100).toInt()}%'),
         );
@@ -67,10 +58,7 @@ class TourDownloadButton extends ConsumerWidget {
           SizedBox(
             width: iconSize + 8,
             height: iconSize + 8,
-            child: CircularProgressIndicator(
-              value: progress,
-              strokeWidth: 2,
-            ),
+            child: CircularProgressIndicator(value: progress, strokeWidth: 2),
           ),
           IconButton(
             onPressed: () => _cancelDownload(ref),
@@ -85,18 +73,20 @@ class TourDownloadButton extends ConsumerWidget {
     if (downloadState?.status == DownloadStatus.failed) {
       if (showLabel) {
         return OutlinedButton.icon(
-          onPressed: () => _startDownload(ref),
+          onPressed: () {
+            _showErrorThenRetry(context, ref, downloadState?.errorMessage);
+          },
           icon: Icon(Icons.error_outline, size: iconSize, color: theme.colorScheme.error),
           label: const Text('Retry'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: theme.colorScheme.error,
-          ),
+          style: OutlinedButton.styleFrom(foregroundColor: theme.colorScheme.error),
         );
       }
       return IconButton(
-        onPressed: () => _startDownload(ref),
+        onPressed: () {
+          _showErrorThenRetry(context, ref, downloadState?.errorMessage);
+        },
         icon: Icon(Icons.error_outline, size: iconSize, color: theme.colorScheme.error),
-        tooltip: 'Download failed - tap to retry',
+        tooltip: downloadState?.errorMessage ?? 'Download failed - tap to retry',
       );
     }
 
@@ -112,6 +102,16 @@ class TourDownloadButton extends ConsumerWidget {
       onPressed: () => _startDownload(ref),
       icon: Icon(Icons.download_outlined, size: iconSize),
       tooltip: 'Download for offline use',
+    );
+  }
+
+  void _showErrorThenRetry(BuildContext context, WidgetRef ref, String? errorMessage) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(errorMessage ?? 'Download failed'),
+        action: SnackBarAction(label: 'Retry', onPressed: () => _startDownload(ref)),
+        duration: const Duration(seconds: 5),
+      ),
     );
   }
 
@@ -132,30 +132,26 @@ class TourDownloadButton extends ConsumerWidget {
   void _showDeleteDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Download?'),
-        content: const Text(
-          'This will remove the offline version of this tour. '
-          'You can download it again anytime.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              final manager = ref.read(downloadManagerProvider.notifier);
-              manager.deleteDownload(tourId);
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Download?'),
+            content: const Text(
+              'This will remove the offline version of this tour. '
+              'You can download it again anytime.',
             ),
-            child: const Text('Delete'),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  final manager = ref.read(downloadManagerProvider.notifier);
+                  manager.deleteDownload(tourId);
+                },
+                style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }
@@ -164,10 +160,7 @@ class TourDownloadButton extends ConsumerWidget {
 class DownloadIndicator extends ConsumerWidget {
   final String tourId;
 
-  const DownloadIndicator({
-    super.key,
-    required this.tourId,
-  });
+  const DownloadIndicator({super.key, required this.tourId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -179,19 +172,12 @@ class DownloadIndicator extends ConsumerWidget {
         width: 20,
         height: 20,
         padding: const EdgeInsets.all(2),
-        child: CircularProgressIndicator(
-          value: downloadState?.progress,
-          strokeWidth: 2,
-        ),
+        child: CircularProgressIndicator(value: downloadState?.progress, strokeWidth: 2),
       );
     }
 
     if (isDownloaded) {
-      return const Icon(
-        Icons.offline_pin,
-        size: 20,
-        color: Colors.green,
-      );
+      return const Icon(Icons.offline_pin, size: 20, color: AppColors.primary);
     }
 
     return const SizedBox.shrink();
@@ -202,10 +188,7 @@ class DownloadIndicator extends ConsumerWidget {
 class DownloadAllButton extends ConsumerWidget {
   final List<String> tourIds;
 
-  const DownloadAllButton({
-    super.key,
-    required this.tourIds,
-  });
+  const DownloadAllButton({super.key, required this.tourIds});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -221,33 +204,34 @@ class DownloadAllButton extends ConsumerWidget {
     final someDownloaded = downloadedCount > 0 && !allDownloaded;
 
     return FilledButton.icon(
-      onPressed: allDownloaded
-          ? null
-          : () {
-              final manager = ref.read(downloadManagerProvider.notifier);
-              for (final tourId in tourIds) {
-                if (!ref.read(isTourDownloadedProvider(tourId))) {
-                  if (AppConfig.demoMode) {
-                    manager.downloadTourDemo(tourId);
-                  } else {
-                    manager.downloadTour(tourId);
+      onPressed:
+          allDownloaded
+              ? null
+              : () {
+                final manager = ref.read(downloadManagerProvider.notifier);
+                for (final tourId in tourIds) {
+                  if (!ref.read(isTourDownloadedProvider(tourId))) {
+                    if (AppConfig.demoMode) {
+                      manager.downloadTourDemo(tourId);
+                    } else {
+                      manager.downloadTour(tourId);
+                    }
                   }
                 }
-              }
-            },
+              },
       icon: Icon(
         allDownloaded
             ? Icons.download_done
             : someDownloaded
-                ? Icons.downloading
-                : Icons.download,
+            ? Icons.downloading
+            : Icons.download,
       ),
       label: Text(
         allDownloaded
             ? 'All Downloaded'
             : someDownloaded
-                ? 'Download Remaining (${tourIds.length - downloadedCount})'
-                : 'Download All (${tourIds.length})',
+            ? 'Download Remaining (${tourIds.length - downloadedCount})'
+            : 'Download All (${tourIds.length})',
       ),
     );
   }

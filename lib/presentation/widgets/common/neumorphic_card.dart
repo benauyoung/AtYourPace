@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../../config/theme/app_spacing.dart';
 import '../../../config/theme/colors.dart';
-import '../../../config/theme/neumorphic.dart';
+import '../../../config/theme/glassmorphic.dart';
 
-/// A neumorphic-styled card with soft shadows
+/// A glassmorphic-styled card with frosted glass effect
 ///
-/// Provides a raised, extruded appearance that gives depth
-/// without harsh drop shadows.
+/// Provides a frosted glass appearance that floats over the
+/// parchment backdrop with subtle sepia shadows.
+///
+/// Note: Class name kept as NeumorphicCard for backward compatibility.
 class NeumorphicCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -22,7 +24,7 @@ class NeumorphicCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding,
-    this.borderRadius = 20,
+    this.borderRadius = 32,
     this.color,
     this.pressed = false,
     this.onTap,
@@ -33,38 +35,32 @@ class NeumorphicCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = color ?? (isDark ? AppColors.surfaceDark : AppColors.surface);
 
-    final shadows = pressed
-        ? Neumorphic.flat
-        : isDark
-            ? Neumorphic.raisedDark(intensity: intensity)
-            : Neumorphic.raised(intensity: intensity);
+    final decoration =
+        isDark
+            ? Glassmorphic.mediumDark(borderRadius: borderRadius)
+            : Glassmorphic.medium(borderRadius: borderRadius, tint: color);
 
     final container = AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       padding: padding ?? AppSpacing.cardPadding,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: shadows,
-      ),
+      decoration: decoration,
+      transform: pressed ? (Matrix4.identity()..scale(0.97)) : Matrix4.identity(),
+      transformAlignment: Alignment.center,
       child: child,
     );
 
     if (onTap != null || onLongPress != null) {
-      return GestureDetector(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        child: container,
-      );
+      return GestureDetector(onTap: onTap, onLongPress: onLongPress, child: container);
     }
 
     return container;
   }
 }
 
-/// A neumorphic button with pressed state
+/// A glassmorphic button with pressed state
+///
+/// Note: Class name kept as NeumorphicButton for backward compatibility.
 class NeumorphicButton extends StatefulWidget {
   final Widget child;
   final VoidCallback? onPressed;
@@ -78,7 +74,7 @@ class NeumorphicButton extends StatefulWidget {
     required this.child,
     this.onPressed,
     this.padding,
-    this.borderRadius = 14,
+    this.borderRadius = 12,
     this.color,
     this.enabled = true,
   });
@@ -93,13 +89,7 @@ class _NeumorphicButtonState extends State<NeumorphicButton> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = widget.color ?? (isDark ? AppColors.surfaceDark : AppColors.surface);
-
-    final shadows = _isPressed || !widget.enabled
-        ? Neumorphic.flat
-        : isDark
-            ? Neumorphic.raisedDark(intensity: 0.7, blur: 15, offset: const Offset(5, 5))
-            : Neumorphic.raised(intensity: 0.7, blur: 15, offset: const Offset(5, 5));
+    final bgColor = widget.color ?? (isDark ? AppColors.surfaceDark : AppColors.glassMedium);
 
     return GestureDetector(
       onTapDown: widget.enabled ? (_) => setState(() => _isPressed = true) : null,
@@ -109,17 +99,30 @@ class _NeumorphicButtonState extends State<NeumorphicButton> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         padding: widget.padding ?? AppSpacing.buttonPadding,
+        transform: _isPressed ? (Matrix4.identity()..scale(0.97)) : Matrix4.identity(),
+        transformAlignment: Alignment.center,
         decoration: BoxDecoration(
           color: widget.enabled ? bgColor : bgColor.withOpacity(0.5),
           borderRadius: BorderRadius.circular(widget.borderRadius),
-          boxShadow: shadows,
+          border: Border.all(color: AppColors.glassBorder, width: 1.0),
+          boxShadow:
+              _isPressed
+                  ? []
+                  : [
+                    BoxShadow(
+                      color: AppColors.accent.withOpacity(0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
         ),
         child: DefaultTextStyle(
           style: TextStyle(
-            color: widget.enabled
-                ? (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary)
-                : AppColors.textTertiary,
-            fontWeight: FontWeight.w500,
+            color:
+                widget.enabled
+                    ? (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary)
+                    : AppColors.textTertiary,
+            fontWeight: FontWeight.w700,
           ),
           child: widget.child,
         ),
@@ -128,7 +131,9 @@ class _NeumorphicButtonState extends State<NeumorphicButton> {
   }
 }
 
-/// A neumorphic icon button
+/// A glassmorphic icon button
+///
+/// Note: Class name kept as NeumorphicIconButton for backward compatibility.
 class NeumorphicIconButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback? onPressed;
@@ -157,16 +162,10 @@ class _NeumorphicIconButtonState extends State<NeumorphicIconButton> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = widget.backgroundColor ??
-        (isDark ? AppColors.surfaceDark : AppColors.surface);
-    final iconColor = widget.iconColor ??
-        (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary);
-
-    final shadows = _isPressed || !widget.enabled
-        ? Neumorphic.flat
-        : isDark
-            ? Neumorphic.raisedDark(intensity: 0.6, blur: 12, offset: const Offset(4, 4))
-            : Neumorphic.raised(intensity: 0.6, blur: 12, offset: const Offset(4, 4));
+    final bgColor =
+        widget.backgroundColor ?? (isDark ? AppColors.surfaceDark : AppColors.glassMedium);
+    final iconColor =
+        widget.iconColor ?? (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary);
 
     return GestureDetector(
       onTapDown: widget.enabled ? (_) => setState(() => _isPressed = true) : null,
@@ -177,10 +176,22 @@ class _NeumorphicIconButtonState extends State<NeumorphicIconButton> {
         duration: const Duration(milliseconds: 100),
         width: widget.size,
         height: widget.size,
+        transform: _isPressed ? (Matrix4.identity()..scale(0.97)) : Matrix4.identity(),
+        transformAlignment: Alignment.center,
         decoration: BoxDecoration(
           color: widget.enabled ? bgColor : bgColor.withOpacity(0.5),
           shape: BoxShape.circle,
-          boxShadow: shadows,
+          border: Border.all(color: AppColors.glassBorder, width: 1.0),
+          boxShadow:
+              _isPressed
+                  ? []
+                  : [
+                    BoxShadow(
+                      color: AppColors.accent.withOpacity(0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
         ),
         child: Icon(
           widget.icon,
@@ -192,7 +203,9 @@ class _NeumorphicIconButtonState extends State<NeumorphicIconButton> {
   }
 }
 
-/// A neumorphic container for inset/pressed appearance
+/// A glassmorphic container for inset/pressed appearance
+///
+/// Note: Class name kept as NeumorphicInset for backward compatibility.
 class NeumorphicInset extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -210,22 +223,31 @@ class NeumorphicInset extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = color ??
-        (isDark ? AppColors.surfaceVariantDark : AppColors.surfaceVariant);
+    final bgColor =
+        color ??
+        (isDark ? AppColors.surfaceVariantDark : AppColors.surfaceVariant.withOpacity(0.5));
 
     return Container(
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: isDark ? null : Neumorphic.inset(),
+        border: Border.all(
+          color:
+              isDark
+                  ? AppColors.highlightDark.withOpacity(0.15)
+                  : AppColors.accentLight.withOpacity(0.2),
+          width: 0.5,
+        ),
       ),
       child: child,
     );
   }
 }
 
-/// A neumorphic progress indicator
+/// A glassmorphic progress indicator with gold fill
+///
+/// Note: Class name kept as NeumorphicProgress for backward compatibility.
 class NeumorphicProgress extends StatelessWidget {
   final double value;
   final double height;
@@ -245,8 +267,9 @@ class NeumorphicProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = backgroundColor ??
-        (isDark ? AppColors.surfaceVariantDark : AppColors.surfaceVariant);
+    final bgColor =
+        backgroundColor ??
+        (isDark ? AppColors.surfaceVariantDark : AppColors.surfaceVariant.withOpacity(0.5));
     final fillColor = progressColor ?? AppColors.primary;
 
     return Container(
@@ -254,7 +277,7 @@ class NeumorphicProgress extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(borderRadius),
-        boxShadow: isDark ? null : Neumorphic.inset(intensity: 0.5, blur: 8),
+        border: Border.all(color: AppColors.accentLight.withOpacity(0.15), width: 0.5),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
@@ -264,7 +287,7 @@ class NeumorphicProgress extends StatelessWidget {
             widthFactor: value.clamp(0.0, 1.0),
             child: Container(
               decoration: BoxDecoration(
-                color: fillColor,
+                gradient: LinearGradient(colors: [fillColor.withOpacity(0.7), fillColor]),
                 borderRadius: BorderRadius.circular(borderRadius),
               ),
             ),

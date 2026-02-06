@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ayp_tour_guide/services/connectivity_service.dart';
-import '../../helpers/mock_services.dart';
 
 void main() {
   group('ConnectivityStatus', () {

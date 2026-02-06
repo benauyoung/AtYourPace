@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../config/theme/colors.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/review_model.dart';
@@ -22,24 +23,18 @@ class MyReviewsScreen extends ConsumerWidget {
     if (currentUser == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('My Reviews')),
-        body: const Center(
-          child: Text('Please log in to see your reviews'),
-        ),
+        body: const Center(child: Text('Please log in to see your reviews')),
       );
     }
 
     final reviewsAsync = ref.watch(userReviewsProvider(currentUser.uid));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Reviews'),
-      ),
+      appBar: AppBar(title: const Text('My Reviews')),
       body: reviewsAsync.when(
         data: (reviews) {
           if (reviews.isEmpty) {
-            return EmptyState.noReviews(
-              onWriteReview: () => context.go(RouteNames.discover),
-            );
+            return EmptyState.noReviews(onWriteReview: () => context.go(RouteNames.discover));
           }
 
           return RefreshableList(
@@ -56,9 +51,7 @@ class MyReviewsScreen extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _ReviewCard(
                     review: review,
-                    onTap: () => context.push(
-                      RouteNames.tourDetailsPath(review.tourId),
-                    ),
+                    onTap: () => context.push(RouteNames.tourDetailsPath(review.tourId)),
                     onEdit: () => _showEditReviewSheet(context, ref, review),
                     onDelete: () => _confirmDeleteReview(context, ref, review),
                   ),
@@ -68,10 +61,11 @@ class MyReviewsScreen extends ConsumerWidget {
           );
         },
         loading: () => SkeletonList.reviews(count: 4),
-        error: (error, _) => ErrorView(
-          message: error.toString(),
-          onRetry: () => ref.invalidate(userReviewsProvider(currentUser.uid)),
-        ),
+        error:
+            (error, _) => ErrorView(
+              message: error.toString(),
+              onRetry: () => ref.invalidate(userReviewsProvider(currentUser.uid)),
+            ),
       ),
     );
   }
@@ -81,56 +75,55 @@ class MyReviewsScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (context) => _EditReviewSheet(
-        review: review,
-        onSubmit: (rating, comment) async {
-          final submitService = ref.read(submitReviewProvider);
-          await submitService.submitReview(
-            tourId: review.tourId,
-            rating: rating,
-            comment: comment.isNotEmpty ? comment : null,
-          );
-        },
-      ),
+      builder:
+          (context) => _EditReviewSheet(
+            review: review,
+            onSubmit: (rating, comment) async {
+              final submitService = ref.read(submitReviewProvider);
+              await submitService.submitReview(
+                tourId: review.tourId,
+                rating: rating,
+                comment: comment.isNotEmpty ? comment : null,
+              );
+            },
+          ),
     );
   }
 
   void _confirmDeleteReview(BuildContext context, WidgetRef ref, ReviewModel review) {
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Review?'),
-        content: const Text(
-          'Are you sure you want to delete this review? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text('Delete Review?'),
+            content: const Text(
+              'Are you sure you want to delete this review? This action cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+                  try {
+                    final deleteService = ref.read(deleteReviewProvider);
+                    await deleteService.deleteReview(tourId: review.tourId, reviewId: review.id);
+                    if (context.mounted) {
+                      context.showSuccessSnackBar('Review deleted');
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      context.showErrorSnackBar('Failed to delete review: $e');
+                    }
+                  }
+                },
+                style: TextButton.styleFrom(foregroundColor: AppColors.error),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              try {
-                final deleteService = ref.read(deleteReviewProvider);
-                await deleteService.deleteReview(
-                  tourId: review.tourId,
-                  reviewId: review.id,
-                );
-                if (context.mounted) {
-                  context.showSuccessSnackBar('Review deleted');
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  context.showErrorSnackBar('Failed to delete review: $e');
-                }
-              }
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -165,11 +158,14 @@ class _ReviewCard extends StatelessWidget {
                   // Star rating
                   Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: List.generate(5, (index) => Icon(
-                      index < review.rating ? Icons.star : Icons.star_border,
-                      color: Colors.amber,
-                      size: 20,
-                    )),
+                    children: List.generate(
+                      5,
+                      (index) => Icon(
+                        index < review.rating ? Icons.star : Icons.star_border,
+                        color: AppColors.accent,
+                        size: 20,
+                      ),
+                    ),
                   ),
                   const Spacer(),
                   Text(
@@ -185,9 +181,7 @@ class _ReviewCard extends StatelessWidget {
               // Tour ID (we'd ideally show tour name here)
               Text(
                 'Tour: ${review.tourId}',
-                style: context.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -219,9 +213,7 @@ class _ReviewCard extends StatelessWidget {
                     onPressed: onDelete,
                     icon: const Icon(Icons.delete_outline, size: 18),
                     label: const Text('Delete'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: context.colorScheme.error,
-                    ),
+                    style: TextButton.styleFrom(foregroundColor: context.colorScheme.error),
                   ),
                 ],
               ),
@@ -237,10 +229,7 @@ class _EditReviewSheet extends StatefulWidget {
   final ReviewModel review;
   final Future<void> Function(int rating, String comment) onSubmit;
 
-  const _EditReviewSheet({
-    required this.review,
-    required this.onSubmit,
-  });
+  const _EditReviewSheet({required this.review, required this.onSubmit});
 
   @override
   State<_EditReviewSheet> createState() => _EditReviewSheetState();
@@ -267,9 +256,7 @@ class _EditReviewSheetState extends State<_EditReviewSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -280,24 +267,16 @@ class _EditReviewSheetState extends State<_EditReviewSheet> {
               children: [
                 Text(
                   'Edit Review',
-                  style: context.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
               ],
             ),
             const SizedBox(height: 24),
 
             // Rating
-            Text(
-              'Your Rating',
-              style: context.textTheme.titleMedium,
-            ),
+            Text('Your Rating', style: context.textTheme.titleMedium),
             const SizedBox(height: 12),
             Center(
               child: Row(
@@ -310,7 +289,7 @@ class _EditReviewSheetState extends State<_EditReviewSheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Icon(
                         starNumber <= _rating ? Icons.star : Icons.star_border,
-                        color: Colors.amber,
+                        color: AppColors.accent,
                         size: 40,
                       ),
                     ),
@@ -321,10 +300,7 @@ class _EditReviewSheetState extends State<_EditReviewSheet> {
             const SizedBox(height: 24),
 
             // Comment
-            Text(
-              'Your Review',
-              style: context.textTheme.titleMedium,
-            ),
+            Text('Your Review', style: context.textTheme.titleMedium),
             const SizedBox(height: 12),
             TextField(
               controller: _commentController,
@@ -363,17 +339,14 @@ class _EditReviewSheetState extends State<_EditReviewSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Review updated successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.primary,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update review: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Failed to update review: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {

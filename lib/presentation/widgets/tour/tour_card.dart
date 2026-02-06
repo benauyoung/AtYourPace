@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../config/theme/colors.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../../data/models/tour_model.dart';
 import '../../../data/models/tour_version_model.dart';
@@ -11,19 +12,19 @@ import '../../providers/tour_providers.dart';
 List<Color> _categoryGradientColors(TourCategory category) {
   switch (category) {
     case TourCategory.history:
-      return [Colors.amber.shade300, Colors.amber.shade700];
+      return [AppColors.historyCategory.withOpacity(0.7), AppColors.historyCategory];
     case TourCategory.nature:
-      return [Colors.green.shade300, Colors.green.shade700];
+      return [AppColors.natureCategory.withOpacity(0.7), AppColors.natureCategory];
     case TourCategory.ghost:
-      return [Colors.grey.shade600, Colors.grey.shade900];
+      return [AppColors.ghostCategory.withOpacity(0.7), AppColors.ghostCategory];
     case TourCategory.food:
-      return [Colors.orange.shade300, Colors.orange.shade700];
+      return [AppColors.foodCategory.withOpacity(0.7), AppColors.foodCategory];
     case TourCategory.art:
-      return [Colors.purple.shade300, Colors.purple.shade700];
+      return [AppColors.artCategory.withOpacity(0.7), AppColors.artCategory];
     case TourCategory.architecture:
-      return [Colors.blue.shade300, Colors.blue.shade700];
+      return [AppColors.architectureCategory.withOpacity(0.7), AppColors.architectureCategory];
     case TourCategory.other:
-      return [Colors.blueGrey.shade300, Colors.blueGrey.shade600];
+      return [AppColors.textTertiary.withOpacity(0.7), AppColors.textTertiary];
   }
 }
 
@@ -46,9 +47,7 @@ class TourCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Fetch the live version if available, otherwise draft
     final versionId = tour.liveVersionId ?? tour.draftVersionId;
-    final versionAsync = ref.watch(
-      tourVersionProvider((tourId: tour.id, versionId: versionId)),
-    );
+    final versionAsync = ref.watch(tourVersionProvider((tourId: tour.id, versionId: versionId)));
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -72,28 +71,31 @@ class TourCard extends ConsumerWidget {
                 children: [
                   // Title
                   versionAsync.when(
-                    data: (version) => Text(
-                      version?.title ?? tour.displayName,
-                      style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    loading: () => Container(
-                      height: 20,
-                      width: 150,
-                      decoration: BoxDecoration(
-                        color: context.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    error: (_, __) => Text(
-                      tour.displayName,
-                      style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    data:
+                        (version) => Text(
+                          version?.title ?? tour.displayName,
+                          style: context.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    loading:
+                        () => Container(
+                          height: 20,
+                          width: 150,
+                          decoration: BoxDecoration(
+                            color: context.colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                    error:
+                        (_, __) => Text(
+                          tour.displayName,
+                          style: context.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                   ),
                   const SizedBox(height: 4),
 
@@ -121,11 +123,7 @@ class TourCard extends ConsumerWidget {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      Icon(
-                        Icons.person,
-                        size: 14,
-                        color: context.colorScheme.onSurfaceVariant,
-                      ),
+                      Icon(Icons.person, size: 14, color: context.colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text(
                         'by ${tour.creatorName}',
@@ -142,10 +140,7 @@ class TourCard extends ConsumerWidget {
                     children: [
                       // Category chip
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: context.colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(12),
@@ -172,10 +167,7 @@ class TourCard extends ConsumerWidget {
 
                       // Tour type chip
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: context.colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(12),
@@ -204,7 +196,7 @@ class TourCard extends ConsumerWidget {
 
                         // Rating
                         if (tour.stats.totalRatings > 0) ...[
-                          const Icon(Icons.star, size: 16, color: Colors.amber),
+                          Icon(Icons.star, size: 16, color: AppColors.accent),
                           const SizedBox(width: 2),
                           Text(
                             tour.stats.averageRating.toStringAsFixed(1),
@@ -241,7 +233,9 @@ class TourCard extends ConsumerWidget {
 
   Widget _buildCoverImage(BuildContext context, TourVersionModel? version, WidgetRef ref) {
     final imageUrl = version?.coverImageUrl;
-    debugPrint('[TourCard] Tour ${tour.id}: coverImageUrl=${imageUrl ?? 'null'}, version=${version?.id ?? 'null'}');
+    debugPrint(
+      '[TourCard] Tour ${tour.id}: coverImageUrl=${imageUrl ?? 'null'}, version=${version?.id ?? 'null'}',
+    );
     final isFavorited = ref.watch(isTourFavoritedProvider(tour.id));
 
     Widget coverContent;
@@ -253,14 +247,11 @@ class TourCard extends ConsumerWidget {
         child: CachedNetworkImage(
           imageUrl: imageUrl,
           fit: BoxFit.cover,
-          placeholder: (_, __) => Container(
-            color: context.colorScheme.surfaceContainerHighest,
-            child: Center(
-              child: CircularProgressIndicator(
-                color: context.colorScheme.primary,
+          placeholder:
+              (_, __) => Container(
+                color: context.colorScheme.surfaceContainerHighest,
+                child: Center(child: CircularProgressIndicator(color: context.colorScheme.primary)),
               ),
-            ),
-          ),
           errorWidget: (_, __, ___) => _buildCoverImagePlaceholder(context),
         ),
       );
@@ -281,18 +272,18 @@ class TourCard extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.amber,
+                  color: AppColors.accent,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.star, size: 14, color: Colors.white),
+                    Icon(Icons.star, size: 14, color: AppColors.textOnPrimary),
                     SizedBox(width: 4),
                     Text(
                       'Featured',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textOnPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -308,7 +299,7 @@ class TourCard extends ConsumerWidget {
               top: 8,
               right: 8,
               child: Material(
-                color: Colors.black54,
+                color: AppColors.textPrimary.withOpacity(0.5),
                 shape: const CircleBorder(),
                 clipBehavior: Clip.antiAlias,
                 child: InkWell(
@@ -320,7 +311,7 @@ class TourCard extends ConsumerWidget {
                     child: Icon(
                       isFavorited ? Icons.favorite : Icons.favorite_border,
                       size: 20,
-                      color: isFavorited ? Colors.red : Colors.white,
+                      color: isFavorited ? AppColors.error : AppColors.textOnPrimary,
                     ),
                   ),
                 ),
@@ -335,20 +326,17 @@ class TourCard extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: AppColors.textPrimary.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.timer, size: 14, color: Colors.white),
+                    const Icon(Icons.timer, size: 14, color: AppColors.textOnPrimary),
                     const SizedBox(width: 4),
                     Text(
                       version!.duration!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(color: AppColors.textOnPrimary, fontSize: 12),
                     ),
                   ],
                 ),
@@ -375,7 +363,7 @@ class TourCard extends ConsumerWidget {
           child: Icon(
             tour.category.icon,
             size: 48,
-            color: Colors.white.withValues(alpha: 0.7),
+            color: AppColors.textOnPrimary.withOpacity(0.7),
           ),
         ),
       ),
@@ -397,18 +385,12 @@ class CompactTourCard extends ConsumerWidget {
   final TourModel tour;
   final VoidCallback? onTap;
 
-  const CompactTourCard({
-    super.key,
-    required this.tour,
-    this.onTap,
-  });
+  const CompactTourCard({super.key, required this.tour, this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final versionId = tour.liveVersionId ?? tour.draftVersionId;
-    final versionAsync = ref.watch(
-      tourVersionProvider((tourId: tour.id, versionId: versionId)),
-    );
+    final versionAsync = ref.watch(tourVersionProvider((tourId: tour.id, versionId: versionId)));
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -428,19 +410,18 @@ class CompactTourCard extends ConsumerWidget {
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
-                        width: 100,
-                        color: context.colorScheme.surfaceContainerHighest,
-                      ),
+                      placeholder:
+                          (_, __) => Container(
+                            width: 100,
+                            color: context.colorScheme.surfaceContainerHighest,
+                          ),
                       errorWidget: (_, __, ___) => _buildImagePlaceholder(context),
                     );
                   }
                   return _buildImagePlaceholder(context);
                 },
-                loading: () => Container(
-                  width: 100,
-                  color: context.colorScheme.surfaceContainerHighest,
-                ),
+                loading:
+                    () => Container(width: 100, color: context.colorScheme.surfaceContainerHighest),
                 error: (_, __) => _buildImagePlaceholder(context),
               ),
 
@@ -453,26 +434,26 @@ class CompactTourCard extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       versionAsync.when(
-                        data: (version) => Text(
-                          version?.title ?? tour.displayName,
-                          style: context.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        loading: () => Container(
-                          height: 16,
-                          width: 100,
-                          decoration: BoxDecoration(
-                            color: context.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        error: (_, __) => Text(
-                          tour.displayName,
-                          style: context.textTheme.titleSmall,
-                        ),
+                        data:
+                            (version) => Text(
+                              version?.title ?? tour.displayName,
+                              style: context.textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        loading:
+                            () => Container(
+                              height: 16,
+                              width: 100,
+                              decoration: BoxDecoration(
+                                color: context.colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                        error:
+                            (_, __) => Text(tour.displayName, style: context.textTheme.titleSmall),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -486,19 +467,12 @@ class CompactTourCard extends ConsumerWidget {
                       const Spacer(),
                       Row(
                         children: [
-                          Icon(
-                            tour.category.icon,
-                            size: 14,
-                            color: context.colorScheme.primary,
-                          ),
+                          Icon(tour.category.icon, size: 14, color: context.colorScheme.primary),
                           const SizedBox(width: 4),
-                          Text(
-                            tour.category.displayName,
-                            style: context.textTheme.labelSmall,
-                          ),
+                          Text(tour.category.displayName, style: context.textTheme.labelSmall),
                           const Spacer(),
                           if (tour.stats.totalRatings > 0) ...[
-                            const Icon(Icons.star, size: 14, color: Colors.amber),
+                            Icon(Icons.star, size: 14, color: AppColors.accent),
                             const SizedBox(width: 2),
                             Text(
                               tour.stats.averageRating.toStringAsFixed(1),
@@ -529,11 +503,7 @@ class CompactTourCard extends ConsumerWidget {
           colors: colors,
         ),
       ),
-      child: Icon(
-        tour.category.icon,
-        size: 32,
-        color: Colors.white.withValues(alpha: 0.7),
-      ),
+      child: Icon(tour.category.icon, size: 32, color: AppColors.textOnPrimary.withOpacity(0.7)),
     );
   }
 }

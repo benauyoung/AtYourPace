@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/extensions/context_extensions.dart';
+import '../../../config/theme/colors.dart';
 
 class CreatorPile extends StatelessWidget {
   final List<String> imageUrls;
@@ -52,8 +53,8 @@ class CreatorPile extends StatelessWidget {
                 ),
                 // Mock avatar as seen in screenshot
                 child: const CircleAvatar(
-                  backgroundColor: Colors.teal,
-                  child: Text('SG', style: TextStyle(color: Colors.white, fontSize: 12)),
+                  backgroundColor: AppColors.primary,
+                  child: Text('SG', style: TextStyle(color: AppColors.textOnPrimary, fontSize: 12)),
                 ),
               ),
             ),

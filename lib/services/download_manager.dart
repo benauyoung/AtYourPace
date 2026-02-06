@@ -63,14 +63,7 @@ class TourDownloadState {
   bool get isPaused => status == DownloadStatus.paused;
 }
 
-enum DownloadStatus {
-  idle,
-  queued,
-  downloading,
-  paused,
-  complete,
-  failed,
-}
+enum DownloadStatus { idle, queued, downloading, paused, complete, failed }
 
 /// Manages downloading tours for offline use
 class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
@@ -98,11 +91,7 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
     // Update state to downloading
     state = {
       ...state,
-      tourId: TourDownloadState(
-        tourId: tourId,
-        status: DownloadStatus.downloading,
-        progress: 0.0,
-      ),
+      tourId: TourDownloadState(tourId: tourId, status: DownloadStatus.downloading, progress: 0.0),
     };
 
     try {
@@ -125,9 +114,7 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
       }
 
       // Get stops
-      final stops = await _ref.read(
-        stopsProvider((tourId: tourId, versionId: versionId)).future,
-      );
+      final stops = await _ref.read(stopsProvider((tourId: tourId, versionId: versionId)).future);
 
       // Cache the data
       await _storage.cacheTour(tour);
@@ -142,28 +129,22 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
 
       // Add cover image
       if (version.coverImageUrl != null) {
-        filesToDownload.add(_DownloadItem(
-          url: version.coverImageUrl!,
-          type: _FileType.image,
-          stopId: null,
-        ));
+        filesToDownload.add(
+          _DownloadItem(url: version.coverImageUrl!, type: _FileType.image, stopId: null),
+        );
       }
 
       // Add stop media (audio and images, but NOT video)
       for (final stop in stops) {
         if (stop.media.audioUrl != null) {
-          filesToDownload.add(_DownloadItem(
-            url: stop.media.audioUrl!,
-            type: _FileType.audio,
-            stopId: stop.id,
-          ));
+          filesToDownload.add(
+            _DownloadItem(url: stop.media.audioUrl!, type: _FileType.audio, stopId: stop.id),
+          );
         }
         for (final image in stop.media.images) {
-          filesToDownload.add(_DownloadItem(
-            url: image.url,
-            type: _FileType.image,
-            stopId: stop.id,
-          ));
+          filesToDownload.add(
+            _DownloadItem(url: image.url, type: _FileType.image, stopId: stop.id),
+          );
         }
         // Note: We explicitly skip video as per the spec
       }
@@ -212,8 +193,10 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
           hasMapTiles: tilesDownloaded,
         ),
       };
-    } catch (e) {
+    } catch (e, stack) {
       // Mark failed
+      debugPrint('[DownloadManager] Download failed for $tourId: $e');
+      debugPrint('[DownloadManager] Stack: $stack');
       await _storage.failDownload(tourId, e.toString());
       state = {
         ...state,
@@ -232,11 +215,7 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
   Future<void> downloadTourDemo(String tourId) async {
     state = {
       ...state,
-      tourId: TourDownloadState(
-        tourId: tourId,
-        status: DownloadStatus.downloading,
-        progress: 0.0,
-      ),
+      tourId: TourDownloadState(tourId: tourId, status: DownloadStatus.downloading, progress: 0.0),
     };
 
     // Simulate download progress
@@ -355,10 +334,7 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
         // Update state with map tile progress
         final currentState = state[tourId];
         if (currentState != null) {
-          state = {
-            ...state,
-            tourId: currentState.copyWith(mapTileProgress: progress),
-          };
+          state = {...state, tourId: currentState.copyWith(mapTileProgress: progress)};
         }
       },
     );
@@ -388,13 +364,7 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
     // Update state to reflect map tiles downloaded
     final currentState = state[tourId];
     if (currentState != null) {
-      state = {
-        ...state,
-        tourId: currentState.copyWith(
-          mapTileProgress: 1.0,
-          hasMapTiles: true,
-        ),
-      };
+      state = {...state, tourId: currentState.copyWith(mapTileProgress: 1.0, hasMapTiles: true)};
     }
   }
 
@@ -403,13 +373,7 @@ class DownloadManager extends StateNotifier<Map<String, TourDownloadState>> {
     _cancelTokens[tourId]?.cancel('User cancelled');
     _cancelTokens.remove(tourId);
 
-    state = {
-      ...state,
-      tourId: TourDownloadState(
-        tourId: tourId,
-        status: DownloadStatus.idle,
-      ),
-    };
+    state = {...state, tourId: TourDownloadState(tourId: tourId, status: DownloadStatus.idle)};
   }
 
   /// Delete a downloaded tour
@@ -493,11 +457,7 @@ class _DownloadItem {
   final _FileType type;
   final String? stopId;
 
-  _DownloadItem({
-    required this.url,
-    required this.type,
-    this.stopId,
-  });
+  _DownloadItem({required this.url, required this.type, this.stopId});
 }
 
 enum _FileType { audio, image }
@@ -505,8 +465,8 @@ enum _FileType { audio, image }
 /// Provider for download manager
 final downloadManagerProvider =
     StateNotifierProvider<DownloadManager, Map<String, TourDownloadState>>((ref) {
-  return DownloadManager(ref);
-});
+      return DownloadManager(ref);
+    });
 
 /// Provider to check if a specific tour is downloaded
 final isTourDownloadedProvider = Provider.family<bool, String>((ref, tourId) {
@@ -515,8 +475,7 @@ final isTourDownloadedProvider = Provider.family<bool, String>((ref, tourId) {
 });
 
 /// Provider for download state of a specific tour
-final tourDownloadStateProvider =
-    Provider.family<TourDownloadState?, String>((ref, tourId) {
+final tourDownloadStateProvider = Provider.family<TourDownloadState?, String>((ref, tourId) {
   final allStates = ref.watch(downloadManagerProvider);
   return allStates[tourId];
 });

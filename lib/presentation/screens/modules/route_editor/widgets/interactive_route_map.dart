@@ -40,6 +40,8 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
   mapbox.PointAnnotationManager? _waypointManager;
   mapbox.PolylineAnnotationManager? _routeLineManager;
   mapbox.CircleAnnotationManager? _radiusCircleManager;
+  double _currentZoom = MapboxConfig.defaultZoom;
+  var _isRedrawingCircles = false;
 
   final Map<String, int> _annotationIdToWaypointIndex = {};
 
@@ -53,11 +55,7 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
 
   @override
   Widget build(BuildContext context) {
-    final params = (
-      tourId: widget.tourId,
-      versionId: widget.versionId,
-      routeId: widget.routeId,
-    );
+    final params = (tourId: widget.tourId, versionId: widget.versionId, routeId: widget.routeId);
     final routeState = ref.watch(routeEditorProvider(params));
 
     // Update annotations when state changes
@@ -82,6 +80,7 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
           onMapCreated: _onMapCreated,
           onTapListener: _onMapTap,
           onLongTapListener: _onMapLongTap,
+          onCameraChangeListener: _onCameraChanged,
         ),
         // Loading overlay
         if (routeState.isSnapping)
@@ -119,17 +118,11 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
                 children: [
                   const Icon(Icons.straighten, size: 16),
                   const SizedBox(width: 4),
-                  Text(
-                    routeState.distanceFormatted,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  Text(routeState.distanceFormatted, style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(width: 12),
                   const Icon(Icons.schedule, size: 16),
                   const SizedBox(width: 4),
-                  Text(
-                    routeState.durationFormatted,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  Text(routeState.durationFormatted, style: Theme.of(context).textTheme.bodySmall),
                   const SizedBox(width: 12),
                   const Icon(Icons.place, size: 16),
                   const SizedBox(width: 4),
@@ -158,10 +151,7 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
                     const SizedBox(width: 8),
                     Text(
                       '${routeState.overlappingWaypoints.length} overlapping triggers',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.orange.shade800,
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.orange.shade800),
                     ),
                   ],
                 ),
@@ -189,11 +179,7 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
     );
 
     // Initial annotation update
-    final params = (
-      tourId: widget.tourId,
-      versionId: widget.versionId,
-      routeId: widget.routeId,
-    );
+    final params = (tourId: widget.tourId, versionId: widget.versionId, routeId: widget.routeId);
     final routeState = ref.read(routeEditorProvider(params));
     await _updateAnnotations(routeState);
 
@@ -228,22 +214,23 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
 
     await _radiusCircleManager!.deleteAll();
 
-    final circles = waypoints.map((waypoint) {
-      return mapbox.CircleAnnotationOptions(
-        geometry: mapbox.Point(
-          coordinates: mapbox.Position(
-            waypoint.longitude,
-            waypoint.latitude,
-          ),
-        ),
-        circleRadius: _metersToPixels(waypoint.triggerRadius.toDouble()),
-        circleColor: waypoint.radiusColorHex,
-        circleOpacity: 0.3,
-        circleStrokeWidth: 2,
-        circleStrokeColor: waypoint.radiusColorHex,
-        circleStrokeOpacity: 0.6,
-      );
-    }).toList();
+    final circles =
+        waypoints.map((waypoint) {
+          return mapbox.CircleAnnotationOptions(
+            geometry: mapbox.Point(
+              coordinates: mapbox.Position(waypoint.longitude, waypoint.latitude),
+            ),
+            circleRadius: _metersToPixels(
+              waypoint.triggerRadius.toDouble(),
+              latitude: waypoint.latitude,
+            ),
+            circleColor: waypoint.radiusColorHex,
+            circleOpacity: 0.3,
+            circleStrokeWidth: 2,
+            circleStrokeColor: waypoint.radiusColorHex,
+            circleStrokeOpacity: 0.6,
+          );
+        }).toList();
 
     if (circles.isNotEmpty) {
       await _radiusCircleManager!.createMulti(circles);
@@ -257,9 +244,7 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
 
     if (polyline.length < 2) return;
 
-    final coordinates = polyline
-        .map((p) => mapbox.Position(p.longitude, p.latitude))
-        .toList();
+    final coordinates = polyline.map((p) => mapbox.Position(p.longitude, p.latitude)).toList();
 
     await _routeLineManager!.create(
       mapbox.PolylineAnnotationOptions(
@@ -286,10 +271,7 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
       markers.add(
         mapbox.PointAnnotationOptions(
           geometry: mapbox.Point(
-            coordinates: mapbox.Position(
-              waypoint.longitude,
-              waypoint.latitude,
-            ),
+            coordinates: mapbox.Position(waypoint.longitude, waypoint.latitude),
           ),
           iconSize: isSelected ? 1.5 : 1.0,
           iconColor: _getWaypointColor(waypoint.type, isSelected),
@@ -326,10 +308,40 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
     }
   }
 
-  double _metersToPixels(double meters) {
-    // Approximate conversion at default zoom level
-    // This should be adjusted based on actual zoom
-    return meters / 5;
+  void _onCameraChanged(mapbox.CameraChangedEventData event) async {
+    if (_mapboxMap == null) return;
+    final cameraState = await _mapboxMap!.getCameraState();
+    final newZoom = cameraState.zoom;
+    if ((newZoom - _currentZoom).abs() > 0.1) {
+      _currentZoom = newZoom;
+      _redrawRadiusCircles();
+    }
+  }
+
+  Future<void> _redrawRadiusCircles() async {
+    if (_isRedrawingCircles) return;
+    _isRedrawingCircles = true;
+    try {
+      final params = (tourId: widget.tourId, versionId: widget.versionId, routeId: widget.routeId);
+      final routeState = ref.read(routeEditorProvider(params));
+      await _updateRadiusCircles(routeState.waypoints);
+    } finally {
+      _isRedrawingCircles = false;
+    }
+  }
+
+  double _metersToPixels(double meters, {double latitude = 40.0}) {
+    // Convert meters to pixels at the current zoom level.
+    // Circles are redrawn on every zoom change via _onCameraChanged.
+    const double earthCircumference = 40075016.686;
+    const double tileSize = 512.0;
+    final double zoom = _currentZoom;
+
+    final double latRad = latitude * 3.14159265359 / 180.0;
+    final double metersPerPixel =
+        earthCircumference * math.cos(latRad.abs()) / (tileSize * math.pow(2, zoom));
+
+    return (meters / metersPerPixel).clamp(1.0, 5000.0);
   }
 
   Future<void> _fitToWaypoints(List<WaypointModel> waypoints) async {
@@ -339,10 +351,7 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
       await _mapboxMap!.flyTo(
         mapbox.CameraOptions(
           center: mapbox.Point(
-            coordinates: mapbox.Position(
-              waypoints.first.longitude,
-              waypoints.first.latitude,
-            ),
+            coordinates: mapbox.Position(waypoints.first.longitude, waypoints.first.latitude),
           ),
           zoom: 15,
         ),
@@ -368,59 +377,45 @@ class InteractiveRouteMapState extends ConsumerState<InteractiveRouteMap> {
     final latPadding = (maxLat - minLat) * 0.2;
     final lngPadding = (maxLng - minLng) * 0.2;
 
-    await _mapboxMap!.cameraForCoordinateBounds(
-      mapbox.CoordinateBounds(
-        southwest: mapbox.Point(
-          coordinates: mapbox.Position(minLng - lngPadding, minLat - latPadding),
-        ),
-        northeast: mapbox.Point(
-          coordinates: mapbox.Position(maxLng + lngPadding, maxLat + latPadding),
-        ),
-        infiniteBounds: false,
-      ),
-      mapbox.MbxEdgeInsets(top: 50, left: 50, bottom: 50, right: 50),
-      null, // bearing
-      null, // pitch
-      null, // maxZoom
-      null, // offset
-    ).then((cameraOptions) {
-      _mapboxMap!.flyTo(
-        cameraOptions,
-        mapbox.MapAnimationOptions(duration: 500),
-      );
-    });
+    await _mapboxMap!
+        .cameraForCoordinateBounds(
+          mapbox.CoordinateBounds(
+            southwest: mapbox.Point(
+              coordinates: mapbox.Position(minLng - lngPadding, minLat - latPadding),
+            ),
+            northeast: mapbox.Point(
+              coordinates: mapbox.Position(maxLng + lngPadding, maxLat + latPadding),
+            ),
+            infiniteBounds: false,
+          ),
+          mapbox.MbxEdgeInsets(top: 50, left: 50, bottom: 50, right: 50),
+          null, // bearing
+          null, // pitch
+          null, // maxZoom
+          null, // offset
+        )
+        .then((cameraOptions) {
+          _mapboxMap!.flyTo(cameraOptions, mapbox.MapAnimationOptions(duration: 500));
+        });
   }
 
   /// Public method to fit map to current waypoints
   Future<void> fitToWaypoints() async {
-    final params = (
-      tourId: widget.tourId,
-      versionId: widget.versionId,
-      routeId: widget.routeId,
-    );
+    final params = (tourId: widget.tourId, versionId: widget.versionId, routeId: widget.routeId);
     final routeState = ref.read(routeEditorProvider(params));
     await _fitToWaypoints(routeState.waypoints);
   }
 
   /// Public method to center on a specific waypoint
   Future<void> centerOnWaypoint(int index) async {
-    final params = (
-      tourId: widget.tourId,
-      versionId: widget.versionId,
-      routeId: widget.routeId,
-    );
+    final params = (tourId: widget.tourId, versionId: widget.versionId, routeId: widget.routeId);
     final routeState = ref.read(routeEditorProvider(params));
 
     if (index >= 0 && index < routeState.waypoints.length) {
       final waypoint = routeState.waypoints[index];
       await _mapboxMap?.flyTo(
         mapbox.CameraOptions(
-          center: mapbox.Point(
-            coordinates: mapbox.Position(
-              waypoint.longitude,
-              waypoint.latitude,
-            ),
-          ),
+          center: mapbox.Point(coordinates: mapbox.Position(waypoint.longitude, waypoint.latitude)),
           zoom: 17,
         ),
         mapbox.MapAnimationOptions(duration: 500),
@@ -434,10 +429,7 @@ class _WaypointClickListener extends mapbox.OnPointAnnotationClickListener {
   final Map<String, int> annotationIdToIndex;
   final void Function(int index)? onWaypointTapped;
 
-  _WaypointClickListener({
-    required this.annotationIdToIndex,
-    this.onWaypointTapped,
-  });
+  _WaypointClickListener({required this.annotationIdToIndex, this.onWaypointTapped});
 
   @override
   void onPointAnnotationClick(mapbox.PointAnnotation annotation) {

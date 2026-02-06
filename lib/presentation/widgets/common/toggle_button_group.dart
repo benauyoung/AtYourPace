@@ -53,11 +53,7 @@ class ToggleButtonGroup extends StatelessWidget {
 }
 
 class _ToggleItem extends StatelessWidget {
-  const _ToggleItem({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _ToggleItem({required this.label, required this.isSelected, required this.onTap});
 
   final String label;
   final bool isSelected;
@@ -78,7 +74,7 @@ class _ToggleItem extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.primary,
+            color: isSelected ? AppColors.textOnPrimary : AppColors.primary,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -133,11 +129,7 @@ class DualToggle extends StatelessWidget {
 }
 
 class _DualToggleItem extends StatelessWidget {
-  const _DualToggleItem({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _DualToggleItem({required this.label, required this.isSelected, required this.onTap});
 
   final String label;
   final bool isSelected;
@@ -158,7 +150,7 @@ class _DualToggleItem extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.primary,
+            color: isSelected ? AppColors.textOnPrimary : AppColors.primary,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),

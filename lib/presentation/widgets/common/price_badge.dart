@@ -37,7 +37,7 @@ class PriceBadge extends StatelessWidget {
       child: Text(
         '$currency${price.toStringAsFixed(2)}',
         style: TextStyle(
-          color: textColor ?? Colors.white,
+          color: textColor ?? AppColors.textOnPrimary,
           fontSize: 14,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
@@ -49,11 +49,7 @@ class PriceBadge extends StatelessWidget {
 
 /// A free badge for free tours
 class FreeBadge extends StatelessWidget {
-  const FreeBadge({
-    super.key,
-    this.backgroundColor,
-    this.textColor,
-  });
+  const FreeBadge({super.key, this.backgroundColor, this.textColor});
 
   final Color? backgroundColor;
   final Color? textColor;
@@ -69,7 +65,7 @@ class FreeBadge extends StatelessWidget {
       child: Text(
         'FREE',
         style: TextStyle(
-          color: textColor ?? Colors.white,
+          color: textColor ?? AppColors.textOnPrimary,
           fontSize: 14,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
@@ -81,12 +77,7 @@ class FreeBadge extends StatelessWidget {
 
 /// A category badge for displaying tour category
 class CategoryBadge extends StatelessWidget {
-  const CategoryBadge({
-    super.key,
-    required this.label,
-    this.backgroundColor,
-    this.textColor,
-  });
+  const CategoryBadge({super.key, required this.label, this.backgroundColor, this.textColor});
 
   final String label;
   final Color? backgroundColor;

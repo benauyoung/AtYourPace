@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../config/theme/app_spacing.dart';
-import '../../../../../config/theme/neumorphic.dart';
+import '../../../../../config/theme/colors.dart';
 import '../../../../../data/models/collection_model.dart';
 
 class CollectionCard extends StatelessWidget {
@@ -19,10 +19,17 @@ class CollectionCard extends StatelessWidget {
       child: Container(
         width: 200,
         margin: const EdgeInsets.only(right: AppSpacing.md),
-        decoration: Neumorphic.box(
+        decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: AppSpacing.radiusLg,
-          shadows: Neumorphic.subtle,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          border: Border.all(color: AppColors.glassBorder, width: 0.5),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.accent.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(

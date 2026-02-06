@@ -9,7 +9,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'app.dart';
-import 'config/app_config.dart';
 import 'config/firebase_options.dart';
 import 'config/mapbox_config.dart';
 import 'data/local/offline_storage_service.dart';

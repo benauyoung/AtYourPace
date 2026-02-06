@@ -5,7 +5,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:mockito/mockito.dart';
 
 import 'package:ayp_tour_guide/services/geofence_service.dart';
-import 'package:ayp_tour_guide/services/location_service.dart';
 
 import '../helpers/test_helpers.mocks.dart';
 

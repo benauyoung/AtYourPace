@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../config/app_config.dart';
+import '../../../config/theme/colors.dart';
 import '../../../core/constants/route_names.dart';
 import '../../../core/extensions/context_extensions.dart';
 import '../../providers/auth_provider.dart';
@@ -57,11 +58,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Icon
-          Icon(
-            Icons.lock_reset,
-            size: 80,
-            color: context.primaryColor,
-          ),
+          Icon(Icons.lock_reset, size: 80, color: context.primaryColor),
           const SizedBox(height: 24),
 
           // Title
@@ -105,13 +102,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           // Submit button
           FilledButton(
             onPressed: _isLoading ? null : _sendResetEmail,
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Send Reset Link'),
+            child:
+                _isLoading
+                    ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                    : const Text('Send Reset Link'),
           ),
           const SizedBox(height: 16),
 
@@ -134,14 +132,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.green.withValues(alpha: 0.1),
+            color: AppColors.primary.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.check_circle_outline,
-            size: 80,
-            color: Colors.green,
-          ),
+          child: const Icon(Icons.check_circle_outline, size: 80, color: AppColors.primary),
         ),
         const SizedBox(height: 24),
 
@@ -162,9 +156,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         const SizedBox(height: 8),
         Text(
           _emailController.text,
-          style: context.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: context.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -179,17 +171,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 20,
-                      color: context.colorScheme.primary,
-                    ),
+                    Icon(Icons.info_outline, size: 20, color: context.colorScheme.primary),
                     const SizedBox(width: 8),
                     Text(
                       'What\'s next?',
-                      style: context.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: context.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -210,9 +196,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         // Didn't receive email?
         Text(
           'Didn\'t receive the email?',
-          style: context.textTheme.bodySmall?.copyWith(
-            color: context.colorScheme.onSurfaceVariant,
-          ),
+          style: context.textTheme.bodySmall?.copyWith(color: context.colorScheme.onSurfaceVariant),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
@@ -268,10 +252,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        Text(
-          text,
-          style: context.textTheme.bodyMedium,
-        ),
+        Text(text, style: context.textTheme.bodyMedium),
       ],
     );
   }

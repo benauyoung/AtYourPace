@@ -9,13 +9,13 @@ class AppSpacing {
 
   // ============ BASE SCALE (8px grid) ============
 
-  static const double xxs = 4.0;   // Micro spacing
-  static const double xs = 8.0;    // Tight
-  static const double sm = 12.0;   // Small
-  static const double md = 16.0;   // Default
-  static const double lg = 24.0;   // Comfortable
-  static const double xl = 32.0;   // Generous
-  static const double xxl = 48.0;  // Section
+  static const double xxs = 4.0; // Micro spacing
+  static const double xs = 8.0; // Tight
+  static const double sm = 12.0; // Small
+  static const double md = 16.0; // Default
+  static const double lg = 24.0; // Comfortable
+  static const double xl = 32.0; // Generous
+  static const double xxl = 48.0; // Section
   static const double xxxl = 64.0; // Hero
 
   // ============ SEMANTIC SPACING ============
@@ -38,10 +38,7 @@ class AppSpacing {
   // ============ PADDING PRESETS ============
 
   /// Screen-level padding (generous)
-  static const EdgeInsets screenPadding = EdgeInsets.symmetric(
-    horizontal: 24,
-    vertical: 20,
-  );
+  static const EdgeInsets screenPadding = EdgeInsets.symmetric(horizontal: 24, vertical: 20);
 
   /// Card internal padding (spacious)
   static const EdgeInsets cardPadding = EdgeInsets.all(24);
@@ -50,22 +47,13 @@ class AppSpacing {
   static const EdgeInsets cardPaddingCompact = EdgeInsets.all(16);
 
   /// Button padding (comfortable touch target)
-  static const EdgeInsets buttonPadding = EdgeInsets.symmetric(
-    horizontal: 32,
-    vertical: 16,
-  );
+  static const EdgeInsets buttonPadding = EdgeInsets.symmetric(horizontal: 32, vertical: 16);
 
   /// Input field padding
-  static const EdgeInsets inputPadding = EdgeInsets.symmetric(
-    horizontal: 20,
-    vertical: 18,
-  );
+  static const EdgeInsets inputPadding = EdgeInsets.symmetric(horizontal: 20, vertical: 18);
 
   /// List item padding
-  static const EdgeInsets listPadding = EdgeInsets.symmetric(
-    horizontal: 24,
-    vertical: 16,
-  );
+  static const EdgeInsets listPadding = EdgeInsets.symmetric(horizontal: 24, vertical: 16);
 
   /// Bottom sheet padding
   static const EdgeInsets sheetPadding = EdgeInsets.fromLTRB(24, 24, 24, 40);
@@ -81,36 +69,42 @@ class AppSpacing {
   /// Small - inputs, small cards
   static const double radiusSm = 10.0;
 
-  /// Medium - buttons, chips
-  static const double radiusMd = 14.0;
+  /// Medium - buttons, interactive elements
+  static const double radiusMd = 12.0;
 
-  /// Large - cards, dialogs
-  static const double radiusLg = 20.0;
+  /// Large - cards, panels
+  static const double radiusLg = 16.0;
 
   /// Extra large - modals, sheets
-  static const double radiusXl = 28.0;
+  static const double radiusXl = 24.0;
+
+  /// Badge radius
+  static const double radiusBadge = 20.0;
 
   /// Full - pills, circular
   static const double radiusFull = 999.0;
 
   // ============ BORDER RADIUS PRESETS ============
 
-  /// Neumorphic card radius
+  /// Card radius (16pt)
   static const BorderRadius cardRadius = BorderRadius.all(Radius.circular(radiusLg));
 
-  /// Button radius
+  /// Button radius (12pt)
   static const BorderRadius buttonRadius = BorderRadius.all(Radius.circular(radiusMd));
 
-  /// Input field radius
+  /// Input field radius (10pt)
   static const BorderRadius inputRadius = BorderRadius.all(Radius.circular(radiusSm));
 
   /// Chip/tag radius
   static const BorderRadius chipRadius = BorderRadius.all(Radius.circular(radiusFull));
 
-  /// Dialog radius
+  /// Badge radius (20pt)
+  static const BorderRadius badgeRadius = BorderRadius.all(Radius.circular(radiusBadge));
+
+  /// Dialog radius (24pt)
   static const BorderRadius dialogRadius = BorderRadius.all(Radius.circular(radiusXl));
 
-  /// Bottom sheet radius (top only)
+  /// Bottom sheet radius (24pt top only)
   static const BorderRadius sheetRadius = BorderRadius.only(
     topLeft: Radius.circular(radiusXl),
     topRight: Radius.circular(radiusXl),
